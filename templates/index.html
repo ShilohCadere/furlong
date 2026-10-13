@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        <title>Travel Planner</title>
+    </head>
+   <body>
+    <h1>My Travel Planner</h1>
+    <p>Plan your next adventure!</p>
+
+    <h2 class="section-title">My Trips</h2>
+    <button class="new-trip-btn" onclick="createTrip()">+ New Trip</button>
+    <form method="POST">
+        <label for="trip-name">Trip Name:</label>
+        <input type="text" id="trip-name" name="trip-name" required placeholder="Ireland & Scotland 2027">
+        
+        <label for="destination" >Destination:</label>
+        <input type="text" id="destination" name="destination" required placeholder="Ireland" >
+        
+        <button type="submit">Create Trip</button>
+   </form>
+
+   {% if trip_name %}
+        <div class="trip-card">
+            <h3>{{ trip_name }}</h3>
+            <p>{{ destination }}</p>
+        </div>
+    {% endif %}
+
+    <p>{{ trip_name }}</p>
+
+    <div class="trip-container">
+        <div class="trip-card">
+            <h3>Scotland & Ireland 2027</h3>
+            <p>Planning in progress</p>
+        </div>
+
+        <div class="trip-card">
+            <h3>Italy 2026</h3>
+            <p>Status: Completed</p>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    </body>
+</html>
