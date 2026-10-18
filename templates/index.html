@@ -17,12 +17,15 @@
 <body>
     <div class="app-layout">
 
-        <!-- Sidebar -->
         <aside class="sidebar">
-            <a href="/" class="brand">furlong<span>.</span></a>
+            <a href="{{ url_for('home') }}" class="brand">
+                furlong<span>.</span>
+            </a>
 
             <nav class="sidebar-nav" aria-label="Main navigation">
-                <a href="/" class="nav-link active" aria-current="page">
+                <a href="{{ url_for('home') }}"
+                   class="nav-link active"
+                   aria-current="page">
                     <span class="nav-icon">⌂</span>
                     My Journeys
                 </a>
@@ -33,7 +36,6 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content">
 
             <header class="page-header">
@@ -56,7 +58,6 @@
                 </button>
             </header>
 
-            <!-- Journeys -->
             <section class="journeys-section">
                 <div class="section-heading">
                     <div>
@@ -73,7 +74,10 @@
                 {% if trips %}
                     <div class="trip-grid">
                         {% for trip in trips %}
-                            <article class="trip-card">
+                            <a
+                                href="{{ url_for('trip_overview', trip_id=trip.id) }}"
+                                class="trip-card"
+                            >
                                 <div class="trip-cover">
                                     <span class="cover-label">
                                         JOURNEY {{ "%02d"|format(loop.index) }}
@@ -96,7 +100,7 @@
 
                                     <span class="trip-status">Planning</span>
                                 </div>
-                            </article>
+                            </a>
                         {% endfor %}
                     </div>
                 {% else %}
@@ -124,10 +128,10 @@
             <footer class="page-footer">
                 Furlong · A little further, every day.
             </footer>
+
         </main>
     </div>
 
-    <!-- New Trip Modal -->
     <dialog
         id="new-trip-dialog"
         class="trip-dialog"

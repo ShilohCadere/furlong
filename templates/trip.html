@@ -1,0 +1,269 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{ trip.name }} | Furlong</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="app-layout">
+
+        <aside class="sidebar">
+            <a href="{{ url_for('home') }}" class="brand">
+                furlong<span>.</span>
+            </a>
+
+            <nav class="sidebar-nav" aria-label="Main navigation">
+                <a href="{{ url_for('home') }}" class="nav-link">
+                    <span class="nav-icon">⌂</span>
+                    My Journeys
+                </a>
+
+                <a
+                    href="{{ url_for('trip_overview', trip_id=trip.id) }}"
+                    class="nav-link active"
+                    aria-current="page"
+                >
+                    <span class="nav-icon">◫</span>
+                    Overview
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <span>Make room for the journey.</span>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <nav class="breadcrumbs" aria-label="Breadcrumb">
+                <a href="{{ url_for('home') }}">My Journeys</a>
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">{{ trip.name }}</span>
+            </nav>
+
+            <!-- Panoramic cover -->
+            <div
+                class="overview-banner"
+                role="img"
+                aria-label="Decorative green trip cover"
+            >
+                <div class="banner-decoration" aria-hidden="true">
+                    <span class="banner-circle"></span>
+                    <span class="banner-hill banner-hill-back"></span>
+                    <span class="banner-hill banner-hill-front"></span>
+                </div>
+            </div>
+
+            <!-- Trip identity -->
+            <header class="overview-header">
+                <div>
+                    <p class="eyebrow">YOUR JOURNEY</p>
+                    <h1>{{ trip.name }}</h1>
+
+                    {% if trip.destination %}
+                        <p class="overview-destination">
+                            <span aria-hidden="true">⌖</span>
+                            {{ trip.destination }}
+                        </p>
+                    {% else %}
+                        <p class="overview-destination muted">
+                            Destination to be discovered
+                        </p>
+                    {% endif %}
+                </div>
+
+                <button
+                    type="button"
+                    id="edit-trip-btn"
+                    class="secondary-btn edit-trip-btn"
+                    aria-haspopup="dialog"
+                    aria-controls="edit-trip-dialog"
+                >
+                    Edit Trip
+                </button>
+            </header>
+
+            <!-- Feature previews -->
+            <section class="overview-sections" aria-label="Trip planning">
+
+                <article class="overview-preview">
+                    <div class="preview-heading">
+                        <div>
+                            <p class="eyebrow">PLAN YOUR DAYS</p>
+                            <h2>Itinerary</h2>
+                        </div>
+                        <div class="preview-heading-icon" aria-hidden="true">
+                            <span>◷</span>
+                        </div>
+                    </div>
+
+                    <div class="preview-empty">
+                        <div class="empty-icon-wrap" aria-hidden="true">
+                            <span>＋</span>
+                        </div>
+
+                        <h3>Your days are waiting.</h3>
+                        <p>
+                            Soon, you'll be able to organize each day
+                            and build your journey one activity at a time.
+                        </p>
+                    </div>
+
+                    <div class="preview-footer">
+                        <span>Itinerary builder coming next</span>
+                    </div>
+                </article>
+
+                <article class="overview-preview">
+                    <div class="preview-heading">
+                        <div>
+                            <p class="eyebrow">COLLECT INSPIRATION</p>
+                            <h2>Saved Ideas</h2>
+                        </div>
+                        <div class="preview-heading-icon" aria-hidden="true">
+                            <span>♡</span>
+                        </div>
+                    </div>
+
+                    <div class="preview-empty">
+                        <div class="empty-icon-wrap" aria-hidden="true">
+                            <span>✦</span>
+                        </div>
+
+                        <h3>Good ideas start somewhere.</h3>
+                        <p>
+                            Soon, you'll be able to collect places,
+                            experiences, and links worth remembering.
+                        </p>
+                    </div>
+
+                    <div class="preview-footer">
+                        <span>Idea collection coming soon</span>
+                    </div>
+                </article>
+
+            </section>
+
+            <footer class="page-footer">
+                <a href="{{ url_for('home') }}">
+                    ← Back to My Journeys
+                </a>
+            </footer>
+
+        </main>
+    </div>
+
+    <!-- Edit Trip Modal -->
+    <dialog
+        id="edit-trip-dialog"
+        class="trip-dialog"
+        aria-labelledby="edit-dialog-title"
+    >
+        <div class="dialog-heading">
+            <div>
+                <p class="eyebrow">YOUR JOURNEY</p>
+                <h2 id="edit-dialog-title">Edit Trip</h2>
+                <p class="dialog-description">
+                    Update the details of your journey.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="close-btn"
+                id="close-edit-btn"
+                aria-label="Close edit trip dialog"
+            >
+                &times;
+            </button>
+        </div>
+
+        <form
+            method="POST"
+            action="{{ url_for('edit_trip', trip_id=trip.id) }}"
+            class="trip-form"
+            id="edit-trip-form"
+        >
+            <label for="edit-trip-name">Trip name *</label>
+            <input
+                type="text"
+                id="edit-trip-name"
+                name="trip-name"
+                value="{{ trip.name }}"
+                required
+                maxlength="120"
+            >
+
+            <label for="edit-destination">Destination (optional)</label>
+            <input
+                type="text"
+                id="edit-destination"
+                name="destination"
+                value="{{ trip.destination or '' }}"
+                placeholder="Scotland, United Kingdom"
+            >
+
+            <div class="form-actions">
+                <button
+                    type="button"
+                    class="secondary-btn"
+                    id="cancel-edit-btn"
+                >
+                    Cancel
+                </button>
+
+                <button type="submit" class="primary-btn">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </dialog>
+
+    <script>
+        const editDialog = document.getElementById("edit-trip-dialog");
+        const editButton = document.getElementById("edit-trip-btn");
+        const closeButton = document.getElementById("close-edit-btn");
+        const cancelButton = document.getElementById("cancel-edit-btn");
+        const editForm = document.getElementById("edit-trip-form");
+        const editName = document.getElementById("edit-trip-name");
+
+        function openEditDialog() {
+            editForm.reset();
+            editDialog.showModal();
+            editName.focus();
+        }
+
+        function closeEditDialog() {
+            editDialog.close();
+        }
+
+        editButton.addEventListener("click", openEditDialog);
+        closeButton.addEventListener("click", closeEditDialog);
+        cancelButton.addEventListener("click", closeEditDialog);
+
+        editDialog.addEventListener("click", function(event) {
+            const bounds = editDialog.getBoundingClientRect();
+
+            const outside =
+                event.clientX < bounds.left ||
+                event.clientX > bounds.right ||
+                event.clientY < bounds.top ||
+                event.clientY > bounds.bottom;
+
+            if (outside) {
+                closeEditDialog();
+            }
+        });
+    </script>
+</body>
+</html>
