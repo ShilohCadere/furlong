@@ -16,7 +16,6 @@
 
 <body>
     <div class="app-layout">
-
         <aside class="sidebar">
             <a href="{{ url_for('home') }}" class="brand">
                 furlong<span>.</span>
@@ -36,6 +35,14 @@
                     <span class="nav-icon">◫</span>
                     Overview
                 </a>
+
+                <a
+                    href="{{ url_for('itinerary', trip_id=trip.id) }}"
+                    class="nav-link"
+                >
+                    <span class="nav-icon">▤</span>
+                    Itinerary
+                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -44,14 +51,12 @@
         </aside>
 
         <main class="main-content">
-
             <nav class="breadcrumbs" aria-label="Breadcrumb">
                 <a href="{{ url_for('home') }}">My Journeys</a>
                 <span aria-hidden="true">/</span>
                 <span aria-current="page">{{ trip.name }}</span>
             </nav>
 
-            <!-- Panoramic cover -->
             <div
                 class="overview-banner"
                 role="img"
@@ -64,7 +69,6 @@
                 </div>
             </div>
 
-            <!-- Trip identity -->
             <header class="overview-header">
                 <div>
                     <p class="eyebrow">YOUR JOURNEY</p>
@@ -93,9 +97,7 @@
                 </button>
             </header>
 
-            <!-- Feature previews -->
             <section class="overview-sections" aria-label="Trip planning">
-
                 <article class="overview-preview">
                     <div class="preview-heading">
                         <div>
@@ -107,20 +109,48 @@
                         </div>
                     </div>
 
-                    <div class="preview-empty">
-                        <div class="empty-icon-wrap" aria-hidden="true">
-                            <span>＋</span>
+                    {% if days %}
+                        <div class="overview-day-list">
+                            {% for day in days %}
+                                <a
+                                    class="overview-day-link"
+                                    href="{{ url_for('itinerary', trip_id=trip.id) }}#day-{{ day.id }}"
+                                >
+                                    <span class="overview-day-number">
+                                        {{ "%02d"|format(day.day_number) }}
+                                    </span>
+                                    <span class="overview-day-name">
+                                        {{ day.title or ("Day " ~ day.day_number) }}
+                                    </span>
+                                    <span aria-hidden="true">↗</span>
+                                </a>
+                            {% endfor %}
                         </div>
-
-                        <h3>Your days are waiting.</h3>
-                        <p>
-                            Soon, you'll be able to organize each day
-                            and build your journey one activity at a time.
+                        <p class="overview-day-count">
+                            {{ day_count }}
+                            {{ "day" if day_count == 1 else "days" }}
+                            planned
                         </p>
-                    </div>
+                    {% else %}
+                        <div class="preview-empty">
+                            <div class="empty-icon-wrap" aria-hidden="true">
+                                <span>＋</span>
+                            </div>
+                            <h3>Your days are waiting.</h3>
+                            <p>
+                                Start organizing your journey, one day at a time.
+                            </p>
+                        </div>
+                    {% endif %}
 
                     <div class="preview-footer">
-                        <span>Itinerary builder coming next</span>
+                        <a
+                            class="preview-action"
+                            href="{{ url_for('itinerary', trip_id=trip.id) }}"
+                        >
+                            {{ "View itinerary" if days else "Start planning" }}
+                            <span aria-hidden="true">→</span>
+                        </a>
                     </div>
                 </article>
 
@@ -139,7 +169,6 @@
                         <div class="empty-icon-wrap" aria-hidden="true">
                             <span>✦</span>
                         </div>
-
                         <h3>Good ideas start somewhere.</h3>
                         <p>
                             Soon, you'll be able to collect places,
@@ -151,7 +180,6 @@
                         <span>Idea collection coming soon</span>
                     </div>
                 </article>
-
             </section>
 
             <footer class="page-footer">
@@ -159,11 +187,9 @@
                     ← Back to My Journeys
                 </a>
             </footer>
-
         </main>
     </div>
 
-    <!-- Edit Trip Modal -->
     <dialog
         id="edit-trip-dialog"
         class="trip-dialog"
@@ -221,7 +247,6 @@
                 >
                     Cancel
                 </button>
-
                 <button type="submit" class="primary-btn">
                     Save Changes
                 </button>

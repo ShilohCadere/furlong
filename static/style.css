@@ -204,7 +204,7 @@ h2 {
     background: var(--ivory);
 }
 
-/* HOMEPAGE HEADER */
+/* HOMEPAGE */
 
 .page-header {
     display: flex;
@@ -213,94 +213,6 @@ h2 {
     gap: 28px;
     margin-bottom: 64px;
 }
-
-/* NEW AND EDIT TRIP MODALS */
-
-.trip-dialog {
-    width: min(460px, calc(100% - 32px));
-    max-width: none;
-    max-height: calc(100dvh - 40px);
-    padding: 30px;
-    margin: auto;
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    background: var(--white);
-    color: var(--pine);
-    box-shadow: 0 24px 80px rgba(18, 35, 29, 0.16);
-    overflow-y: auto;
-}
-
-.trip-dialog::backdrop {
-    background: rgba(25, 39, 34, 0.46);
-    backdrop-filter: blur(3px);
-}
-
-.dialog-heading {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-.dialog-heading h2 {
-    font-size: 34px;
-    margin-bottom: 6px;
-}
-
-.dialog-description {
-    color: var(--muted);
-    font-size: 13px;
-    margin-bottom: 0;
-}
-
-.close-btn {
-    border: 0;
-    background: transparent;
-    color: var(--muted);
-    font-size: 28px;
-    line-height: 1;
-    padding: 2px 5px;
-}
-
-.close-btn:hover {
-    color: var(--pine);
-}
-
-.trip-form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.trip-form label {
-    font-size: 12px;
-    font-weight: 700;
-    margin-top: 8px;
-}
-
-.trip-form input {
-    width: 100%;
-    padding: 13px 14px;
-    border-radius: 9px;
-    border: 1px solid var(--border);
-    background: #FCFCFA;
-    color: var(--pine);
-    outline-offset: 2px;
-}
-
-.trip-form input:focus {
-    outline: 2px solid var(--sage);
-}
-
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-/* HOMEPAGE JOURNEYS */
 
 .section-heading {
     display: flex;
@@ -407,7 +319,7 @@ h2 {
     font-weight: 700;
 }
 
-/* HOMEPAGE EMPTY STATE */
+/* EMPTY STATES */
 
 .empty-state {
     background: var(--white);
@@ -433,7 +345,93 @@ h2 {
     margin: 0 auto 25px;
 }
 
-/* TRIP OVERVIEW */
+/* NEW TRIP AND EDIT TRIP MODALS */
+
+.trip-dialog {
+    width: min(460px, calc(100% - 32px));
+    max-width: none;
+    max-height: calc(100dvh - 40px);
+    padding: 30px;
+    margin: auto;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--white);
+    color: var(--pine);
+    box-shadow: 0 24px 80px rgba(18, 35, 29, 0.16);
+    overflow-y: auto;
+}
+
+.trip-dialog::backdrop {
+    background: rgba(25, 39, 34, 0.46);
+    backdrop-filter: blur(3px);
+}
+
+.dialog-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.dialog-heading h2 {
+    font-size: 34px;
+    margin-bottom: 6px;
+}
+
+.dialog-description {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 0;
+}
+
+.close-btn {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 28px;
+    line-height: 1;
+    padding: 2px 5px;
+}
+
+.close-btn:hover {
+    color: var(--pine);
+}
+
+.trip-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.trip-form label {
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 8px;
+}
+
+.trip-form input {
+    width: 100%;
+    padding: 13px 14px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: #FCFCFA;
+    color: var(--pine);
+    outline-offset: 2px;
+}
+
+.trip-form input:focus {
+    outline: 2px solid var(--sage);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* BREADCRUMBS */
 
 .breadcrumbs {
     display: flex;
@@ -455,6 +453,8 @@ h2 {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* TRIP OVERVIEW */
 
 .overview-banner {
     height: clamp(175px, 22vw, 265px);
@@ -626,6 +626,224 @@ h2 {
     font-size: 12px;
 }
 
+.preview-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--sage);
+    font-weight: 700;
+}
+
+.preview-action:hover {
+    color: var(--pine);
+    text-decoration: underline;
+}
+
+.overview-day-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+}
+
+.overview-day-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.overview-day-link:hover {
+    background: var(--ivory);
+}
+
+.overview-day-number {
+    display: grid;
+    place-items: center;
+    width: 37px;
+    height: 37px;
+    flex-shrink: 0;
+    border-radius: 9px;
+    background: var(--soft-green);
+    color: var(--sage);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.overview-day-name {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-weight: 600;
+}
+
+.overview-day-count {
+    color: var(--muted);
+    font-size: 12px;
+    margin: 16px 0 0;
+}
+
+/* ITINERARY */
+
+.itinerary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 35px;
+}
+
+.itinerary-header .page-subtitle {
+    margin-bottom: 0;
+}
+
+.itinerary-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(240px, 3fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.itinerary-days {
+    min-width: 0;
+}
+
+.itinerary-day-strip {
+    display: flex;
+    gap: 9px;
+    overflow-x: auto;
+    padding: 0 0 16px;
+    margin-bottom: 6px;
+}
+
+.day-jump {
+    flex-shrink: 0;
+    padding: 9px 14px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--sage);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.day-jump:hover {
+    background: var(--soft-green);
+    border-color: var(--sage);
+}
+
+.itinerary-day-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    scroll-margin-top: 18px;
+}
+
+.day-card-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 22px 24px;
+    list-style: none;
+    cursor: pointer;
+}
+
+.day-card-heading::-webkit-details-marker {
+    display: none;
+}
+
+.day-card-heading:hover {
+    background: #FCFBF8;
+}
+
+.day-heading-text .eyebrow {
+    display: block;
+    margin-bottom: 7px;
+}
+
+.day-heading-text h2 {
+    font-size: 29px;
+    margin-bottom: 0;
+}
+
+.day-date {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+.day-chevron {
+    color: var(--sage);
+    font-size: 23px;
+    transition: transform 0.2s ease;
+}
+
+.itinerary-day-card[open] .day-chevron {
+    transform: rotate(180deg);
+}
+
+.day-card-content {
+    border-top: 1px solid var(--border);
+    padding: 20px 24px 24px;
+}
+
+.day-empty-state {
+    padding: 35px 20px;
+    text-align: center;
+    background: var(--ivory);
+    border-radius: 11px;
+}
+
+.day-empty-symbol {
+    color: var(--clay);
+    font-size: 27px;
+}
+
+.day-empty-state h3 {
+    font-size: 23px;
+    margin: 10px 0 7px;
+}
+
+.day-empty-state p {
+    max-width: 290px;
+    margin: 0 auto;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.unscheduled-panel {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 24px;
+}
+
+.unscheduled-panel h2 {
+    font-size: 28px;
+    margin-bottom: 13px;
+}
+
+.unscheduled-panel > p:not(.eyebrow) {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 22px;
+}
+
+.panel-coming-soon {
+    display: inline-block;
+    color: var(--sage);
+    font-size: 12px;
+    border-top: 1px solid var(--border);
+    padding-top: 17px;
+    width: 100%;
+}
+
 /* FOOTER */
 
 .page-footer {
@@ -642,6 +860,12 @@ h2 {
 }
 
 /* TABLET */
+
+@media (max-width: 1000px) {
+    .itinerary-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
 
 @media (max-width: 900px) {
     .sidebar {
@@ -685,8 +909,8 @@ h2 {
     }
 
     .sidebar-nav {
-        display: flex;
         flex-direction: row;
+        flex-wrap: wrap;
         gap: 8px;
         margin-top: 16px;
     }
@@ -708,14 +932,17 @@ h2 {
         padding: 35px 20px;
     }
 
-    .page-header {
+    .page-header,
+    .itinerary-header {
         align-items: flex-start;
         flex-direction: column;
         gap: 24px;
-        margin-bottom: 50px;
+        margin-bottom: 35px;
     }
 
-    .page-header .primary-btn {
+    .page-header .primary-btn,
+    .itinerary-header form,
+    .itinerary-header .primary-btn {
         width: 100%;
     }
 
@@ -767,5 +994,17 @@ h2 {
 
     .preview-heading {
         margin-bottom: 18px;
+    }
+
+    .day-card-heading {
+        padding: 18px;
+    }
+
+    .day-card-content {
+        padding: 15px;
+    }
+
+    .unscheduled-panel {
+        padding: 20px;
     }
 }

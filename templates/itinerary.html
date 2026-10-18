@@ -1,0 +1,181 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Itinerary | {{ trip.name }} | Furlong</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.gstatic.com" crossorigin rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <a href="{{ url_for('home') }}" class="brand">
+                furlong<span>.</span>
+            </a>
+
+            <nav class="sidebar-nav" aria-label="Main navigation">
+                <a href="{{ url_for('home') }}" class="nav-link">
+                    <span class="nav-icon">⌂</span>
+                    My Journeys
+                </a>
+
+                <a
+                    href="{{ url_for('trip_overview', trip_id=trip.id) }}"
+                    class="nav-link"
+                >
+                    <span class="nav-icon">◫</span>
+                    Overview
+                </a>
+
+                <a
+                    href="{{ url_for('itinerary', trip_id=trip.id) }}"
+                    class="nav-link active"
+                    aria-current="page"
+                >
+                    <span class="nav-icon">▤</span>
+                    Itinerary
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <span>Make room for the journey.</span>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <nav class="breadcrumbs" aria-label="Breadcrumb">
+                <a href="{{ url_for('home') }}">My Journeys</a>
+                <span aria-hidden="true">/</span>
+                <a href="{{ url_for('trip_overview', trip_id=trip.id) }}">
+                    {{ trip.name }}
+                </a>
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">Itinerary</span>
+            </nav>
+
+            <header class="itinerary-header">
+                <div>
+                    <p class="eyebrow">PLAN THE JOURNEY</p>
+                    <h1>Your itinerary</h1>
+                    <p class="page-subtitle">
+                        {{ trip.name }}
+                        {% if trip.destination %}
+                            · {{ trip.destination }}
+                        {% endif %}
+                    </p>
+                </div>
+
+                <form
+                    method="POST"
+                    action="{{ url_for('add_itinerary_day', trip_id=trip.id) }}"
+                >
+                    <button type="submit" class="primary-btn">
+                        + Add Day
+                    </button>
+                </form>
+            </header>
+
+            {% if days %}
+                <div class="itinerary-layout">
+                    <section class="itinerary-days" aria-label="Itinerary days">
+                        <div class="itinerary-day-strip" aria-label="Jump to day">
+                            {% for day in days %}
+                                <a href="#day-{{ day.id }}" class="day-jump">
+                                    Day {{ day.day_number }}
+                                </a>
+                            {% endfor %}
+                        </div>
+
+                        {% for day in days %}
+                            <details
+                                class="itinerary-day-card"
+                                id="day-{{ day.id }}"
+                                {% if loop.first %}open{% endif %}
+                            >
+                                <summary class="day-card-heading">
+                                    <div class="day-heading-text">
+                                        <span class="eyebrow">
+                                            DAY {{ "%02d"|format(day.day_number) }}
+                                        </span>
+                                        <h2>
+                                            {{ day.title or ("Day " ~ day.day_number) }}
+                                        </h2>
+
+                                        {% if day.trip_date %}
+                                            <span class="day-date">
+                                                {{ day.trip_date }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+
+                                    <span class="day-chevron" aria-hidden="true">
+                                        ▾
+                                    </span>
+                                </summary>
+
+                                <div class="day-card-content">
+                                    <div class="day-empty-state">
+                                        <span class="day-empty-symbol" aria-hidden="true">
+                                            ✦
+                                        </span>
+                                        <h3>A day full of possibilities.</h3>
+                                        <p>
+                                            Activities will appear here once
+                                            we add the activity editor.
+                                        </p>
+                                    </div>
+                                </div>
+                            </details>
+                        {% endfor %}
+                    </section>
+
+                    <aside class="unscheduled-panel">
+                        <p class="eyebrow">KEEP YOUR OPTIONS OPEN</p>
+                        <h2>Unscheduled Ideas</h2>
+                        <p>
+                            Saved places and experiences that haven't
+                            been assigned to a day will appear here.
+                        </p>
+                        <span class="panel-coming-soon">
+                            Idea collection coming next
+                        </span>
+                    </aside>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <span class="empty-symbol">✦</span>
+                    <h3>Let's begin with Day 1.</h3>
+                    <p>
+                        Add your first day to start organizing
+                        this journey. Dates can come later.
+                    </p>
+
+                    <form
+                        method="POST"
+                        action="{{ url_for('add_itinerary_day', trip_id=trip.id) }}"
+                    >
+                        <button type="submit" class="primary-btn">
+                            Create Day 1
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+
+            <footer class="page-footer">
+                <a href="{{ url_for('trip_overview', trip_id=trip.id) }}">
+                    ← Back to Trip Overview
+                </a>
+            </footer>
+        </main>
+    </div>
+</body>
+</html>
