@@ -96,6 +96,10 @@ def add_missing_europe_candidates(db, trip_id):
                 WHERE trip_id=? AND city=? AND name=? AND scenario_tag=?""",
                 (trip_id,city,name,variant)).fetchone()
             if exists:continue
+            excluded=db.execute("""SELECT 1 FROM excluded_seed_options
+                WHERE trip_id=? AND city=? AND name=? AND category='hotel' AND scenario_tag=?""",
+                (trip_id,city,name,variant)).fetchone()
+            if excluded:continue
             db.execute("""INSERT INTO saved_options
                 (trip_id,city,name,category,price,notes,start_date,end_date,scenario_tag)
                 VALUES (?,?,?,?,?,?,?,?,?)""",
