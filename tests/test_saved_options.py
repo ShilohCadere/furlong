@@ -41,6 +41,39 @@ class SavedOptionsTests(unittest.TestCase):
             entries = db.execute("SELECT name,is_preferred FROM saved_options ORDER BY id").fetchall()
         self.assertEqual([(x["name"],x["is_preferred"]) for x in entries],[("Eyre Square",0),("The Western",1)])
 
+    def test_scenarios_are_independent_and_budget_updates(self):
+        self.add("Eyre Square",price="1006")
+        self.add("Four Seasons",price="960")
+        self.assertEqual(self.client.get(f"/trip/{self.trip_id}/workspace").status_code,200)
+        self.client.post(f"/trip/{self.trip_id}/workspace/scenarios",data={"name":"L1"})
+        with furlong.get_db_connection() as db:
+            plans=db.execute("SELECT * FROM trip_scenarios ORDER BY id").fetchall()
+            hotels=db.execute("SELECT id FROM saved_options ORDER BY id").fetchall()
+        for s,h in zip(plans,hotels):
+            response=self.client.post(f"/trip/{self.trip_id}/workspace/choose",data={
+                "scenario_id":s["id"],"option_id":h["id"],"city":"Galway","category":"hotel"
+            },follow_redirects=True)
+            self.assertEqual(response.status_code,200)
+        first=self.client.get(f"/trip/{self.trip_id}/workspace?scenario={plans[0]['id']}")
+        second=self.client.get(f"/trip/{self.trip_id}/workspace?scenario={plans[1]['id']}")
+        self.assertIn(b"1006.00",first.data)
+        self.assertIn(b"960.00",second.data)
+        self.client.post(f"/trip/{self.trip_id}/workspace/settings",data={"scenario_id":plans[0]["id"],"budget_limit":"20000","other_costs":"15000"})
+        updated=self.client.get(f"/trip/{self.trip_id}/workspace?scenario={plans[0]['id']}")
+        self.assertIn(b"16006.00",updated.data)
+
+    def test_option_edit_dates_and_validation(self):
+        self.add("Eyre Square")
+        with furlong.get_db_connection() as db:
+            oid=db.execute("SELECT id FROM saved_options").fetchone()[0]
+        url=f"/trip/{self.trip_id}/options/{oid}/edit"
+        payload={"city":"Galway","name":"Eyre Square","category":"hotel","price":"1100",
+                 "start_date":"2027-09-02","end_date":"2027-09-05"}
+        self.assertEqual(self.client.post(url,data=payload).status_code,302)
+        self.assertIn(b"2027-09-02",self.client.get(f"/trip/{self.trip_id}/options").data)
+        payload["end_date"]="2027-09-01"
+        self.assertEqual(self.client.post(url,data=payload).status_code,400)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
