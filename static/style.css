@@ -1326,3 +1326,38 @@ body{background:radial-gradient(ellipse at top right,rgba(39,113,148,.11),transp
 .hotel-quote-form .hotel-notes-input{grid-column:1/-1}
 .hotel-quote-form button{justify-self:start}
 @media(max-width:650px){.sidebar-city-jumps{display:none}.hotel-quote-form{grid-template-columns:1fr}}
+
+
+/* Compact comparison cards and city planning hubs */
+.hotel-comparison-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.hotel-comparison-card{padding:13px 15px;border-radius:11px}
+.hotel-card-number{font-size:18px}
+.hotel-comparison-card h4{font-size:21px;margin:8px 0}
+.hotel-price{font-size:24px;margin-bottom:7px}
+.hotel-dates{font-size:11px;margin-bottom:7px}
+.hotel-card-notes{font-size:11px;line-height:1.4;max-height:56px;overflow:auto}
+.hotel-card-actions{margin-top:10px}
+.hotel-card-actions button{padding:7px 10px}
+.hotel-quote-edit{margin-top:9px;padding-top:8px}
+.city-hub-shortcut{font-size:12px;color:#176883;text-decoration:underline}
+.city-nav-active{background:#247182;color:#fff!important}
+.city-page{padding-top:35px}
+.city-back{display:inline-block;color:#1B6583;font-weight:700;font-size:12px;margin-bottom:16px}
+.city-page-hero{border-radius:17px;padding:30px 34px;margin-bottom:24px;color:white;background:linear-gradient(115deg,#103D69,#126C73 60%,#513477)}
+.city-page-hero h1{font-size:clamp(44px,6vw,70px);color:white}
+.city-page-hero .eyebrow{color:#DCBE75}
+.city-page-hero .scenario-tabs{margin-top:20px}
+.city-hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:17px}
+.city-hub-panel,.city-days{background:#FAFDFF;border:1px solid #B5CEDB;border-radius:15px;padding:23px;margin-bottom:20px}
+.city-hub-panel h2,.city-days h2{font-size:31px;color:#174F76;margin-bottom:18px}
+.city-hub-panel .secondary-btn{display:inline-block;margin-top:14px}
+.city-selected-stay,.city-idea{padding:12px;background:#E8F2F6;border-left:3px solid #188078;border-radius:6px;margin:10px 0}
+.city-selected-stay strong{display:block;font-size:18px}.city-selected-stay p{margin:6px 0;font-size:12px}
+.city-idea{display:flex;flex-direction:column;gap:4px}.city-idea span{font-size:12px;color:#41677A}
+.city-day{display:grid;grid-template-columns:130px 1fr;gap:18px;padding:18px 0;border-bottom:1px solid #D2E1E8}
+.city-day-date{color:#1B7284;font-weight:700;font-size:13px}
+.city-day h3{font-size:24px;color:#183D72;margin-bottom:8px}.city-day p{font-size:13px;color:#456578}
+.city-day-activity{padding:8px 10px;margin:6px 0;background:#E5F1EF;border-radius:7px;font-size:12px}
+.city-days>.primary-btn{display:inline-block;margin-top:20px}
+@media(max-width:1100px){.hotel-comparison-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){.city-hub-grid,.hotel-comparison-grid{grid-template-columns:1fr}.city-day{grid-template-columns:1fr;gap:3px}.city-page-hero{padding:22px}}
