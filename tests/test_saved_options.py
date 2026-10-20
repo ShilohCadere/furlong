@@ -106,6 +106,31 @@ class SavedOptionsTests(unittest.TestCase):
         })
         self.assertEqual(denied.status_code,400)
 
+    def test_all_europe_cities_have_alternatives_without_resetting_choices(self):
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+            plans=db.execute("SELECT id,name FROM trip_scenarios WHERE trip_id=?",(trip,)).fetchall()
+            before={p["name"]:db.execute("SELECT other_costs FROM trip_scenarios WHERE id=?",(p["id"],)).fetchone()[0] for p in plans}
+        for plan in plans:
+            page=self.client.get(f"/trip/{trip}/workspace?scenario={plan['id']}")
+            self.assertEqual(page.status_code,200)
+            self.assertIn(b"choices",page.data)
+        with furlong.get_db_connection() as db:
+            for plan in plans:
+                for city in ("Dublin","Galway","Edinburgh","Inverness","London"):
+                    count=db.execute("""SELECT count(*) FROM saved_options WHERE trip_id=?
+                        AND city=? AND category='hotel' AND scenario_tag=?""",
+                        (trip,city,plan["name"])).fetchone()[0]
+                    self.assertGreaterEqual(count,3,(plan["name"],city))
+                self.assertEqual(db.execute("SELECT other_costs FROM trip_scenarios WHERE id=?",
+                    (plan["id"],)).fetchone()[0],before[plan["name"]])
+            count_before=db.execute("SELECT count(*) FROM saved_options WHERE trip_id=?",(trip,)).fetchone()[0]
+        self.client.get(f"/trip/{trip}/workspace")
+        with furlong.get_db_connection() as db:
+            count_after=db.execute("SELECT count(*) FROM saved_options WHERE trip_id=?",(trip,)).fetchone()[0]
+        self.assertEqual(count_before,count_after)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
