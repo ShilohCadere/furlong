@@ -284,6 +284,26 @@ class SavedOptionsTests(unittest.TestCase):
             self.assertEqual(db.execute("SELECT COUNT(*) FROM scenario_choices").fetchone()[0],before)
             self.assertEqual(db.execute("SELECT COUNT(*) FROM scenario_expenses").fetchone()[0],expenses)
 
+    def test_apartment_candidates_restored_without_staycity(self):
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+            for variant in ("S1","L1"):
+                for city,name in (("Dublin","Broc House Suites"),("Galway","Canal Court"),
+                    ("Edinburgh","Aparthotel Adagio Edinburgh Royal Mile"),
+                    ("Inverness","23 Innes Street Apartment"),
+                    ("London","Citadines Holborn-Covent Garden")):
+                    row=db.execute("""SELECT id,price FROM saved_options WHERE trip_id=? AND city=?
+                        AND name=? AND scenario_tag=?""",(trip,city,name,variant)).fetchone()
+                    self.assertIsNotNone(row,(variant,city,name))
+                    self.assertIsNone(row["price"])
+            self.assertEqual(db.execute("""SELECT COUNT(*) FROM saved_options WHERE trip_id=?
+                AND name='Staycity Aparthotels Dublin City Centre'""",(trip,)).fetchone()[0],0)
+            before=db.execute("SELECT COUNT(*) FROM saved_options WHERE trip_id=?",(trip,)).fetchone()[0]
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM saved_options WHERE trip_id=?",(trip,)).fetchone()[0],before)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
