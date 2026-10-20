@@ -400,6 +400,31 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertEqual(self.client.post(f"/trip/{trip}/options/{oid}/link",
             data={"scenario_id":999999,"link":"https://example.com"}).status_code,404)
 
+    def test_edinburgh_city_and_castle_stays_are_independent(self):
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+            for variant,total in (("S1",1829),("L1",1829)):
+                sid=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name=?",
+                    (trip,variant)).fetchone()["id"]
+                rows=db.execute("""SELECT sc.category,o.name,o.price,o.start_date,o.end_date
+                    FROM scenario_choices sc JOIN saved_options o ON o.id=sc.option_id
+                    WHERE sc.scenario_id=? AND sc.city='Edinburgh' ORDER BY sc.category""",
+                    (sid,)).fetchall()
+                self.assertEqual({row["category"] for row in rows},{"hotel","castle"})
+                self.assertAlmostEqual(sum(row["price"] for row in rows),total,places=2)
+                self.assertEqual({(row["start_date"],row["end_date"]) for row in rows},
+                    {("2027-09-05","2027-09-07"),("2027-09-07","2027-09-08")})
+        page=self.client.get(f"/trip/{trip}/workspace?scenario={sid}")
+        self.assertEqual(page.status_code,200)
+        self.assertIn(b"Castle night",page.data)
+        self.assertIn(b"Choose castle",page.data) if b"Choose castle" in page.data else self.assertIn(b"Current castle",page.data)
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            self.assertEqual(db.execute("""SELECT COUNT(*) FROM scenario_choices
+                WHERE scenario_id=? AND city='Edinburgh' AND category='castle'""",
+                (sid,)).fetchone()[0],1)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
