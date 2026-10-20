@@ -1392,3 +1392,5 @@ body{background:radial-gradient(ellipse at top right,rgba(39,113,148,.11),transp
 .playground-baseline .secondary-btn{display:inline-block;margin-top:8px}
 @media(max-width:1050px){.playground-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:750px){.playground-options{grid-template-columns:1fr}.playground-whatif{grid-template-columns:1fr}.playground-heading{flex-direction:column}}
+
+.hotel-delete-btn{border:1px solid #C88790;color:#8F2D44;background:#FFF8F8;border-radius:8px;padding:7px 10px;font-weight:700;font-size:12px;cursor:pointer}.hotel-delete-btn:hover{background:#F7DDE1;border-color:#A84257}
