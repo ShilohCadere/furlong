@@ -106,7 +106,13 @@ def split_edinburgh_stays(db, trip_id):
             found=db.execute("""SELECT id FROM saved_options WHERE trip_id=? AND city='Edinburgh'
                 AND category=? AND name=? AND scenario_tag=?""",
                 (trip_id,category,name,plan["name"])).fetchone()
-            if found:oid=found["id"]
+            if found:
+                oid=found["id"]
+                # Keep a user-entered standalone price if present; otherwise
+                # carry forward this stay's share of the combined estimate.
+                if price is not None:
+                    db.execute("UPDATE saved_options SET price=? WHERE id=? AND price IS NULL",
+                        (price,oid))
             else:
                 db.execute("""INSERT INTO saved_options
                     (trip_id,city,category,name,price,start_date,end_date,notes,scenario_tag)
