@@ -504,8 +504,8 @@ def update_saved_option_quote(trip_id,option_id):
 def update_saved_option_link(trip_id,option_id):
     get_trip(trip_id)
     link=request.form.get("link","").strip()
-    if len(link)>500:
-        abort(400,"Booking link must be 500 characters or fewer")
+    if len(link)>2048:
+        abort(400,"Booking link must be 2048 characters or fewer")
     if link and not link.lower().startswith(("https://","http://")):
         abort(400,"Booking link must begin with https:// or http://")
     with get_db_connection() as db:
