@@ -463,6 +463,13 @@ def edit_saved_option(trip_id,option_id):
         # Remove scenario associations when a selected option changes its group.
         if item["city"]!=fields[0] or item["category"]!=fields[2]:
             db.execute("DELETE FROM scenario_choices WHERE option_id=?",(option_id,))
+    if request.form.get("return_workspace") == "1":
+        sid=request.form.get("scenario_id",type=int)
+        with get_db_connection() as db:
+            valid=db.execute("SELECT 1 FROM trip_scenarios WHERE id=? AND trip_id=?",(sid,trip_id)).fetchone()
+        if valid:
+            slug="".join(c.lower() if c.isalnum() or c=="-" else "-" for c in fields[0]).strip("-")
+            return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+"#hotel-"+slug)
     return redirect(url_for("saved_options",trip_id=trip_id))
 
 
