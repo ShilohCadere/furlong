@@ -1306,3 +1306,23 @@ body{background:radial-gradient(ellipse at top right,rgba(39,113,148,.11),transp
 .ledger-item button{padding:6px 11px}.ledger-footnote{font-size:12px;color:#345F78;margin:14px 0 0}
 @media(max-width:820px){.hotel-comparison-grid{grid-template-columns:1fr}}
 @media(max-width:620px){.itinerary-story-day{grid-template-columns:1fr}.itinerary-story-date{padding:12px 20px}.itinerary-story-body{padding:18px}.itinerary-activity{grid-template-columns:1fr auto}.itinerary-activity>span{grid-column:1/-1}}
+
+
+/* Stay navigation and hotel quote editing */
+.sidebar-city-jumps{display:flex;flex-direction:column;gap:3px;margin-top:23px;padding:16px 0 0;border-top:1px solid #3A7283}
+.sidebar-jumps-title{font-size:10px;font-weight:700;letter-spacing:1.8px;color:#A8CED7;padding:0 13px 8px}
+.sidebar-city-jumps a{display:flex;align-items:center;justify-content:space-between;padding:7px 13px;border-radius:8px;color:#D4EBF0;font-size:13px}
+.sidebar-city-jumps a:hover,.sidebar-city-jumps a:focus-visible{background:#247182;color:#fff}
+.sidebar-city-jumps small{opacity:.65}
+.atlas-city-gallery a.atlas-city-tile{display:block;cursor:pointer}
+.atlas-city-gallery a.atlas-city-tile:hover{outline:3px solid #D3A34F;outline-offset:2px}
+.hotel-city-section{scroll-margin-top:20px}
+.hotel-city-section:target{outline:3px solid #D3A34F;outline-offset:7px;border-radius:5px}
+.hotel-quote-edit{margin-top:13px;padding-top:11px;border-top:1px solid #BDD5DD}
+.hotel-quote-edit summary{font-size:12px;font-weight:700;color:#1B597E;cursor:pointer}
+.hotel-quote-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.hotel-quote-form label{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:700;color:#315E78}
+.hotel-quote-form input,.hotel-quote-form textarea{min-width:0;width:100%;border-radius:8px;padding:9px 11px;border:1px solid #A8C4D2;background:white;color:#183E57;font:inherit}
+.hotel-quote-form .hotel-notes-input{grid-column:1/-1}
+.hotel-quote-form button{justify-self:start}
+@media(max-width:650px){.sidebar-city-jumps{display:none}.hotel-quote-form{grid-template-columns:1fr}}
