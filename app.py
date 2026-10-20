@@ -90,6 +90,24 @@ def init_db():
                 PRIMARY KEY(scenario_id, city, category)
             )
         """)
+        connection.execute("""CREATE TABLE IF NOT EXISTS scenario_itinerary (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+            scenario_id INTEGER NOT NULL REFERENCES trip_scenarios(id) ON DELETE CASCADE,
+            day_date TEXT NOT NULL,
+            city TEXT NOT NULL DEFAULT '',
+            title TEXT NOT NULL DEFAULT '',
+            notes TEXT NOT NULL DEFAULT '',
+            UNIQUE(scenario_id,day_date)
+        )""")
+        connection.execute("""CREATE TABLE IF NOT EXISTS day_activities (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            itinerary_id INTEGER NOT NULL REFERENCES scenario_itinerary(id) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            start_time TEXT,
+            notes TEXT NOT NULL DEFAULT '',
+            position INTEGER NOT NULL DEFAULT 0
+        )""")
         # Safe additive migration for existing local trip databases.
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(saved_options)")}
         for field in ("start_date", "end_date", "scenario_tag", "origin", "destination", "departure_time", "arrival_time", "layovers", "carrier"):
@@ -194,24 +212,69 @@ def edit_trip(trip_id):
 
 @app.route("/trip/<int:trip_id>/itinerary")
 def itinerary(trip_id):
-    trip = get_trip(trip_id)
+    trip=get_trip(trip_id)
+    with get_db_connection() as db:
+        scenarios=db.execute("SELECT * FROM trip_scenarios WHERE trip_id=? ORDER BY id",(trip_id,)).fetchall()
+        sid=request.args.get("scenario",type=int)
+        scenario=next((p for p in scenarios if p["id"]==sid),None) if sid else (scenarios[0] if scenarios else None)
+        days=db.execute("SELECT * FROM itinerary_days WHERE trip_id=? ORDER BY day_number",(trip_id,)).fetchall()
+        route_days=db.execute("SELECT * FROM scenario_itinerary WHERE scenario_id=? ORDER BY day_date",(scenario["id"],)).fetchall() if scenario else []
+        activity_rows=db.execute("""SELECT a.* FROM day_activities a JOIN scenario_itinerary d ON d.id=a.itinerary_id
+            WHERE d.scenario_id=? ORDER BY a.position,a.id""",(scenario["id"],)).fetchall() if scenario else []
+    activities={}
+    for item in activity_rows:activities.setdefault(item["itinerary_id"],[]).append(item)
+    return render_template("itinerary.html",trip=trip,days=days,scenarios=scenarios,
+       scenario=scenario,route_days=route_days,activities=activities)
 
-    with get_db_connection() as connection:
-        days = connection.execute(
-            """
-            SELECT *
-            FROM itinerary_days
-            WHERE trip_id = ?
-            ORDER BY day_number
-            """,
-            (trip_id,)
-        ).fetchall()
 
-    return render_template(
-        "itinerary.html",
-        trip=trip,
-        days=days
-    )
+@app.route("/trip/<int:trip_id>/itinerary/day",methods=["POST"])
+def save_scenario_day(trip_id):
+    get_trip(trip_id)
+    sid=request.form.get("scenario_id",type=int)
+    when=request.form.get("day_date","").strip()
+    city=request.form.get("city","").strip()
+    title=request.form.get("title","").strip()
+    notes=request.form.get("notes","").strip()
+    try:date.fromisoformat(when)
+    except ValueError:abort(400,"Use a valid itinerary date")
+    if len(city)>100 or len(title)>160 or len(notes)>1500:abort(400)
+    with get_db_connection() as db:
+        if not db.execute("SELECT 1 FROM trip_scenarios WHERE id=? AND trip_id=?",(sid,trip_id)).fetchone():abort(404)
+        db.execute("""INSERT INTO scenario_itinerary(trip_id,scenario_id,day_date,city,title,notes)
+            VALUES(?,?,?,?,?,?) ON CONFLICT(scenario_id,day_date) DO UPDATE SET
+            city=excluded.city,title=excluded.title,notes=excluded.notes""",
+            (trip_id,sid,when,city,title,notes))
+    return redirect(url_for("itinerary",trip_id=trip_id,scenario=sid))
+
+
+@app.route("/trip/<int:trip_id>/itinerary/activity",methods=["POST"])
+def add_day_activity(trip_id):
+    get_trip(trip_id)
+    sid=request.form.get("scenario_id",type=int)
+    day_id=request.form.get("itinerary_id",type=int)
+    title=request.form.get("title","").strip()
+    timing=request.form.get("start_time","").strip()
+    notes=request.form.get("notes","").strip()
+    if not title or len(title)>160 or len(timing)>30 or len(notes)>1000:abort(400)
+    with get_db_connection() as db:
+        if not db.execute("""SELECT 1 FROM scenario_itinerary
+            WHERE id=? AND trip_id=? AND scenario_id=?""",(day_id,trip_id,sid)).fetchone():abort(404)
+        position=db.execute("SELECT COALESCE(MAX(position),0)+1 FROM day_activities WHERE itinerary_id=?",(day_id,)).fetchone()[0]
+        db.execute("INSERT INTO day_activities(itinerary_id,title,start_time,notes,position) VALUES(?,?,?,?,?)",
+            (day_id,title,timing,notes,position))
+    return redirect(url_for("itinerary",trip_id=trip_id,scenario=sid))
+
+
+@app.route("/trip/<int:trip_id>/itinerary/activity/<int:activity_id>/delete",methods=["POST"])
+def delete_day_activity(trip_id,activity_id):
+    get_trip(trip_id)
+    sid=request.form.get("scenario_id",type=int)
+    with get_db_connection() as db:
+        item=db.execute("""SELECT a.id FROM day_activities a JOIN scenario_itinerary d ON d.id=a.itinerary_id
+            WHERE a.id=? AND d.trip_id=? AND d.scenario_id=?""",(activity_id,trip_id,sid)).fetchone()
+        if not item:abort(404)
+        db.execute("DELETE FROM day_activities WHERE id=?",(activity_id,))
+    return redirect(url_for("itinerary",trip_id=trip_id,scenario=sid))
 
 
 @app.route("/trip/<int:trip_id>/itinerary/add-day", methods=["POST"])
