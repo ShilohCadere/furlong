@@ -51,13 +51,32 @@ def import_europe_2027(db):
             oid=db.execute("SELECT last_insert_rowid()").fetchone()[0]
             lookup[(variant,city,name)]=oid
     for variant,info in BASELINES.items():
+        # Separately adjustable group allowances. No claim these are booked.
+        components = [
+            ("International flights","transport","Main-economy roundtrip/open-jaw group flight allowance",4225 if variant=="S1" else 4680),
+            ("Regional transportation","transport","Intercity flights, rail, transfers, taxis and baggage allowances",2323),
+            ("Excursions","activity","Tours and attractions with unpriced-entry reserve",2105 if variant=="S1" else 2409),
+        ]
+        for city,category,label,amount in components:
+            db.execute("""INSERT INTO saved_options
+                (trip_id,city,name,category,price,notes)
+                VALUES (?,?,?,?,?,?)""",
+                (trip_id,city,f"{variant}: {label}",category,amount,
+                 f"{variant} whole-trip USD group planning allowance; not a booked price."))
+            option_id=db.execute("SELECT last_insert_rowid()").fetchone()[0]
+            lookup[(variant,city,f"{variant}: {label}")]=option_id
         subtotal=sum(db.execute("SELECT price FROM saved_options WHERE id=?",
                  (lookup[(variant,city,name)],)).fetchone()[0] or 0
                  for city,name in info["hotels"].items())
+        subtotal += sum(component[3] for component in components)
         db.execute("INSERT INTO trip_scenarios (trip_id,name,budget_limit,other_costs) VALUES (?,?,?,?)",
                    (trip_id,variant,info["budget"],info["total"]-subtotal))
         scenario=db.execute("SELECT last_insert_rowid()").fetchone()[0]
         for city,name in info["hotels"].items():
             db.execute("INSERT INTO scenario_choices(scenario_id,city,category,option_id) VALUES (?,?,?,?)",
                        (scenario,city,"hotel",lookup[(variant,city,name)]))
+        for city,category,label,amount in components:
+            name=f"{variant}: {label}"
+            db.execute("INSERT INTO scenario_choices(scenario_id,city,category,option_id) VALUES (?,?,?,?)",
+                       (scenario,city,category,lookup[(variant,city,name)]))
     return trip_id
