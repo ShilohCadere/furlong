@@ -540,6 +540,37 @@ def trip_workspace(trip_id):
     return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,flights=flights,excursions=excursions,transport=transport,selected_flights=selected_flights,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total,expenses=expenses,extra_expenses=extra_expenses)
 
 
+@app.route("/trip/<int:trip_id>/city/<city>")
+def city_view(trip_id,city):
+    trip=get_trip(trip_id)
+    with get_db_connection() as db:
+        plans=db.execute("SELECT * FROM trip_scenarios WHERE trip_id=? ORDER BY id",(trip_id,)).fetchall()
+        sid=request.args.get("scenario",type=int) or (plans[0]["id"] if plans else None)
+        plan=next((p for p in plans if p["id"]==sid),None)
+        if plan is None:abort(404)
+        names=[row["city"] for row in db.execute("""SELECT DISTINCT city FROM saved_options
+            WHERE trip_id=? AND category='hotel' UNION SELECT DISTINCT city FROM scenario_itinerary
+            WHERE trip_id=? AND scenario_id=?""",(trip_id,trip_id,sid)).fetchall()]
+        if city not in names:abort(404)
+        days=db.execute("""SELECT * FROM scenario_itinerary WHERE trip_id=? AND scenario_id=? AND city=?
+            ORDER BY day_date""",(trip_id,sid,city)).fetchall()
+        day_ids=[d["id"] for d in days]
+        activities={}
+        for d in days:
+            activities[d["id"]]=db.execute("SELECT * FROM day_activities WHERE itinerary_id=? ORDER BY position,id",(d["id"],)).fetchall()
+        hotels=db.execute("""SELECT * FROM saved_options WHERE trip_id=? AND city=? AND category='hotel'
+            AND (scenario_tag IS NULL OR scenario_tag=?) ORDER BY price IS NULL,price,name""",
+            (trip_id,city,plan["name"])).fetchall()
+        selected=db.execute("""SELECT o.* FROM scenario_choices sc JOIN saved_options o ON o.id=sc.option_id
+            WHERE sc.scenario_id=? AND sc.city=? AND sc.category='hotel' AND o.trip_id=?""",
+            (sid,city,trip_id)).fetchone()
+        ideas=db.execute("""SELECT * FROM saved_options WHERE trip_id=? AND city=? AND category='activity'
+            AND (scenario_tag IS NULL OR scenario_tag=?) ORDER BY start_date,name""",
+            (trip_id,city,plan["name"])).fetchall()
+    return render_template("city.html",trip=trip,city=city,plans=plans,plan=plan,
+        days=days,activities=activities,hotels=hotels,selected=selected,ideas=ideas,names=names)
+
+
 @app.route("/trip/<int:trip_id>/flights/add", methods=["POST"])
 def add_flight_option(trip_id):
     get_trip(trip_id)
