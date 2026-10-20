@@ -138,8 +138,8 @@ class SavedOptionsTests(unittest.TestCase):
             scenario=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name='S1'",(trip,)).fetchone()["id"]
         result=self.client.get(f"/trip/{trip}/workspace?scenario={scenario}")
         self.assertEqual(result.status_code,200)
-        self.assertIn(b'Flights &amp; connections',result.data)
-        self.assertIn(b'Excursions &amp; experiences',result.data)
+        self.assertIn(b'Flights & connections',result.data)
+        self.assertIn(b'Excursions & experiences',result.data)
         self.assertIn(b'Places to stay',result.data)
         flight=self.client.post(f"/trip/{trip}/flights/add",data={
             "route":"STL - DUB","name":"Test flight via ORD","origin":"STL","destination":"DUB",
