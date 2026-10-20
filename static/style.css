@@ -1169,3 +1169,8 @@ h2 {
 @media(max-width:1150px){.atlas-city-gallery{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:680px){.brand{margin:0}.furlong-bear-mark{width:41px}.brand-wordmark{font-size:32px}.atlas-hero-grid{min-height:185px}.atlas-city-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.atlas-route-identity{min-width:116px;padding:10px}.atlas-route-identity strong{font-size:28px}}
 @media(max-width:440px){.atlas-route-identity{display:none}.atlas-city-gallery{grid-template-columns:1fr 1fr}.atlas-city-tile{min-height:150px}.atlas-hero-caption{font-size:8px;letter-spacing:1px}}
+
+/* Approved polar bear: retain the SVG's native deep-pine color. */
+.furlong-bear-mark{filter:none!important;width:60px;height:43px;object-fit:contain;flex-shrink:0}
+.brand{gap:7px}
+@media(max-width:680px){.furlong-bear-mark{width:49px;height:38px}}
