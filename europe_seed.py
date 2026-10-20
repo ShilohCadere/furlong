@@ -36,6 +36,11 @@ MORE_HOTELS = [
     ("Edinburgh","Premier Inn Haymarket + Melville Castle",None,"Confirm room category, two suites inside the main castle, and group total before comparing."),
     ("Edinburgh","Premier Inn Haymarket + Dalhousie Castle",None,"Castle backup; two castle-interior rooms and ground transfers unverified."),
     ("Edinburgh","Apex Grassmarket + Melville Castle",None,"Alternative city hotel for first two nights; castle night retained; full group price unquoted."),
+    ("Edinburgh","Motel One Edinburgh-Royal",None,"Central city stay by Waverley and Royal Mile; two rooms for Sep 5–7, separate castle night."),
+    ("Edinburgh","Motel One Edinburgh-Princes",None,"Central near Waverley and Princes Street; verify two-room group cost."),
+    ("Edinburgh","Holiday Inn Express Edinburgh – Royal Mile",None,"Old Town city stay; check two rooms for Sep 5–7."),
+    ("Edinburgh","Premier Inn Edinburgh City Centre (Royal Mile)",None,"Royal Mile area alternative; verify location and two-room total."),
+
     ("Inverness","Premier Inn Inverness Centre (River Ness)",None,"Central riverside budget candidate; two rooms unquoted."),
     ("Inverness","Aye Stay",None,"Guesthouse candidate; room availability and group price unverified."),
     ("Inverness","Ballifeary Guest House",None,"Guesthouse candidate; room availability and group price unverified."),
@@ -121,7 +126,7 @@ def add_missing_europe_candidates(db, trip_id):
             city_dates={
                 "S1":{"Dublin":("2027-09-01","2027-09-03"),
                       "Galway":("2027-09-03","2027-09-05"),
-                      "Edinburgh":("2027-09-05","2027-09-08"),
+                      "Edinburgh":("2027-09-05","2027-09-07"),
                       "Inverness":("2027-09-08","2027-09-10"),
                       "London":("2027-09-10","2027-09-13")},
                 "L1":{"Dublin":("2027-08-30","2027-09-02"),
