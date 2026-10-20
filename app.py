@@ -60,6 +60,7 @@ def init_db():
                 is_preferred INTEGER NOT NULL DEFAULT 0,
                 start_date TEXT,
                 end_date TEXT,
+                scenario_tag TEXT,
                 FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE
             )
         """)
@@ -85,7 +86,7 @@ def init_db():
         """)
         # Safe additive migration for existing local trip databases.
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(saved_options)")}
-        for field in ("start_date", "end_date"):
+        for field in ("start_date", "end_date", "scenario_tag"):
             if field not in columns:
                 connection.execute(f"ALTER TABLE saved_options ADD COLUMN {field} TEXT")
 
@@ -377,12 +378,24 @@ def trip_workspace(trip_id):
         scenario=next((s for s in scenarios if s["id"]==selected_id),None)
         if scenario is None: abort(404)
         options=db.execute("SELECT * FROM saved_options WHERE trip_id=? ORDER BY city,category,price,name",(trip_id,)).fetchall()
+        # Historical Europe imports predate scenario_tag; identify them without
+        # disturbing user-created shared options or their saved selections.
+        if trip["name"] == "Europe 2027":
+            db.execute("""UPDATE saved_options SET scenario_tag=substr(notes,2,2)
+                WHERE trip_id=? AND scenario_tag IS NULL
+                AND notes GLOB '[[]S1 estimate]*' OR
+                trip_id=? AND scenario_tag IS NULL AND notes GLOB '[[]L1 estimate]*'""",(trip_id,trip_id))
+            db.execute("""UPDATE saved_options SET scenario_tag=substr(name,1,2)
+                WHERE trip_id=? AND scenario_tag IS NULL
+                AND (name LIKE 'S1: %' OR name LIKE 'L1: %')""",(trip_id,))
         choices=db.execute("""SELECT sc.city, sc.category, sc.option_id FROM scenario_choices sc
             JOIN saved_options o ON o.id=sc.option_id AND o.trip_id=?
             WHERE sc.scenario_id=?""",(trip_id,scenario["id"])).fetchall()
     selected={(r["city"],r["category"]):r["option_id"] for r in choices}
     groups={}
-    for opt in options: groups.setdefault((opt["city"],opt["category"]),[]).append(opt)
+    for opt in options:
+        if opt["scenario_tag"] is None or opt["scenario_tag"] == scenario["name"]:
+            groups.setdefault((opt["city"],opt["category"]),[]).append(opt)
     picked=[next((o for o in choiceset if o["id"]==selected.get(key)),None) for key,choiceset in groups.items()]
     picked=[p for p in picked if p is not None]
     subtotal=sum(o["price"] or 0 for o in picked)
@@ -437,10 +450,11 @@ def choose_scenario_option(trip_id):
     city=request.form.get("city","")
     category=request.form.get("category","")
     with get_db_connection() as db:
-        if not db.execute("SELECT 1 FROM trip_scenarios WHERE id=? AND trip_id=?",(sid,trip_id)).fetchone():abort(404)
+        plan=db.execute("SELECT * FROM trip_scenarios WHERE id=? AND trip_id=?",(sid,trip_id)).fetchone()
+        if not plan:abort(404)
         if oid:
             opt=db.execute("SELECT * FROM saved_options WHERE id=? AND trip_id=?",(oid,trip_id)).fetchone()
-            if not opt or opt["city"]!=city or opt["category"]!=category:abort(400)
+            if not opt or opt["city"]!=city or opt["category"]!=category or (opt["scenario_tag"] is not None and opt["scenario_tag"] != plan["name"]):abort(400,"Option belongs to another scenario")
             db.execute("""INSERT INTO scenario_choices (scenario_id,city,category,option_id) VALUES (?,?,?,?)
                 ON CONFLICT(scenario_id,city,category) DO UPDATE SET option_id=excluded.option_id""",(sid,city,category,oid))
         else:
