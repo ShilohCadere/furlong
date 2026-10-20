@@ -66,7 +66,15 @@ def add_missing_europe_candidates(db, trip_id):
 
     Do not overwrite edited options, selected plans, or budgets.
     """
-    # Explicitly excluded candidate: never re-import Staycity Dublin.\n    db.execute("""DELETE FROM scenario_choices WHERE option_id IN (\n        SELECT id FROM saved_options WHERE trip_id=? AND city='Dublin'\n          AND name='Staycity Aparthotels Dublin City Centre'\n          AND scenario_tag IN ('S1','L1'))""",(trip_id,))\n    db.execute("""DELETE FROM saved_options WHERE trip_id=? AND city='Dublin'\n        AND name='Staycity Aparthotels Dublin City Centre'\n        AND scenario_tag IN ('S1','L1')""",(trip_id,))\n    scenarios={row["name"] for row in db.execute(
+    # Explicitly excluded candidate: never re-import Staycity Dublin.
+    db.execute("""DELETE FROM scenario_choices WHERE option_id IN (
+        SELECT id FROM saved_options WHERE trip_id=? AND city='Dublin'
+          AND name='Staycity Aparthotels Dublin City Centre'
+          AND scenario_tag IN ('S1','L1'))""",(trip_id,))
+    db.execute("""DELETE FROM saved_options WHERE trip_id=? AND city='Dublin'
+        AND name='Staycity Aparthotels Dublin City Centre'
+        AND scenario_tag IN ('S1','L1')""",(trip_id,))
+    scenarios={row["name"] for row in db.execute(
         "SELECT name FROM trip_scenarios WHERE trip_id=?",(trip_id,))}
     for variant in ("S1","L1"):
         if variant not in scenarios: continue
