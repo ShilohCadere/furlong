@@ -29,11 +29,63 @@ PRICE_OVERRIDES={("L1","Dublin","Keavans Port"):1112,("L1","Galway","Eyre Square
 DOC_URL="https://docs.google.com/document/d/1eAZXLq-bxdhCem6wpQr63s2CaozNO8oSur_ejBxW8jo/edit"
 
 
+# Additional researched candidates. No fabricated two-room quotes.
+MORE_HOTELS = [
+    ("Dublin","Premier Inn Dublin City Centre (Temple Bar)",None,"Central alternative; verify two rooms for exact dates."),
+    ("Dublin","Staycity Aparthotels Dublin City Centre",None,"Apartment-hotel alternative; check two separate bedrooms/units and cancellation terms."),
+    ("Dublin","The Alex Hotel",None,"Higher-comfort comparison; exact two-room quote unverified."),
+    ("Edinburgh","Premier Inn Haymarket + Melville Castle",None,"Confirm room category, two suites inside the main castle, and group total before comparing."),
+    ("Edinburgh","Premier Inn Haymarket + Dalhousie Castle",None,"Castle backup; two castle-interior rooms and ground transfers unverified."),
+    ("Edinburgh","Apex Grassmarket + Melville Castle",None,"Alternative city hotel for first two nights; castle night retained; full group price unquoted."),
+    ("Inverness","Premier Inn Inverness Centre (River Ness)",None,"Central riverside budget candidate; two rooms unquoted."),
+    ("Inverness","Aye Stay",None,"Guesthouse candidate; room availability and group price unverified."),
+    ("Inverness","Ballifeary Guest House",None,"Guesthouse candidate; room availability and group price unverified."),
+    ("London","The Resident Victoria",None,"Central alternative; two-room group quote unverified."),
+    ("London","Premier Inn London County Hall",None,"Family-friendly location; verify exact two-room availability and pricing."),
+    ("London","hub by Premier Inn London Goodge Street",None,"Compact rooms; confirm suitability for two couples."),
+]
+
+
+def add_missing_europe_candidates(db, trip_id):
+    """Add new city alternatives safely even if Europe was imported earlier.
+
+    Do not overwrite edited options, selected plans, or budgets.
+    """
+    scenarios={row["name"] for row in db.execute(
+        "SELECT name FROM trip_scenarios WHERE trip_id=?",(trip_id,))}
+    for variant in ("S1","L1"):
+        if variant not in scenarios: continue
+        for city,name,price,note in MORE_HOTELS:
+            dates=BASELINES[variant]["dates"]
+            # Reuse city-specific dates from the existing trip's researched baseline.
+            city_dates={
+                "S1":{"Dublin":("2027-09-01","2027-09-03"),
+                      "Edinburgh":("2027-09-05","2027-09-08"),
+                      "Inverness":("2027-09-08","2027-09-10"),
+                      "London":("2027-09-10","2027-09-13")},
+                "L1":{"Dublin":("2027-08-30","2027-09-02"),
+                      "Edinburgh":("2027-09-05","2027-09-08"),
+                      "Inverness":("2027-09-08","2027-09-10"),
+                      "London":("2027-09-10","2027-09-13")}
+            }[variant][city]
+            exists=db.execute("""SELECT id FROM saved_options
+                WHERE trip_id=? AND city=? AND name=? AND scenario_tag=?""",
+                (trip_id,city,name,variant)).fetchone()
+            if exists:continue
+            db.execute("""INSERT INTO saved_options
+                (trip_id,city,name,category,price,notes,start_date,end_date,scenario_tag)
+                VALUES (?,?,?,?,?,?,?,?,?)""",
+                (trip_id,city,name,"hotel",price,
+                 "["+variant+" candidate] "+note+" Group USD price unknown.",
+                 city_dates[0],city_dates[1],variant))
+
+
 def import_europe_2027(db):
     """Create a separate trip and scenarios, not overwriting any existing trip."""
     existing=db.execute("SELECT id FROM trips WHERE name=? ORDER BY id LIMIT 1",("Europe 2027",)).fetchone()
     if existing:
         # Repeat clicks never duplicate or overwrite user changes.
+        add_missing_europe_candidates(db, existing["id"])
         return existing["id"]
     db.execute("INSERT INTO trips(name,destination) VALUES (?,?)",
                ("Europe 2027","Ireland · Scotland · England"))
@@ -79,4 +131,5 @@ def import_europe_2027(db):
             name=f"{variant}: {label}"
             db.execute("INSERT INTO scenario_choices(scenario_id,city,category,option_id) VALUES (?,?,?,?)",
                        (scenario,city,category,lookup[(variant,city,name)]))
+    add_missing_europe_candidates(db, trip_id)
     return trip_id
