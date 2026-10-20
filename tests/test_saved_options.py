@@ -183,11 +183,23 @@ class SavedOptionsTests(unittest.TestCase):
             "start_time":"15:00"},follow_redirects=True)
         self.assertEqual(added.status_code,200)
         self.assertIn(b'Our own Galway stop',added.data)
+        with furlong.get_db_connection() as db:
+            activity=db.execute("SELECT id FROM day_activities WHERE title='Our own Galway stop'").fetchone()["id"]
+            new_day=db.execute("SELECT id FROM scenario_itinerary WHERE scenario_id=? AND day_date='2027-09-05'",(ids["S1"],)).fetchone()["id"]
+        moved=self.client.post(f"/trip/{trip}/itinerary/activity/{activity}/edit",data={
+            "scenario_id":ids["S1"],"itinerary_id":new_day,
+            "title":"Our moved Galway stop","start_time":"16:00","notes":"Move test"
+        },follow_redirects=True)
+        self.assertEqual(moved.status_code,200)
+        with furlong.get_db_connection() as db:
+            item=db.execute("SELECT itinerary_id,title FROM day_activities WHERE id=?",(activity,)).fetchone()
+            self.assertEqual(item["itinerary_id"],new_day)
+            self.assertEqual(item["title"],"Our moved Galway stop")
         other=self.client.get(f"/trip/{trip}/itinerary?scenario={ids['L1']}")
         self.assertNotIn(b'Our own Galway stop',other.data)
         self.client.post("/trips/import-europe-2027")
         with furlong.get_db_connection() as db:
-            self.assertEqual(db.execute("SELECT COUNT(*) FROM day_activities WHERE title='Our own Galway stop'").fetchone()[0],1)
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM day_activities WHERE title='Our moved Galway stop'").fetchone()[0],1)
 
     def test_allowance_expenses_and_extra_costs(self):
         self.client.post("/trips/import-europe-2027")
