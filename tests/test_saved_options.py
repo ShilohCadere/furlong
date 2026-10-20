@@ -258,6 +258,10 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertEqual(other.status_code,200)
         self.assertNotEqual(page.data,other.data)
         self.assertEqual(self.client.get(f"/trip/{trip}/city/Nowhere?scenario={plans['S1']}").status_code,404)
+        self.assertNotIn(b'href="/trip/'+str(trip).encode()+b'/city/Transit',page.data)
+        self.assertEqual(self.client.get(f"/trip/{trip}/city/Transit?scenario={plans['S1']}").status_code,404)
+        itinerary=self.client.get(f"/trip/{trip}/itinerary?scenario={plans['S1']}")
+        self.assertIn(b"Galway to Edinburgh",itinerary.data)
 
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
