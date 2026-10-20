@@ -252,6 +252,10 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertIn(f"/trip/{trip}/city/Galway?scenario={plans['S1']}".encode(),workspace.data)
         page=self.client.get(f"/trip/{trip}/city/Galway?scenario={plans['S1']}")
         self.assertEqual(page.status_code,200)
+        route=[b'Dublin',b'Galway',b'Edinburgh',b'Inverness',b'London']
+        city_gallery=workspace.data.split(b'class="atlas-city-gallery"')[1].split(b'class="hotel-city-sections"')[0]
+        offsets=[city_gallery.index(name) for name in route]
+        self.assertEqual(offsets,sorted(offsets))
         self.assertIn(b"Cliffs of Moher",page.data)
         self.assertIn(b"Eyre Square Townhouse",page.data)
         other=self.client.get(f"/trip/{trip}/city/Galway?scenario={plans['L1']}")
