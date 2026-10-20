@@ -56,11 +56,11 @@ class SavedOptionsTests(unittest.TestCase):
             self.assertEqual(response.status_code,200)
         first=self.client.get(f"/trip/{self.trip_id}/workspace?scenario={plans[0]['id']}")
         second=self.client.get(f"/trip/{self.trip_id}/workspace?scenario={plans[1]['id']}")
-        self.assertIn(b"1006.00",first.data)
-        self.assertIn(b"960.00",second.data)
+        self.assertIn(b"$1006",first.data)
+        self.assertIn(b"$960",second.data)
         self.client.post(f"/trip/{self.trip_id}/workspace/settings",data={"scenario_id":plans[0]["id"],"budget_limit":"20000","other_costs":"15000"})
         updated=self.client.get(f"/trip/{self.trip_id}/workspace?scenario={plans[0]['id']}")
-        self.assertIn(b"16006.00",updated.data)
+        self.assertIn(b"$16006",updated.data)
 
     def test_option_edit_dates_and_validation(self):
         self.add("Eyre Square")
