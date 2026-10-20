@@ -449,6 +449,14 @@ def choose_scenario_option(trip_id):
 
 
 
+@app.route("/trips/import-europe-2027",methods=["POST"])
+def import_europe_trip():
+    from europe_seed import import_europe_2027
+    with get_db_connection() as db:
+        trip_id=import_europe_2027(db)
+    return redirect(url_for("trip_workspace",trip_id=trip_id))
+
+
 init_db()
 
 if __name__ == "__main__":
