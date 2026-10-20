@@ -1071,3 +1071,28 @@ h2 {
 .workspace-footer .page-subtitle {max-width:720px;margin:0;line-height:1.65;}
 .workspace-footer .primary-btn {display:inline-flex;align-items:center;justify-content:center;text-align:center;max-width:100%;white-space:normal;}
 @media(max-width:550px){.workspace-footer .primary-btn{width:100%;}}
+
+/* Europe planning visual pass: lively, restrained Furlong palette. */
+.workspace-revamp {--accent-light:#f3e6d9;--sea:#dfeee9;}
+.workspace-hero {background:linear-gradient(112deg,#263e38 2%,#47776b 70%,#77988c);border-radius:19px;padding:31px 38px;margin:0 0 22px;color:#fff;position:relative;overflow:hidden;}
+.workspace-hero:after{content:"✦";font-size:180px;line-height:1;position:absolute;right:18px;top:-26px;color:rgba(255,255,255,.10);pointer-events:none}
+.workspace-hero .eyebrow{color:#e2c6a8}.workspace-hero h1{color:#fff;margin-bottom:9px}.workspace-hero .page-subtitle{color:#e1ebe5;max-width:670px}
+.workspace-revamp .scenario-tabs .secondary-btn{border-color:#b2c9bd;background:#eff5ef;color:#2b5147}
+.workspace-revamp .scenario-tabs .scenario-active{background:#c87855!important;border-color:#c87855;color:#fff!important;box-shadow:0 4px 12px rgba(125,57,34,.19)}
+.workspace-revamp .workspace-metrics>div{border-top:4px solid #5b8c79;box-shadow:0 5px 18px rgba(35,60,50,.035)}
+.workspace-revamp .workspace-metrics>div:nth-child(2){border-top-color:#ba9b75}
+.workspace-revamp .workspace-metrics>div:nth-child(3){border-top-color:#cb7c5f;background:#fff8f3}
+.workspace-revamp .workspace-metrics>div:nth-child(4){border-top-color:#89a9a0;background:#eff7f3}
+.workspace-revamp .option-add{background:#fffaf4;border:1px solid #ebdece}
+.workspace-revamp .option-add h2{color:#396052}
+.workspace-revamp .workspace-timeline{background:#e8f1e9;border-radius:16px;padding:24px}
+.workspace-revamp .workspace-timeline h2{margin-bottom:12px}
+.workspace-revamp .timeline-list>div{border-left-color:#c87855;box-shadow:0 2px 12px rgba(39,60,50,.035)}
+.workspace-revamp .workspace-picker{background:#fff;border:1px solid #e5e8dc;border-radius:16px;padding:23px}
+.workspace-revamp .choice-row{background:#fafbf7;border-color:#dee5d9}
+.workspace-revamp .choice-row strong{color:#305f51}
+.workspace-revamp .choice-row select{border-color:#acc6b7;background:#fff;min-height:44px}
+.workspace-revamp .choice-row:focus-within{box-shadow:0 0 0 2px #c2dccb}
+.workspace-revamp .choice-row .secondary-btn{background:#e4eee7;border-color:#b7cec0;color:#2c594b}
+.workspace-revamp .choice-row .secondary-btn:hover{background:#d1e4d6}
+@media(max-width:550px){.workspace-hero{padding:24px 21px}.workspace-revamp .workspace-picker,.workspace-revamp .workspace-timeline{padding:17px}}
