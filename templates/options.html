@@ -11,7 +11,7 @@
 <a class="nav-link" href="{{ url_for('itinerary',trip_id=trip.id) }}">▤ Itinerary</a>
 <a class="nav-link active" aria-current="page" href="{{ url_for('saved_options',trip_id=trip.id) }}">◇ Saved Options</a>
 </nav><div class="sidebar-footer">Make room for the journey.</div></aside>
-<main class="main-content options-page">
+<main class="main-content options-page"><p><a class="secondary-btn" href="{{ url_for('trip_workspace',trip_id=trip.id) }}">← Whole-trip workspace</a></p>
 <nav class="breadcrumbs"><a href="{{ url_for('trip_overview',trip_id=trip.id) }}">{{ trip.name }}</a><span> / </span> Saved Options</nav>
 <header class="options-heading"><div><p class="eyebrow">KEEP YOUR OPTIONS OPEN</p><h1>Saved options</h1><p class="page-subtitle">Collect alternatives. Pick a favorite without deleting the others.</p></div><div class="options-total"><span>Preferred options subtotal</span><strong>{{ "$%.2f"|format(preferred_total) }}</strong><small>Only options with entered prices; not a full trip budget.</small></div></header>
 <section class="option-add"><h2>Add an option</h2><form method="post" action="{{ url_for('add_saved_option',trip_id=trip.id) }}" class="option-form">
@@ -32,7 +32,7 @@
 <h3>{{ item.name }}</h3>{% if item.start_date and item.end_date %}<p class="option-dates">{{ item.start_date }} → {{ item.end_date }}</p>{% endif %}{% if item.price is not none %}<p class="option-price">{{ "$%.2f"|format(item.price) }} <small>group estimate</small></p>{% else %}<p class="option-price missing">Price not added</p>{% endif %}
 {% if item.notes %}<p class="option-notes">{{ item.notes }}</p>{% endif %}
 {% if item.link %}<a class="option-link" href="{{ item.link }}" target="_blank" rel="noopener noreferrer">View original listing ↗</a>{% endif %}
-<div class="option-actions">
+<details class="option-edit"><summary>Edit details & dates</summary><form method="post" action="{{ url_for('edit_saved_option',trip_id=trip.id,option_id=item.id) }}" class="option-edit-fields"><label>City<input name="city" required maxlength="100" value="{{ item.city }}"></label><label>Name<input name="name" required maxlength="160" value="{{ item.name }}"></label><label>Type<select name="category">{% for k in ["hotel","activity","transport"] %}<option value="{{ k }}" {% if item.category==k %}selected{% endif %}>{{ k|capitalize }}</option>{% endfor %}</select></label><label>Group price USD<input name="price" type="number" min="0" step=".01" value="{{ item.price if item.price is not none else '' }}"></label><label>Start date<input name="start_date" type="date" value="{{ item.start_date or '' }}"></label><label>End date<input name="end_date" type="date" value="{{ item.end_date or '' }}"></label><label>Link<input name="link" type="url" value="{{ item.link or '' }}"></label><label>Notes<textarea name="notes" rows="3">{{ item.notes or '' }}</textarea></label><button type="submit" class="primary-btn">Save changes</button></form></details><div class="option-actions">
 {% if not item.is_preferred %}<form method="post" action="{{ url_for('prefer_saved_option',trip_id=trip.id,option_id=item.id) }}"><button type="submit" class="secondary-btn">Make preferred</button></form>{% else %}<span class="option-current">Current favorite</span>{% endif %}
 <form method="post" action="{{ url_for('remove_saved_option',trip_id=trip.id,option_id=item.id) }}" onsubmit="return confirm('Remove this saved option?');"><button class="option-remove" type="submit">Remove</button></form></div>
 </article>{% endfor %}</div></section>{% endfor %}
