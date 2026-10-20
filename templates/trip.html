@@ -17,9 +17,7 @@
 <body>
     <div class="app-layout">
         <aside class="sidebar">
-            <a href="{{ url_for('home') }}" class="brand">
-                furlong<span>.</span>
-            </a>
+            <a href="{{ url_for('home') }}" class="brand"><img class="furlong-bear-mark" src="{{ url_for('static',filename='furlong-bear.svg') }}" alt=""><span class="brand-wordmark">furlong<span>.</span></span></a>
 
             <nav class="sidebar-nav" aria-label="Main navigation">
                 <a href="{{ url_for('home') }}" class="nav-link">
