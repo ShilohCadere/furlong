@@ -61,6 +61,44 @@ MORE_HOTELS = [
 ]
 
 
+def split_edinburgh_stays(db, trip_id):
+    """Migrate selected bundled Edinburgh lodging into independently priced nights.
+
+    The original selected bundle stays in the database for historical reference.
+    Preserve its exact price by allocating it between the two new stay records.
+    """
+    for plan in db.execute("SELECT id,name FROM trip_scenarios WHERE trip_id=?",(trip_id,)).fetchall():
+        if plan["name"] not in ("S1","L1"):continue
+        selection=db.execute("""SELECT o.* FROM scenario_choices c JOIN saved_options o ON o.id=c.option_id
+            WHERE c.scenario_id=? AND c.city='Edinburgh' AND c.category='hotel'""",(plan["id"],)).fetchone()
+        if not selection or " + " not in selection["name"] or "Castle" not in selection["name"]:continue
+        if db.execute("""SELECT 1 FROM scenario_choices WHERE scenario_id=? AND city='Edinburgh'
+            AND category='castle'""",(plan["id"],)).fetchone():continue
+        castle="Dalhousie Castle" if "Dalhousie" in selection["name"] else "Melville Castle"
+        amount=selection["price"]
+        city_cost=round(amount*610/1372,2) if amount is not None else None
+        castle_cost=round(amount-city_cost,2) if amount is not None else None
+        for category,name,price,start,end,notes in [
+            ("hotel","Premier Inn Haymarket",city_cost,"2027-09-05","2027-09-07",
+             "Two Edinburgh city nights; initial estimate allocated from the former combined hotel/castle quote. Confirm a standalone two-room quote."),
+            ("castle",castle+" — two castle rooms",castle_cost,"2027-09-07","2027-09-08",
+             "One night for four adults in two rooms inside the castle; initial estimate allocated from the former combined quote. Confirm room categories and transfers.")]:
+            found=db.execute("""SELECT id FROM saved_options WHERE trip_id=? AND city='Edinburgh'
+                AND category=? AND name=? AND scenario_tag=?""",
+                (trip_id,category,name,plan["name"])).fetchone()
+            if found:oid=found["id"]
+            else:
+                db.execute("""INSERT INTO saved_options
+                    (trip_id,city,category,name,price,start_date,end_date,notes,scenario_tag)
+                    VALUES (?,?,?,?,?,?,?,?,?)""",
+                    (trip_id,"Edinburgh",category,name,price,start,end,notes,plan["name"]))
+                oid=db.execute("SELECT last_insert_rowid()").fetchone()[0]
+            db.execute("""INSERT INTO scenario_choices (scenario_id,city,category,option_id)
+                VALUES (?,?,?,?) ON CONFLICT(scenario_id,city,category)
+                DO UPDATE SET option_id=excluded.option_id""",
+                (plan["id"],"Edinburgh",category,oid))
+
+
 def add_missing_europe_candidates(db, trip_id):
     """Add new city alternatives safely even if Europe was imported earlier.
 
@@ -165,6 +203,7 @@ def import_europe_2027(db):
     if existing:
         # Repeat clicks never duplicate or overwrite user changes.
         add_missing_europe_candidates(db, existing["id"])
+        split_edinburgh_stays(db, existing["id"])
         add_europe_route_days(db, existing["id"])
         fill_europe_day_details(db, existing["id"])
         return existing["id"]
@@ -213,6 +252,7 @@ def import_europe_2027(db):
             db.execute("INSERT INTO scenario_choices(scenario_id,city,category,option_id) VALUES (?,?,?,?)",
                        (scenario,city,category,lookup[(variant,city,name)]))
     add_missing_europe_candidates(db, trip_id)
+    split_edinburgh_stays(db, trip_id)
     add_europe_route_days(db, trip_id)
     fill_europe_day_details(db, trip_id)
     return trip_id
