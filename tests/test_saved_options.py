@@ -164,6 +164,46 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertIn(b'furlong-bear.svg',res.data)
         self.assertNotIn(b'atlas-stamp',res.data)
 
+    def test_hotel_cards_and_independent_itineraries(self):
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+            ids={row["name"]:row["id"] for row in db.execute(
+                "SELECT id,name FROM trip_scenarios WHERE trip_id=?",(trip,))}
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM scenario_itinerary WHERE scenario_id=?",(ids["S1"],)).fetchone()[0],14)
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM scenario_itinerary WHERE scenario_id=?",(ids["L1"],)).fetchone()[0],16)
+            day=db.execute("SELECT id FROM scenario_itinerary WHERE scenario_id=? AND day_date='2027-09-04'",(ids["S1"],)).fetchone()["id"]
+        page=self.client.get(f"/trip/{trip}/workspace?scenario={ids['S1']}")
+        self.assertIn(b'hotel-comparison-card',page.data)
+        self.assertIn(b'Choose this stay',page.data)
+        day_page=self.client.get(f"/trip/{trip}/itinerary?scenario={ids['S1']}")
+        self.assertIn(b'Cliffs of Moher',day_page.data)
+        added=self.client.post(f"/trip/{trip}/itinerary/activity",data={
+            "scenario_id":ids["S1"],"itinerary_id":day,"title":"Our own Galway stop",
+            "start_time":"15:00"},follow_redirects=True)
+        self.assertEqual(added.status_code,200)
+        self.assertIn(b'Our own Galway stop',added.data)
+        other=self.client.get(f"/trip/{trip}/itinerary?scenario={ids['L1']}")
+        self.assertNotIn(b'Our own Galway stop',other.data)
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM day_activities WHERE title='Our own Galway stop'").fetchone()[0],1)
+
+    def test_allowance_expenses_and_extra_costs(self):
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+            sid=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name='S1'",(trip,)).fetchone()["id"]
+        url=f"/trip/{trip}/workspace/expense"
+        self.assertEqual(self.client.post(url,data={"scenario_id":sid,"category":"excursion",
+            "name":"Tour tickets","amount":"250","included_in_allowance":"1"}).status_code,302)
+        self.assertEqual(self.client.post(url,data={"scenario_id":sid,"category":"food",
+            "name":"Extra meal","amount":"50","included_in_allowance":"0"}).status_code,302)
+        page=self.client.get(f"/trip/{trip}/workspace?scenario={sid}")
+        self.assertIn(b'$18989',page.data)
+        self.assertIn(b'Tour tickets',page.data)
+        self.assertIn(b'Extra meal',page.data)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
