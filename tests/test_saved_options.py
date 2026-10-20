@@ -378,6 +378,28 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertEqual(self.client.post(f"/trip/{trip}/options/{oid}/quote",
             data={"price":"-10","scenario_id":sid}).status_code,400)
 
+    def test_harbour_hotel_url_can_be_updated_without_editing_other_fields(self):
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+            sid=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name='S1'",(trip,)).fetchone()["id"]
+            oid=db.execute("""SELECT id FROM saved_options WHERE trip_id=? AND
+                name='Harbour Hotel' AND scenario_tag='S1'""",(trip,)).fetchone()["id"]
+            db.execute("UPDATE saved_options SET notes=? WHERE id=?",("x"*1100,oid))
+        url="https://example.com/harbour?"+"ref="+"a"*550
+        response=self.client.post(f"/trip/{trip}/options/{oid}/link",
+            data={"scenario_id":sid,"link":url})
+        self.assertEqual(response.status_code,302)
+        with furlong.get_db_connection() as db:
+            row=db.execute("SELECT link,notes,price FROM saved_options WHERE id=?",(oid,)).fetchone()
+            self.assertEqual(row["link"],url)
+            self.assertEqual(len(row["notes"]),1100)
+            self.assertIsNone(row["price"])
+        self.assertEqual(self.client.post(f"/trip/{trip}/options/{oid}/link",
+            data={"scenario_id":sid,"link":"javascript:alert(1)"}).status_code,400)
+        self.assertEqual(self.client.post(f"/trip/{trip}/options/{oid}/link",
+            data={"scenario_id":999999,"link":"https://example.com"}).status_code,404)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
