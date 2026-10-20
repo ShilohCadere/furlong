@@ -242,6 +242,23 @@ class SavedOptionsTests(unittest.TestCase):
         refreshed=self.client.get(changed.headers["Location"])
         self.assertIn(b'$926',refreshed.data)
 
+    def test_city_hub_navigation_and_route_isolation(self):
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+            plans={row["name"]:row["id"] for row in db.execute("SELECT id,name FROM trip_scenarios WHERE trip_id=?",(trip,))}
+        workspace=self.client.get(f"/trip/{trip}/workspace?scenario={plans['S1']}")
+        self.assertEqual(workspace.status_code,200)
+        self.assertIn(f"/trip/{trip}/city/Galway?scenario={plans['S1']}".encode(),workspace.data)
+        page=self.client.get(f"/trip/{trip}/city/Galway?scenario={plans['S1']}")
+        self.assertEqual(page.status_code,200)
+        self.assertIn(b"Cliffs of Moher",page.data)
+        self.assertIn(b"Eyre Square Townhouse",page.data)
+        other=self.client.get(f"/trip/{trip}/city/Galway?scenario={plans['L1']}")
+        self.assertEqual(other.status_code,200)
+        self.assertNotEqual(page.data,other.data)
+        self.assertEqual(self.client.get(f"/trip/{trip}/city/Nowhere?scenario={plans['S1']}").status_code,404)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
