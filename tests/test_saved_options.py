@@ -274,11 +274,11 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertEqual(s1.status_code,200)
         self.assertIn(b'Budget playground',s1.data)
         self.assertIn(b'Quote needed',s1.data)
-        self.assertIn(b'18939',s1.data)
+        self.assertIn(b'$18,939',s1.data)
         self.assertIn(b'pg-option',s1.data)
         l1=self.client.get(f"/trip/{trip}/budget-playground?scenario={plans['L1']}")
         self.assertEqual(l1.status_code,200)
-        self.assertIn(b'19817',l1.data)
+        self.assertIn(b'$19,817',l1.data)
         self.assertEqual(self.client.get(f"/trip/{trip}/budget-playground?scenario=999999").status_code,404)
         with furlong.get_db_connection() as db:
             self.assertEqual(db.execute("SELECT COUNT(*) FROM scenario_choices").fetchone()[0],before)
