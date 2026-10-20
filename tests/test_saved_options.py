@@ -74,6 +74,23 @@ class SavedOptionsTests(unittest.TestCase):
         payload["end_date"]="2027-09-01"
         self.assertEqual(self.client.post(url,data=payload).status_code,400)
 
+    def test_europe_import_is_idempotent_and_reconciles_totals(self):
+        first=self.client.post("/trips/import-europe-2027",follow_redirects=True)
+        self.assertEqual(first.status_code,200)
+        second=self.client.post("/trips/import-europe-2027",follow_redirects=True)
+        self.assertEqual(second.status_code,200)
+        with furlong.get_db_connection() as db:
+            trips=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchall()
+            self.assertEqual(len(trips),1)
+            scenarios=db.execute("SELECT * FROM trip_scenarios WHERE trip_id=?",(trips[0]["id"],)).fetchall()
+            self.assertEqual(len(scenarios),2)
+            for plan in scenarios:
+                picked=db.execute("""SELECT o.price FROM scenario_choices sc
+                    JOIN saved_options o ON o.id=sc.option_id WHERE sc.scenario_id=?""",(plan["id"],)).fetchall()
+                total=round(plan["other_costs"]+sum(row["price"] or 0 for row in picked),2)
+                self.assertEqual(total,{"S1":18939,"L1":19817}[plan["name"]])
+                self.assertEqual(len(picked),5)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
