@@ -370,6 +370,9 @@ def edit_saved_option(trip_id,option_id):
 def trip_workspace(trip_id):
     trip=get_trip(trip_id)
     with get_db_connection() as db:
+        if trip["name"] == "Europe 2027":
+            from europe_seed import add_missing_europe_candidates
+            add_missing_europe_candidates(db,trip_id)
         scenarios=db.execute("SELECT * FROM trip_scenarios WHERE trip_id=? ORDER BY id",(trip_id,)).fetchall()
         if not scenarios:
             db.execute("INSERT INTO trip_scenarios (trip_id,name) VALUES (?,?)",(trip_id,"Plan A"))
