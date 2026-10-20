@@ -46,6 +46,21 @@ def init_db():
             )
         """)
 
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS saved_options (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                trip_id INTEGER NOT NULL,
+                city TEXT NOT NULL,
+                name TEXT NOT NULL,
+                category TEXT NOT NULL DEFAULT 'hotel',
+                price REAL,
+                link TEXT,
+                notes TEXT,
+                is_preferred INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE
+            )
+        """)
+
 
 def get_trip(trip_id):
     with get_db_connection() as connection:
@@ -196,6 +211,74 @@ def add_itinerary_day(trip_id):
         )
 
     return redirect(url_for("itinerary", trip_id=trip_id))
+
+
+
+@app.route("/trip/<int:trip_id>/options")
+def saved_options(trip_id):
+    trip = get_trip(trip_id)
+    with get_db_connection() as connection:
+        options = connection.execute(
+            "SELECT * FROM saved_options WHERE trip_id = ? ORDER BY city COLLATE NOCASE, category, is_preferred DESC, price IS NULL, price, name",
+            (trip_id,)
+        ).fetchall()
+    groups = {}
+    for option in options:
+        groups.setdefault(option["city"], []).append(option)
+    preferred_total = sum(float(item["price"]) for item in options if item["is_preferred"] and item["price"] is not None)
+    return render_template("options.html", trip=trip, groups=groups, preferred_total=preferred_total)
+
+
+@app.route("/trip/<int:trip_id>/options/add", methods=["POST"])
+def add_saved_option(trip_id):
+    get_trip(trip_id)
+    city = request.form.get("city", "").strip()
+    name = request.form.get("name", "").strip()
+    category = request.form.get("category", "hotel").strip()
+    link = request.form.get("link", "").strip()
+    notes = request.form.get("notes", "").strip()
+    price_raw = request.form.get("price", "").strip()
+    if not city or not name or len(city) > 100 or len(name) > 160 or category not in ("hotel", "activity", "transport") or len(notes) > 1000 or len(link) > 500 or (link and not link.startswith(("https://", "http://"))):
+        abort(400, description="Check the option fields and link.")
+    try:
+        price = float(price_raw) if price_raw else None
+    except ValueError:
+        abort(400, description="Price must be a number.")
+    if price is not None and (not 0 <= price <= 10000000 or not __import__("math").isfinite(price)):
+        abort(400, description="Price must be a valid nonnegative amount.")
+    with get_db_connection() as connection:
+        connection.execute(
+            "INSERT INTO saved_options (trip_id, city, name, category, price, link, notes) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (trip_id, city, name, category, price, link, notes)
+        )
+    return redirect(url_for("saved_options", trip_id=trip_id))
+
+
+@app.route("/trip/<int:trip_id>/options/<int:option_id>/prefer", methods=["POST"])
+def prefer_saved_option(trip_id, option_id):
+    get_trip(trip_id)
+    with get_db_connection() as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        option = connection.execute(
+            "SELECT * FROM saved_options WHERE id = ? AND trip_id = ?",
+            (option_id, trip_id)
+        ).fetchone()
+        if option is None:
+            abort(404)
+        connection.execute(
+            "UPDATE saved_options SET is_preferred = 0 WHERE trip_id = ? AND city = ? AND category = ?",
+            (trip_id, option["city"], option["category"])
+        )
+        connection.execute("UPDATE saved_options SET is_preferred = 1 WHERE id = ?", (option_id,))
+    return redirect(url_for("saved_options", trip_id=trip_id))
+
+
+@app.route("/trip/<int:trip_id>/options/<int:option_id>/remove", methods=["POST"])
+def remove_saved_option(trip_id, option_id):
+    get_trip(trip_id)
+    with get_db_connection() as connection:
+        connection.execute("DELETE FROM saved_options WHERE id = ? AND trip_id = ?", (option_id, trip_id))
+    return redirect(url_for("saved_options", trip_id=trip_id))
 
 
 init_db()
