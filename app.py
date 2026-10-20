@@ -476,6 +476,30 @@ def option_fields():
     return city,name,category,price,link,notes,start or None,end or None
 
 
+@app.route("/trip/<int:trip_id>/options/<int:option_id>/quote",methods=["POST"])
+def update_saved_option_quote(trip_id,option_id):
+    get_trip(trip_id)
+    raw=request.form.get("price","").strip()
+    try:
+        amount=float(raw) if raw else None
+    except ValueError:
+        abort(400,"Enter a valid group quote in USD")
+    if amount is not None and (not __import__("math").isfinite(amount) or not 0<=amount<=10000000):
+        abort(400,"Enter a nonnegative group quote in USD")
+    with get_db_connection() as db:
+        item=db.execute("SELECT id,category,city FROM saved_options WHERE id=? AND trip_id=?",(option_id,trip_id)).fetchone()
+        if item is None:abort(404)
+        if item["category"]!="hotel":abort(400,"This quote form is for lodging only")
+        sid=request.form.get("scenario_id",type=int)
+        if sid is not None and not db.execute("SELECT 1 FROM trip_scenarios WHERE id=? AND trip_id=?",(sid,trip_id)).fetchone():
+            abort(404)
+        db.execute("UPDATE saved_options SET price=? WHERE id=? AND trip_id=?",(amount,option_id,trip_id))
+    if sid is not None:
+        slug="".join(c.lower() if c.isalnum() or c=="-" else "-" for c in item["city"]).strip("-")
+        return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+"#hotel-"+slug)
+    return redirect(url_for("saved_options",trip_id=trip_id))
+
+
 @app.route("/trip/<int:trip_id>/options/<int:option_id>/edit",methods=["POST"])
 def edit_saved_option(trip_id,option_id):
     get_trip(trip_id)
