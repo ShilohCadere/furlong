@@ -32,7 +32,6 @@ DOC_URL="https://docs.google.com/document/d/1eAZXLq-bxdhCem6wpQr63s2CaozNO8oSur_
 # Additional researched candidates. No fabricated two-room quotes.
 MORE_HOTELS = [
     ("Dublin","Premier Inn Dublin City Centre (Temple Bar)",None,"Central alternative; verify two rooms for exact dates."),
-    ("Dublin","Staycity Aparthotels Dublin City Centre",None,"Apartment-hotel alternative; check two separate bedrooms/units and cancellation terms."),
     ("Dublin","The Alex Hotel",None,"Higher-comfort comparison; exact two-room quote unverified."),
     ("Edinburgh","Premier Inn Haymarket + Melville Castle",None,"Confirm room category, two suites inside the main castle, and group total before comparing."),
     ("Edinburgh","Premier Inn Haymarket + Dalhousie Castle",None,"Castle backup; two castle-interior rooms and ground transfers unverified."),
@@ -43,6 +42,22 @@ MORE_HOTELS = [
     ("London","The Resident Victoria",None,"Central alternative; two-room group quote unverified."),
     ("London","Premier Inn London County Hall",None,"Family-friendly location; verify exact two-room availability and pricing."),
     ("London","hub by Premier Inn London Goodge Street",None,"Compact rooms; confirm suitability for two couples."),
+    ("Dublin","Broc House Suites",None,"Previously considered apartment-style lodging; verify a suitable two-bedroom layout and direct price for four adults."),
+    ("Dublin","The July – Capel Street",None,"Previously considered serviced apartments; verify two private bedrooms, group total and direct booking."),
+    ("Dublin","Modern Two-Bed Apartment, City Centre",None,"Previously considered private apartment; verify listing identity, bedrooms, cancellation rules and 2027 availability."),
+    ("Galway","Modern and Spacious 2 – king bed",None,"Previously considered apartment with two king beds; verify listing identity and suitability for two couples."),
+    ("Galway","Canal Court",None,"Previously considered apartment; verify listing identity, two private bedrooms and group quote."),
+    ("Galway","Exceptional Apartment with River Views",None,"Previously considered apartment; check layout, pricing and direct booking availability."),
+    ("Edinburgh","Aparthotel Adagio Edinburgh Royal Mile",None,"Previously considered aparthotel; verify two separate bedrooms or acceptable room configuration."),
+    ("Edinburgh","PREMIER SUITES Fountain Court",None,"Previously considered apartment-style lodging; verify location, bedrooms and total cost."),
+    ("Edinburgh","Stockbridge Two-Bedroom Apartment",None,"Previously considered private apartment; verify exact listing and availability."),
+    ("Inverness","23 Innes Street Apartment",None,"Previously researched entire two-bedroom apartment; verify 2027 terms and price for four adults."),
+    ("Inverness","Culloden Apartment",None,"Previously considered apartment; verify exact listing, bedrooms and transportation logistics."),
+    ("Inverness","Riverside Two-Bedroom Apartment",None,"Previously considered apartment; verify exact listing, dates and group price."),
+    ("London","Citadines Holborn-Covent Garden",None,"Previously considered aparthotel; verify two private bedrooms or two separate units."),
+    ("London","Interlude House",None,"Previously considered apartment option; verify listing identity, bedroom count and price."),
+    ("London","Marlin Waterloo",None,"Previously considered serviced accommodation; verify exact room configuration for two couples."),
+
 ]
 
 
@@ -51,19 +66,20 @@ def add_missing_europe_candidates(db, trip_id):
 
     Do not overwrite edited options, selected plans, or budgets.
     """
-    scenarios={row["name"] for row in db.execute(
+    # Explicitly excluded candidate: never re-import Staycity Dublin.\n    db.execute("""DELETE FROM scenario_choices WHERE option_id IN (\n        SELECT id FROM saved_options WHERE trip_id=? AND city='Dublin'\n          AND name='Staycity Aparthotels Dublin City Centre'\n          AND scenario_tag IN ('S1','L1'))""",(trip_id,))\n    db.execute("""DELETE FROM saved_options WHERE trip_id=? AND city='Dublin'\n        AND name='Staycity Aparthotels Dublin City Centre'\n        AND scenario_tag IN ('S1','L1')""",(trip_id,))\n    scenarios={row["name"] for row in db.execute(
         "SELECT name FROM trip_scenarios WHERE trip_id=?",(trip_id,))}
     for variant in ("S1","L1"):
         if variant not in scenarios: continue
         for city,name,price,note in MORE_HOTELS:
-            dates=BASELINES[variant]["dates"]
             # Reuse city-specific dates from the existing trip's researched baseline.
             city_dates={
                 "S1":{"Dublin":("2027-09-01","2027-09-03"),
+                      "Galway":("2027-09-03","2027-09-05"),
                       "Edinburgh":("2027-09-05","2027-09-08"),
                       "Inverness":("2027-09-08","2027-09-10"),
                       "London":("2027-09-10","2027-09-13")},
                 "L1":{"Dublin":("2027-08-30","2027-09-02"),
+                      "Galway":("2027-09-02","2027-09-05"),
                       "Edinburgh":("2027-09-05","2027-09-08"),
                       "Inverness":("2027-09-08","2027-09-10"),
                       "London":("2027-09-10","2027-09-13")}
