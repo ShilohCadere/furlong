@@ -61,6 +61,12 @@ def init_db():
                 start_date TEXT,
                 end_date TEXT,
                 scenario_tag TEXT,
+                origin TEXT,
+                destination TEXT,
+                departure_time TEXT,
+                arrival_time TEXT,
+                layovers TEXT,
+                carrier TEXT,
                 FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE
             )
         """)
@@ -86,7 +92,7 @@ def init_db():
         """)
         # Safe additive migration for existing local trip databases.
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(saved_options)")}
-        for field in ("start_date", "end_date", "scenario_tag"):
+        for field in ("start_date", "end_date", "scenario_tag", "origin", "destination", "departure_time", "arrival_time", "layovers", "carrier"):
             if field not in columns:
                 connection.execute(f"ALTER TABLE saved_options ADD COLUMN {field} TEXT")
 
@@ -279,7 +285,7 @@ def add_saved_option(trip_id):
             abort(400, description="Dates must be valid.")
         if departure <= arrival:
             abort(400, description="End date must be later than start date.")
-    if not city or not name or len(city) > 100 or len(name) > 160 or category not in ("hotel", "activity", "transport") or len(notes) > 1000 or len(link) > 500 or (link and not link.startswith(("https://", "http://"))):
+    if not city or not name or len(city) > 100 or len(name) > 160 or category not in ("hotel", "activity", "transport", "flight") or len(notes) > 1000 or len(link) > 500 or (link and not link.startswith(("https://", "http://"))):
         abort(400, description="Check the option fields and link.")
     try:
         price = float(price_raw) if price_raw else None
@@ -332,7 +338,7 @@ def option_fields():
     start = request.form.get("start_date", "").strip()
     end = request.form.get("end_date", "").strip()
     raw = request.form.get("price", "").strip()
-    if not city or not name or len(city)>100 or len(name)>160 or category not in ("hotel","activity","transport") or len(link)>500 or len(notes)>1000 or (link and not link.startswith(("https://","http://"))):
+    if not city or not name or len(city)>100 or len(name)>160 or category not in ("hotel","activity","transport","flight") or len(link)>500 or len(notes)>1000 or (link and not link.startswith(("https://","http://"))):
         abort(400, "Invalid option details")
     if bool(start) != bool(end):
         abort(400,"Enter both dates or leave both blank")
@@ -391,6 +397,13 @@ def trip_workspace(trip_id):
             db.execute("""UPDATE saved_options SET scenario_tag=substr(name,1,2)
                 WHERE trip_id=? AND scenario_tag IS NULL
                 AND (name LIKE 'S1: %' OR name LIKE 'L1: %')""",(trip_id,))
+        # Upgrade legacy flight allowances without changing the selected amounts.
+        db.execute("""UPDATE saved_options SET category='flight'
+            WHERE trip_id=? AND category='transport'
+              AND city='International flights'""",(trip_id,))
+        db.execute("""UPDATE scenario_choices SET category='flight'
+            WHERE scenario_id IN (SELECT id FROM trip_scenarios WHERE trip_id=?)
+              AND city='International flights' AND category='transport'""",(trip_id,))
         choices=db.execute("""SELECT sc.city, sc.category, sc.option_id FROM scenario_choices sc
             JOIN saved_options o ON o.id=sc.option_id AND o.trip_id=?
             WHERE sc.scenario_id=?""",(trip_id,scenario["id"])).fetchall()
@@ -411,8 +424,62 @@ def trip_workspace(trip_id):
         elif a["end_date"]<b["start_date"]:
             warnings.append("Gap between "+a["name"]+" and "+b["name"])
     undated=[o["name"] for o in picked if o["category"]=="hotel" and not o["start_date"]]
+    hotels={k:v for k,v in groups.items() if k[1]=="hotel"}
+    flights={k:v for k,v in groups.items() if k[1]=="flight"}
+    excursions={k:v for k,v in groups.items() if k[1]=="activity"}
+    transport={k:v for k,v in groups.items() if k[1]=="transport"}
     total=subtotal+scenario["other_costs"]
-    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total)
+    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,flights=flights,excursions=excursions,transport=transport,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total)
+
+
+@app.route("/trip/<int:trip_id>/flights/add", methods=["POST"])
+def add_flight_option(trip_id):
+    get_trip(trip_id)
+    name=request.form.get("name","").strip()
+    route=request.form.get("route","").strip()
+    origin=request.form.get("origin","").strip()
+    destination=request.form.get("destination","").strip()
+    carrier=request.form.get("carrier","").strip()
+    departure=request.form.get("departure_time","").strip()
+    arrival=request.form.get("arrival_time","").strip()
+    layovers=request.form.get("layovers","").strip()
+    scenario_tag=request.form.get("scenario_tag","").strip() or None
+    price_str=request.form.get("price","").strip()
+    if not name or not route or len(name)>160 or len(route)>100 or any(len(x)>300 for x in (origin,destination,carrier,departure,arrival,layovers)):
+        abort(400,"Invalid flight information")
+    if scenario_tag:
+        with get_db_connection() as db:
+            if not db.execute("SELECT 1 FROM trip_scenarios WHERE trip_id=? AND name=?",(trip_id,scenario_tag)).fetchone():abort(400)
+    try: price=float(price_str) if price_str else None
+    except ValueError: abort(400)
+    if price is not None and (not __import__("math").isfinite(price) or price<0 or price>10000000): abort(400)
+    with get_db_connection() as db:
+        db.execute("""INSERT INTO saved_options
+        (trip_id,city,name,category,price,scenario_tag,origin,destination,departure_time,arrival_time,layovers,carrier)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (trip_id,route,name,"flight",price,scenario_tag,origin,destination,departure,arrival,layovers,carrier))
+    return redirect(url_for("trip_workspace",trip_id=trip_id))
+
+
+@app.route("/trip/<int:trip_id>/excursions/add", methods=["POST"])
+def add_excursion_option(trip_id):
+    get_trip(trip_id)
+    city=request.form.get("city","").strip()
+    name=request.form.get("name","").strip()
+    day=request.form.get("start_date","").strip()
+    raw=request.form.get("price","").strip()
+    if not city or not name or len(city)>100 or len(name)>160:abort(400)
+    if day:
+        try: date.fromisoformat(day)
+        except ValueError:abort(400)
+    try:price=float(raw) if raw else None
+    except ValueError:abort(400)
+    if price is not None and (not __import__("math").isfinite(price) or price<0 or price>10000000):abort(400)
+    with get_db_connection() as db:
+        db.execute("""INSERT INTO saved_options(trip_id,city,name,category,price,start_date,notes)
+            VALUES (?,?,?,'activity',?,?,?)""",
+            (trip_id,city,name,price,day or None,request.form.get("notes","")[:1000]))
+    return redirect(url_for("trip_workspace",trip_id=trip_id))
 
 
 @app.route("/trip/<int:trip_id>/workspace/scenarios",methods=["POST"])
