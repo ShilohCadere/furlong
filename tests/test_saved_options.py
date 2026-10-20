@@ -216,6 +216,32 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertIn(b'Tour tickets',page.data)
         self.assertIn(b'Extra meal',page.data)
 
+    def test_city_jumps_and_inline_unpriced_quote_edit(self):
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+            sid=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name='S1'",(trip,)).fetchone()["id"]
+            option=db.execute("""SELECT * FROM saved_options WHERE trip_id=? AND city='Galway'
+                AND category='hotel' AND price IS NULL AND scenario_tag='S1' LIMIT 1""",(trip,)).fetchone()
+        page=self.client.get(f"/trip/{trip}/workspace?scenario={sid}")
+        self.assertIn(b'href="#hotel-galway"',page.data)
+        self.assertIn(b'id="hotel-galway"',page.data)
+        self.assertIn(b'Edit hotel / update quote',page.data)
+        changed=self.client.post(f"/trip/{trip}/options/{option['id']}/edit",data={
+            "return_workspace":"1","scenario_id":sid,
+            "city":"Galway","name":option["name"],"category":"hotel",
+            "price":"925.50","start_date":option["start_date"],
+            "end_date":option["end_date"],"notes":option["notes"]
+        })
+        self.assertEqual(changed.status_code,302)
+        self.assertIn(f"scenario={sid}#hotel-galway",changed.headers["Location"])
+        with furlong.get_db_connection() as db:
+            edited=db.execute("SELECT price,scenario_tag FROM saved_options WHERE id=?",(option["id"],)).fetchone()
+            self.assertEqual(edited["price"],925.5)
+            self.assertEqual(edited["scenario_tag"],"S1")
+        refreshed=self.client.get(changed.headers["Location"])
+        self.assertIn(b'$926',refreshed.data)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
