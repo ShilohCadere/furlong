@@ -131,6 +131,28 @@ class SavedOptionsTests(unittest.TestCase):
             count_after=db.execute("SELECT count(*) FROM saved_options WHERE trip_id=?",(trip,)).fetchone()[0]
         self.assertEqual(count_before,count_after)
 
+    def test_flight_and_excursion_sections(self):
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+            scenario=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name='S1'",(trip,)).fetchone()["id"]
+        result=self.client.get(f"/trip/{trip}/workspace?scenario={scenario}")
+        self.assertEqual(result.status_code,200)
+        self.assertIn(b'Flights &amp; connections',result.data)
+        self.assertIn(b'Excursions &amp; experiences',result.data)
+        self.assertIn(b'Places to stay',result.data)
+        flight=self.client.post(f"/trip/{trip}/flights/add",data={
+            "route":"STL - DUB","name":"Test flight via ORD","origin":"STL","destination":"DUB",
+            "layovers":"ORD 90m","carrier":"United","price":"4400","scenario_tag":"S1"
+        },follow_redirects=True)
+        self.assertEqual(flight.status_code,200)
+        self.assertIn(b'Test flight via ORD',flight.data)
+        excursion=self.client.post(f"/trip/{trip}/excursions/add",data={
+            "city":"Galway","name":"Cliffs tour","start_date":"2027-09-04","price":"255"
+        },follow_redirects=True)
+        self.assertEqual(excursion.status_code,200)
+        self.assertIn(b'Cliffs tour',excursion.data)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
