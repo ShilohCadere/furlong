@@ -675,6 +675,11 @@ def budget_playground(trip_id):
     selected={(row["city"],row["category"]):row["option_id"] for row in rows}
     groups={}
     for item in options:
+        # Superseded Edinburgh hotel+castle bundles remain archived in the DB,
+        # but never present them as a competing single city stay.
+        if (item["city"]=="Edinburgh" and item["category"]=="hotel"
+                and " + " in item["name"] and "Castle" in item["name"]):
+            continue
         groups.setdefault((item["city"],item["category"]),[]).append(item)
     # Expenses outside allowances are already included in the active plan's estimate.
     extras=sum(e["amount"] for e in expenses if not e["included_in_allowance"])
