@@ -583,9 +583,11 @@ def city_view(trip_id,city):
         plan=next((p for p in plans if p["id"]==sid),None)
         if plan is None:abort(404)
         # Destinations are places to stay, not placeholder labels such as Transit or Departure.
-        names=[row["city"] for row in db.execute("""SELECT DISTINCT city FROM saved_options
+        names=[row["city"] for row in db.execute("""SELECT city FROM saved_options
             WHERE trip_id=? AND category='hotel' AND city NOT IN ('Transit','Departure')
-              AND TRIM(city) <> '' ORDER BY city COLLATE NOCASE""",(trip_id,)).fetchall()]
+              AND TRIM(city) <> '' AND (scenario_tag IS NULL OR scenario_tag=?)
+            GROUP BY city ORDER BY MIN(COALESCE(start_date,'9999-12-31')),city COLLATE NOCASE""",
+            (trip_id,plan["name"])).fetchall()]
         if city not in names:abort(404)
         days=db.execute("""SELECT * FROM scenario_itinerary WHERE trip_id=? AND scenario_id=? AND city=?
             ORDER BY day_date""",(trip_id,sid,city)).fetchall()
