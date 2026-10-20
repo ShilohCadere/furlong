@@ -385,7 +385,7 @@ def add_saved_option(trip_id):
             abort(400, description="Dates must be valid.")
         if departure <= arrival:
             abort(400, description="End date must be later than start date.")
-    if not city or not name or len(city) > 100 or len(name) > 160 or category not in ("hotel", "activity", "transport", "flight") or len(notes) > 1000 or len(link) > 500 or (link and not link.startswith(("https://", "http://"))):
+    if not city or not name or len(city) > 100 or len(name) > 160 or category not in ("hotel", "castle", "activity", "transport", "flight") or len(notes) > 1000 or len(link) > 500 or (link and not link.startswith(("https://", "http://"))):
         abort(400, description="Check the option fields and link.")
     try:
         price = float(price_raw) if price_raw else None
@@ -398,7 +398,7 @@ def add_saved_option(trip_id):
         scenario_tag=None
         if sid is not None:
             plan=connection.execute("SELECT name FROM trip_scenarios WHERE id=? AND trip_id=?",(sid,trip_id)).fetchone()
-            if not plan or category!="hotel":abort(400)
+            if not plan or category not in ("hotel","castle"):abort(400)
             scenario_tag=plan["name"]
         connection.execute(
             """INSERT INTO saved_options (trip_id, city, name, category, price, link, notes, start_date, end_date, scenario_tag)
@@ -457,7 +457,7 @@ def option_fields():
     start = request.form.get("start_date", "").strip()
     end = request.form.get("end_date", "").strip()
     raw = request.form.get("price", "").strip()
-    if not city or not name or len(city)>100 or len(name)>160 or category not in ("hotel","activity","transport","flight") or len(link)>500 or len(notes)>1000 or (link and not link.startswith(("https://","http://"))):
+    if not city or not name or len(city)>100 or len(name)>160 or category not in ("hotel","castle","activity","transport","flight") or len(link)>500 or len(notes)>1000 or (link and not link.startswith(("https://","http://"))):
         abort(400, "Invalid option details")
     if bool(start) != bool(end):
         abort(400,"Enter both dates or leave both blank")
@@ -489,7 +489,7 @@ def update_saved_option_quote(trip_id,option_id):
     with get_db_connection() as db:
         item=db.execute("SELECT id,category,city FROM saved_options WHERE id=? AND trip_id=?",(option_id,trip_id)).fetchone()
         if item is None:abort(404)
-        if item["category"]!="hotel":abort(400,"This quote form is for lodging only")
+        if item["category"] not in ("hotel","castle"):abort(400,"This quote form is for lodging only")
         sid=request.form.get("scenario_id",type=int)
         if sid is not None and not db.execute("SELECT 1 FROM trip_scenarios WHERE id=? AND trip_id=?",(sid,trip_id)).fetchone():
             abort(404)
@@ -511,7 +511,7 @@ def update_saved_option_link(trip_id,option_id):
     with get_db_connection() as db:
         item=db.execute("SELECT city,category FROM saved_options WHERE id=? AND trip_id=?",(option_id,trip_id)).fetchone()
         if item is None: abort(404)
-        if item["category"]!="hotel":abort(400)
+        if item["category"] not in ("hotel","castle"):abort(400)
         sid=request.form.get("scenario_id",type=int)
         if sid is not None and not db.execute("SELECT 1 FROM trip_scenarios WHERE trip_id=? AND id=?",(trip_id,sid)).fetchone():
             abort(404)
@@ -551,6 +551,8 @@ def trip_workspace(trip_id):
         if trip["name"] == "Europe 2027":
             from europe_seed import add_missing_europe_candidates
             add_missing_europe_candidates(db,trip_id)
+            from europe_seed import split_edinburgh_stays
+            split_edinburgh_stays(db,trip_id)
             from europe_seed import add_europe_route_days
             add_europe_route_days(db,trip_id)
             from europe_seed import fill_europe_day_details
@@ -593,14 +595,14 @@ def trip_workspace(trip_id):
     picked=[p for p in picked if p is not None]
     subtotal=sum(o["price"] or 0 for o in picked)
     missing=[o["name"] for o in picked if o["price"] is None]
-    stays=sorted([o for o in picked if o["category"]=="hotel" and o["start_date"] and o["end_date"]],key=lambda o:o["start_date"])
+    stays=sorted([o for o in picked if o["category"] in ("hotel","castle") and o["start_date"] and o["end_date"]],key=lambda o:o["start_date"])
     warnings=[]
     for a,b in zip(stays,stays[1:]):
         if a["end_date"]>b["start_date"]:
             warnings.append("Overlapping stays: "+a["name"]+" and "+b["name"])
         elif a["end_date"]<b["start_date"]:
             warnings.append("Gap between "+a["name"]+" and "+b["name"])
-    undated=[o["name"] for o in picked if o["category"]=="hotel" and not o["start_date"]]
+    undated=[o["name"] for o in picked if o["category"] in ("hotel","castle") and not o["start_date"]]
     # Follow the route's chronological stays, rather than alphabetical city names.
     route_order={}
     for key,items in groups.items():
@@ -611,13 +613,14 @@ def trip_workspace(trip_id):
         return (route_order.get(key[0],"9999-12-31"),key[0].casefold(),key[1])
     groups=dict(sorted(groups.items(),key=lambda entry:city_sort(entry[0])))
     hotels={k:v for k,v in groups.items() if k[1]=="hotel"}
+    castles={k:v for k,v in groups.items() if k[1]=="castle"}
     flights={k:v for k,v in groups.items() if k[1]=="flight"}
     excursions={k:v for k,v in groups.items() if k[1]=="activity"}
     transport={k:v for k,v in groups.items() if k[1]=="transport"}
     selected_flights=[p for p in picked if p["category"]=="flight"]
     extra_expenses=sum(row["amount"] for row in expenses if not row["included_in_allowance"])
     total=subtotal+scenario["other_costs"]+extra_expenses
-    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,flights=flights,excursions=excursions,transport=transport,selected_flights=selected_flights,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total,expenses=expenses,extra_expenses=extra_expenses)
+    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,castles=castles,flights=flights,excursions=excursions,transport=transport,selected_flights=selected_flights,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total,expenses=expenses,extra_expenses=extra_expenses)
 
 
 @app.route("/trip/<int:trip_id>/city/<city>")
