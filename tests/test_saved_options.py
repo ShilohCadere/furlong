@@ -1,0 +1,64 @@
+"""Regression tests for Saved Options. Run: python -m unittest discover -s tests -v"""
+import tempfile
+import unittest
+from pathlib import Path
+
+import app as furlong
+
+
+class SavedOptionsTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.old_database = furlong.DATABASE
+        furlong.DATABASE = Path(self.tmp.name) / "test.db"
+        furlong.init_db()
+        self.client = furlong.app.test_client()
+        with furlong.get_db_connection() as conn:
+            conn.execute("INSERT INTO trips (name,destination) VALUES (?,?)", ("Test trip", "Ireland"))
+            self.trip_id = conn.execute("SELECT id FROM trips").fetchone()[0]
+
+    def tearDown(self):
+        furlong.DATABASE = self.old_database
+        self.tmp.cleanup()
+
+    def add(self, name, city="Galway", price="400", category="hotel"):
+        return self.client.post(
+            f"/trip/{self.trip_id}/options/add",
+            data={"city":city,"name":name,"price":price,"category":category},
+            follow_redirects=True
+        )
+
+    def test_multiple_options_and_preference_preserves_alternatives(self):
+        self.assertEqual(self.add("Eyre Square").status_code, 200)
+        self.assertEqual(self.add("The Western",price="510").status_code, 200)
+        with furlong.get_db_connection() as db:
+            ids = [r["id"] for r in db.execute("SELECT id FROM saved_options ORDER BY id")]
+        self.client.post(f"/trip/{self.trip_id}/options/{ids[0]}/prefer")
+        res = self.client.post(f"/trip/{self.trip_id}/options/{ids[1]}/prefer",follow_redirects=True)
+        self.assertIn(b"The Western",res.data)
+        self.assertIn(b"Eyre Square",res.data)
+        with furlong.get_db_connection() as db:
+            entries = db.execute("SELECT name,is_preferred FROM saved_options ORDER BY id").fetchall()
+        self.assertEqual([(x["name"],x["is_preferred"]) for x in entries],[("Eyre Square",0),("The Western",1)])
+
+    def test_bad_price_rejected(self):
+        self.assertEqual(self.add("Bad",price="-5").status_code,400)
+        self.assertEqual(self.add("Bad",price="nan").status_code,400)
+
+    def test_bad_external_link_rejected(self):
+        res=self.client.post(f"/trip/{self.trip_id}/options/add",data={"city":"Dublin","name":"Unsafe","link":"javascript:alert(1)"})
+        self.assertEqual(res.status_code,400)
+
+    def test_other_trip_isolation(self):
+        self.add("Galway stay")
+        with furlong.get_db_connection() as db:
+            db.execute("INSERT INTO trips (name) VALUES ('Other')")
+            option_id=db.execute("SELECT id FROM saved_options").fetchone()[0]
+            other_id=db.execute("SELECT MAX(id) FROM trips").fetchone()[0]
+        self.assertEqual(self.client.post(f"/trip/{other_id}/options/{option_id}/prefer").status_code,404)
+        self.assertEqual(self.client.post(f"/trip/{other_id}/options/{option_id}/remove",follow_redirects=True).status_code,200)
+        self.assertIn(b"Galway stay",self.client.get(f"/trip/{self.trip_id}/options").data)
+
+
+if __name__ == "__main__":
+    unittest.main()
