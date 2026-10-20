@@ -1008,3 +1008,45 @@ h2 {
         padding: 20px;
     }
 }
+
+
+/* Saved Options: separate alternatives from booked itinerary choices */
+.options-page {max-width: 1350px;}
+.options-heading {display:flex;justify-content:space-between;gap:30px;align-items:flex-start;margin-bottom:38px;}
+.options-total {background:var(--white);border:1px solid var(--border);border-radius:14px;padding:19px 23px;min-width:230px;display:flex;flex-direction:column;gap:5px;}
+.options-total span,.options-total small {color:var(--muted);font-size:12px;}
+.options-total strong {font-family:var(--font-heading);font-size:30px;font-weight:500;}
+.option-add {background:var(--white);border:1px solid var(--border);border-radius:16px;padding:25px;margin-bottom:45px;}
+.option-add h2 {font-size:27px;margin-bottom:20px;}
+.option-form {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;}
+.option-form label {display:flex;flex-direction:column;gap:7px;font-weight:600;font-size:12px;color:var(--pine);}
+.option-form input,.option-form select {border:1px solid var(--border);border-radius:9px;background:var(--white);padding:11px;color:var(--pine);width:100%;font:inherit;}
+.option-form .wide {grid-column:span 2;}
+.option-form button {align-self:end;}
+.option-city {margin:0 0 36px;}
+.option-city-heading {display:flex;justify-content:space-between;align-items:center;gap:15px;margin:0 0 19px;}
+.option-city-heading h2 {font-size:31px;}
+.option-city-heading span {color:var(--muted);font-size:12px;}
+.option-grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:17px;}
+.option-card {min-width:0;display:flex;flex-direction:column;background:var(--white);border:1px solid var(--border);border-radius:14px;padding:22px;gap:12px;}
+.option-card.is-preferred {border:2px solid var(--sage);padding:21px;background:var(--soft-green);}
+.option-topline {display:flex;justify-content:space-between;gap:8px;align-items:center;}
+.option-category {text-transform:uppercase;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:1px;}
+.preferred-chip {border-radius:999px;background:var(--sage);color:white;padding:4px 11px;font-size:11px;font-weight:700;}
+.option-card h3 {font-size:24px;margin:0;}
+.option-price {font-family:var(--font-heading);font-size:26px;margin:0;}
+.option-price small {font-family:var(--font-body);color:var(--muted);font-size:11px;}
+.option-price.missing {color:var(--muted);font-size:17px;}
+.option-notes {color:var(--muted);font-size:13px;margin:0;white-space:pre-wrap;}
+.option-link {color:var(--sage);font-size:12px;font-weight:700;overflow-wrap:anywhere;}
+.option-link:hover {text-decoration:underline;}
+.option-actions {display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:auto;padding-top:15px;border-top:1px solid var(--border);}
+.option-actions .secondary-btn {font-size:12px;padding:8px 11px;}
+.option-current {color:var(--sage);font-size:12px;font-weight:600;}
+.option-remove {border:0;background:none;color:var(--muted);font-size:12px;padding:8px;}
+.option-remove:hover {color:#9a403a;}
+.option-empty {background:var(--white);border:1px dashed var(--border);border-radius:14px;padding:40px;}
+.option-empty h2 {font-size:29px;margin-bottom:9px;}
+.option-empty p {color:var(--muted);font-size:13px;}
+@media(max-width:850px){.option-form{grid-template-columns:repeat(2,minmax(0,1fr));}.options-heading{flex-direction:column;}.options-total{width:100%;}}
+@media(max-width:550px){.option-form{grid-template-columns:1fr;}.option-form .wide{grid-column:auto;}.option-add{padding:17px;}.option-grid{grid-template-columns:1fr;}}
