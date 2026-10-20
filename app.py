@@ -555,6 +555,15 @@ def trip_workspace(trip_id):
         elif a["end_date"]<b["start_date"]:
             warnings.append("Gap between "+a["name"]+" and "+b["name"])
     undated=[o["name"] for o in picked if o["category"]=="hotel" and not o["start_date"]]
+    # Follow the route's chronological stays, rather than alphabetical city names.
+    route_order={}
+    for key,items in groups.items():
+        if key[1]=="hotel":
+            dates=[item["start_date"] for item in items if item["start_date"]]
+            if dates: route_order[key[0]]=min(dates)
+    def city_sort(key):
+        return (route_order.get(key[0],"9999-12-31"),key[0].casefold(),key[1])
+    groups=dict(sorted(groups.items(),key=lambda entry:city_sort(entry[0])))
     hotels={k:v for k,v in groups.items() if k[1]=="hotel"}
     flights={k:v for k,v in groups.items() if k[1]=="flight"}
     excursions={k:v for k,v in groups.items() if k[1]=="activity"}
