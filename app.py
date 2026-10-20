@@ -650,11 +650,14 @@ def city_view(trip_id,city):
         selected=db.execute("""SELECT o.* FROM scenario_choices sc JOIN saved_options o ON o.id=sc.option_id
             WHERE sc.scenario_id=? AND sc.city=? AND sc.category='hotel' AND o.trip_id=?""",
             (sid,city,trip_id)).fetchone()
+        selected_castle=db.execute("""SELECT o.* FROM scenario_choices sc JOIN saved_options o ON o.id=sc.option_id
+            WHERE sc.scenario_id=? AND sc.city=? AND sc.category='castle' AND o.trip_id=?""",
+            (sid,city,trip_id)).fetchone()
         ideas=db.execute("""SELECT * FROM saved_options WHERE trip_id=? AND city=? AND category='activity'
             AND (scenario_tag IS NULL OR scenario_tag=?) ORDER BY start_date,name""",
             (trip_id,city,plan["name"])).fetchall()
     return render_template("city.html",trip=trip,city=city,plans=plans,plan=plan,
-        days=days,activities=activities,hotels=hotels,selected=selected,ideas=ideas,names=names)
+        days=days,activities=activities,hotels=hotels,selected=selected,selected_castle=selected_castle,ideas=ideas,names=names)
 
 
 @app.route("/trip/<int:trip_id>/budget-playground")
