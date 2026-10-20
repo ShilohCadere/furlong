@@ -1174,3 +1174,91 @@ h2 {
 .furlong-bear-mark{filter:none!important;width:60px;height:43px;object-fit:contain;flex-shrink:0}
 .brand{gap:7px}
 @media(max-width:680px){.furlong-bear-mark{width:49px;height:38px}}
+
+
+/* Furlong jewel-tone system — shared across every screen.
+   Logo artwork remains its approved pine #283C36. */
+:root{
+  --ivory:#EAF1F5;
+  --white:#FFFFFF;
+  --pine:#173F45;
+  --sage:#116C68;
+  --clay:#7B3F83;
+  --muted:#4F6775;
+  --border:#BDD0DA;
+  --soft-green:#DCEEEB;
+  --jewel-emerald:#075E57;
+  --jewel-sapphire:#173D77;
+  --jewel-aubergine:#523269;
+  --jewel-teal:#127D89;
+  --jewel-gold:#D3A34F;
+  --surface:#F5FAFC;
+}
+body{background:radial-gradient(ellipse at top right,rgba(39,113,148,.11),transparent 48%),#EAF1F5;color:#1B3D4B}
+.sidebar{background:#123C4C;border-right:1px solid #276474}
+.sidebar .brand,.sidebar .brand-wordmark{color:#F3FAFC}
+.sidebar .brand-wordmark>span{color:#E4B95D}
+.sidebar .furlong-bear-mark{filter:brightness(0) invert(1)!important}
+.sidebar .nav-link{color:#CEE1E8}
+.sidebar .nav-link:hover{background:#245D6F;color:#FFFFFF}
+.sidebar .nav-link.active{background:#1D777B;color:#FFFFFF;box-shadow:inset 3px 0 #E1B25B}
+.sidebar .sidebar-footer{color:#A7CBD5}
+:focus-visible{outline-color:#D3A34F}
+.primary-btn{background:#116A69;border-color:#116A69;color:#fff}
+.primary-btn:hover{background:#095251;border-color:#095251}
+.secondary-btn{background:#fff;border-color:#91B5C4;color:#174C62}
+.secondary-btn:hover{background:#D9EDF2}
+.eyebrow{color:#17697A}
+.trip-cover,.overview-banner{background:linear-gradient(130deg,#116C68 0%,#153E76 55%,#54356E 100%)}
+.trip-card:nth-child(3n + 2) .trip-cover{background:linear-gradient(135deg,#194B83,#563675 70%,#85538A)}
+.trip-card:nth-child(3n + 3) .trip-cover{background:linear-gradient(135deg,#076B69,#167B92 60%,#18467D)}
+.trip-status{background:#D8F1EB;color:#085A56}
+.empty-state{background:#F6FBFD;border-color:#8DABB8}
+.trip-dialog,.overview-preview,.trip-card{border-color:#BCD1DA}
+.preview-heading-icon{background:#D7E9F6;color:#174A83}
+.atlas-hero{background-image:linear-gradient(90deg,rgba(9,38,62,.94) 0%,rgba(10,66,78,.78) 52%,rgba(51,30,82,.38) 100%),url("https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1800&q=85")}
+.atlas-route-identity{background:#163C65C9;border-color:#9DC4D9}
+.atlas-route-identity span,.atlas-route-identity small{color:#D7EBF4}
+.atlas-hero-caption{color:#E5D19D}
+.atlas-metrics>div{border-color:#C1D8E0;border-bottom-color:#178279}
+.atlas-metrics>div:nth-child(2){border-bottom-color:#654A99;background:#F0EAF6}
+.atlas-metrics>div:nth-child(3){background:#E5EDF9;border-bottom-color:#2459A3}
+.atlas-metrics>div:nth-child(4){background:#DBF2EC;border-bottom-color:#0C8B80}
+.atlas-jump a{background:#F8FCFF;border-color:#B4CEDD;color:#205576}
+.atlas-jump a:hover{background:#DFEFF7}
+.atlas-section{border-color:#AFC9D7;background:#FCFEFF}
+.atlas-section-head{border-bottom-color:#CBDCE6}
+.atlas-number{color:#286B95}
+.atlas-mark{color:#C69B47}
+.atlas-flights{background:#DBEAF8;border-color:#A4C6DF}
+.atlas-flights .atlas-number,.atlas-flights .atlas-mark{color:#1E518E}
+.atlas-excursions{background:#EDE3F5;border-color:#D1BBE1}
+.atlas-excursions .atlas-number,.atlas-excursions .atlas-mark{color:#6B3F85}
+.atlas-ground{background:#DEF1F0;border-color:#A4D1CE}
+.atlas-ground .atlas-number,.atlas-ground .atlas-mark{color:#087973}
+.atlas-budget{background:#E5EBF8;border-color:#B4C3E2}
+.atlas-choice{border-color:#BDD2DD;background:#FFFFFF}
+.atlas-choice-label strong{color:#173E60}
+.atlas-choice select,.atlas-add-grid input,.atlas-add-grid select{border-color:#94B7C9;color:#1E455A;background:#FFFFFF}
+.atlas-timeline{background:#E0F1EF;border-left-color:#11837F}
+.atlas-timeline>div{border-top-color:#B6DCD7}
+.atlas-time-dot{background:#9A5BA5}
+.atlas-add{background:#FFFFFFC9;border-color:#93B7C7}
+.atlas-add summary{color:#194E79}
+.atlas-flight-ticket{border-color:#AFC9E2;border-left-color:#315C9B;background:#F8FCFF}
+.atlas-city-dublin{background:linear-gradient(0deg,#14354EDB,#14354E1A 80%),url("https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Dublin_-_aerial_-_panorama_-_2025-02-06.jpg/640px-Dublin_-_aerial_-_panorama_-_2025-02-06.jpg") center/cover}
+.atlas-city-galway{background:linear-gradient(145deg,#06636E,#1D94AA)}
+.atlas-city-edinburgh{background:linear-gradient(145deg,#3E3A77,#8251A1)}
+.atlas-city-inverness{background:linear-gradient(145deg,#075C63,#1C907E)}
+.atlas-city-london{background:linear-gradient(145deg,#224778,#84448A)}
+.workspace-warning{border-color:#E0B568;color:#704418;background:#FFF5DF}
+/* Legacy workspace, saved ideas, and form surfaces share the jewel palette. */
+.option-add{background:#E5F0F8!important;border-color:#A5C9DA!important}
+.option-city{border-color:#B7CFDA}
+.option-city h2,.option-add h2{color:#214C75}
+.scenario-tabs .scenario-active{background:#174F81!important;border-color:#174F81!important;color:#FFFFFF!important}
+.workspace-revamp .scenario-tabs .scenario-active{background:#174F81!important;border-color:#174F81!important}
+.workspace-revamp .workspace-picker{background:#FAFDFF;border-color:#B1CAD6}
+.workspace-revamp .workspace-timeline{background:#DCF0F1}
+.workspace-revamp .choice-row{background:#F0F8FB;border-color:#C0D6E1}
+.workspace-revamp .choice-row strong{color:#1E5373}
