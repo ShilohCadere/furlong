@@ -572,6 +572,34 @@ def city_view(trip_id,city):
         days=days,activities=activities,hotels=hotels,selected=selected,ideas=ideas,names=names)
 
 
+@app.route("/trip/<int:trip_id>/budget-playground")
+def budget_playground(trip_id):
+    """Temporary what-if comparisons: never modify booked/selected choices."""
+    trip=get_trip(trip_id)
+    with get_db_connection() as db:
+        plans=db.execute("SELECT * FROM trip_scenarios WHERE trip_id=? ORDER BY id",(trip_id,)).fetchall()
+        sid=request.args.get("scenario",type=int) or (plans[0]["id"] if plans else None)
+        plan=next((p for p in plans if p["id"]==sid),None)
+        if not plan:abort(404)
+        options=db.execute("""SELECT * FROM saved_options WHERE trip_id=?
+            AND (scenario_tag IS NULL OR scenario_tag=?)
+            ORDER BY city COLLATE NOCASE,category,price IS NULL,price,name""",
+            (trip_id,plan["name"])).fetchall()
+        rows=db.execute("""SELECT city,category,option_id FROM scenario_choices WHERE scenario_id=?""",(sid,)).fetchall()
+        expenses=db.execute("SELECT * FROM scenario_expenses WHERE scenario_id=?",(sid,)).fetchall()
+    selected={(row["city"],row["category"]):row["option_id"] for row in rows}
+    groups={}
+    for item in options:
+        groups.setdefault((item["city"],item["category"]),[]).append(item)
+    # Expenses outside allowances are already included in the active plan's estimate.
+    extras=sum(e["amount"] for e in expenses if not e["included_in_allowance"])
+    total=plan["other_costs"]+extras+sum(
+        next((o["price"] or 0 for o in opts if o["id"]==selected.get(key)),0)
+        for key,opts in groups.items())
+    return render_template("playground.html",trip=trip,plans=plans,plan=plan,
+        groups=groups,selected=selected,baseline=total,extras=extras)
+
+
 @app.route("/trip/<int:trip_id>/flights/add", methods=["POST"])
 def add_flight_option(trip_id):
     get_trip(trip_id)
