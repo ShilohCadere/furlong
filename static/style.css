@@ -1065,3 +1065,9 @@ h2 {
 .option-edit{padding:10px 0;border-top:1px solid var(--border)}.option-edit summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--sage)}
 .option-edit-fields{display:grid;gap:8px;margin-top:12px}.option-edit-fields label{display:flex;flex-direction:column;font-size:12px;gap:4px}.option-edit textarea{resize:vertical}
 @media(max-width:850px){.workspace-metrics{grid-template-columns:repeat(2,1fr)}}@media(max-width:550px){.workspace-metrics{grid-template-columns:1fr}.choice-row{grid-template-columns:1fr}.choice-row button{width:100%}}
+
+/* Keep the workspace disclaimer separate from the bottom action. */
+.workspace-footer {display:flex;flex-direction:column;align-items:flex-start;gap:20px;margin-top:32px;padding:22px 0 45px;border-top:1px solid var(--border);}
+.workspace-footer .page-subtitle {max-width:720px;margin:0;line-height:1.65;}
+.workspace-footer .primary-btn {display:inline-flex;align-items:center;justify-content:center;text-align:center;max-width:100%;white-space:normal;}
+@media(max-width:550px){.workspace-footer .primary-btn{width:100%;}}
