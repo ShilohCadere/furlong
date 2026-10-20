@@ -91,6 +91,21 @@ class SavedOptionsTests(unittest.TestCase):
                 self.assertEqual(total,{"S1":18939,"L1":19817}[plan["name"]])
                 self.assertEqual(len(picked),8)
 
+    def test_europe_options_cannot_cross_scenarios(self):
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+            s1=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name='S1'",(trip,)).fetchone()["id"]
+            l1_option=db.execute("""SELECT id FROM saved_options WHERE trip_id=?
+                AND scenario_tag='L1' AND city='Galway' LIMIT 1""",(trip,)).fetchone()["id"]
+        page=self.client.get(f"/trip/{trip}/workspace?scenario={s1}")
+        self.assertEqual(page.status_code,200)
+        self.assertNotIn(f'value="{l1_option}"'.encode(),page.data)
+        denied=self.client.post(f"/trip/{trip}/workspace/choose",data={
+            "scenario_id":s1,"option_id":l1_option,"city":"Galway","category":"hotel"
+        })
+        self.assertEqual(denied.status_code,400)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
