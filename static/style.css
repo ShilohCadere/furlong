@@ -1262,3 +1262,47 @@ body{background:radial-gradient(ellipse at top right,rgba(39,113,148,.11),transp
 .workspace-revamp .workspace-timeline{background:#DCF0F1}
 .workspace-revamp .choice-row{background:#F0F8FB;border-color:#C0D6E1}
 .workspace-revamp .choice-row strong{color:#1E5373}
+
+
+/* Comparison cards and dated itinerary */
+.hotel-city-sections{display:grid;gap:26px}
+.hotel-city-section{padding-bottom:23px;border-bottom:1px solid #B8D1DC}
+.hotel-city-heading{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:13px}
+.hotel-city-heading h3{font-size:29px;color:#173D77}.hotel-city-heading span{font-size:12px;color:#476B83}
+.hotel-comparison-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.hotel-comparison-card{display:flex;flex-direction:column;min-width:0;padding:21px;border:1px solid #BED1E0;background:#F7FAFF;border-radius:14px;box-shadow:0 4px 13px #154A6B0A}
+.hotel-is-selected{border:2px solid #087F78;background:#E8F7F3}
+.hotel-card-top{display:flex;justify-content:space-between;align-items:center;gap:9px}
+.hotel-card-number{font:italic 26px var(--font-heading);color:#7190A1}
+.hotel-card-chosen{font-size:11px;color:#056159}.hotel-card-candidate{font-size:11px;color:#667888}
+.hotel-comparison-card h4{font:500 25px/1.12 var(--font-heading);color:#183A63;margin:12px 0}
+.hotel-price{font:500 30px/1.05 var(--font-heading);color:#076E6B;margin:0 0 11px}
+.hotel-price small{display:inline;font:600 11px var(--font-body);color:#567888}
+.hotel-price-missing{font:600 15px var(--font-body);color:#7A4B82}
+.hotel-dates{font-size:12px;color:#32617B;margin-bottom:9px}
+.hotel-card-notes{font-size:12px;color:#536977;line-height:1.55;flex:1}
+.hotel-card-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:auto}
+.hotel-card-actions button{padding:9px 13px;font-size:12px}
+.hotel-card-actions a{font-size:12px;text-decoration:underline;color:#145785}
+.itinerary-modern .itinerary-tabs{margin:22px 0}
+.itinerary-modern .itinerary-add-day{margin:19px 0 30px}
+.itinerary-story{display:grid;gap:19px}
+.itinerary-story-day{display:grid;grid-template-columns:160px minmax(0,1fr);background:#FFFFFF;border:1px solid #B9D0DE;border-radius:17px;overflow:hidden}
+.itinerary-story-date{padding:25px 19px;color:#FFFFFF;font:500 20px var(--font-heading);background:linear-gradient(145deg,#113F76,#0D7778)}
+.itinerary-story-body{padding:25px;min-width:0}
+.itinerary-story-body h2{font-size:32px;margin:0 0 15px;color:#193E70}
+.itinerary-story-body>p:not(.eyebrow){color:#516D7F}
+.itinerary-edit-day{margin-bottom:12px}.itinerary-edit-day summary{cursor:pointer;color:#175E84;font-weight:600;font-size:12px}
+.itinerary-activities{margin-top:17px;display:grid;gap:8px}
+.itinerary-activity{display:grid;grid-template-columns:80px 1fr auto;gap:12px;align-items:center;padding:12px 13px;background:#EFF6FC;border-radius:10px}
+.itinerary-activity>span{font-size:11px;color:#2B6382}.itinerary-activity strong{display:block;font-size:13px}
+.itinerary-activity small{display:block;color:#516C7D;font-size:11px}
+.ledger-section{margin-top:24px;padding-top:18px;border-top:1px solid #BACDDD}
+.ledger-section h3{font-size:29px;color:#183F71}
+.ledger-list{display:grid;gap:8px;margin:17px 0}
+.ledger-item{display:flex;align-items:center;gap:16px;padding:12px;border:1px solid #C5D7E4;background:#FAFDFF;border-radius:11px}
+.ledger-item>div{flex:1}.ledger-item small{display:block;font-size:11px;color:#547183}
+.ledger-item strong{display:block;font-size:13px}.ledger-item b{white-space:nowrap}
+.ledger-item button{padding:6px 11px}.ledger-footnote{font-size:12px;color:#345F78;margin:14px 0 0}
+@media(max-width:820px){.hotel-comparison-grid{grid-template-columns:1fr}}
+@media(max-width:620px){.itinerary-story-day{grid-template-columns:1fr}.itinerary-story-date{padding:12px 20px}.itinerary-story-body{padding:18px}.itinerary-activity{grid-template-columns:1fr auto}.itinerary-activity>span{grid-column:1/-1}}
