@@ -1,5 +1,6 @@
 
 import sqlite3
+from datetime import date
 from pathlib import Path
 
 from flask import (
@@ -57,9 +58,17 @@ def init_db():
                 link TEXT,
                 notes TEXT,
                 is_preferred INTEGER NOT NULL DEFAULT 0,
+                start_date TEXT,
+                end_date TEXT,
                 FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE
             )
         """)
+
+        # Safe additive migration for existing local trip databases.
+        columns = {row["name"] for row in connection.execute("PRAGMA table_info(saved_options)")}
+        for field in ("start_date", "end_date"):
+            if field not in columns:
+                connection.execute(f"ALTER TABLE saved_options ADD COLUMN {field} TEXT")
 
 
 def get_trip(trip_id):
@@ -238,6 +247,18 @@ def add_saved_option(trip_id):
     link = request.form.get("link", "").strip()
     notes = request.form.get("notes", "").strip()
     price_raw = request.form.get("price", "").strip()
+    start_date = request.form.get("start_date", "").strip()
+    end_date = request.form.get("end_date", "").strip()
+    if (start_date and not end_date) or (end_date and not start_date):
+        abort(400, description="Provide both start and end dates, or neither.")
+    if start_date:
+        try:
+            arrival = date.fromisoformat(start_date)
+            departure = date.fromisoformat(end_date)
+        except ValueError:
+            abort(400, description="Dates must be valid.")
+        if departure <= arrival:
+            abort(400, description="End date must be later than start date.")
     if not city or not name or len(city) > 100 or len(name) > 160 or category not in ("hotel", "activity", "transport") or len(notes) > 1000 or len(link) > 500 or (link and not link.startswith(("https://", "http://"))):
         abort(400, description="Check the option fields and link.")
     try:
@@ -248,8 +269,8 @@ def add_saved_option(trip_id):
         abort(400, description="Price must be a valid nonnegative amount.")
     with get_db_connection() as connection:
         connection.execute(
-            "INSERT INTO saved_options (trip_id, city, name, category, price, link, notes) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (trip_id, city, name, category, price, link, notes)
+            "INSERT INTO saved_options (trip_id, city, name, category, price, link, notes, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (trip_id, city, name, category, price, link, notes, start_date or None, end_date or None)
         )
     return redirect(url_for("saved_options", trip_id=trip_id))
 
