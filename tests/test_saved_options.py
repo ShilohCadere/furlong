@@ -153,6 +153,17 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertEqual(excursion.status_code,200)
         self.assertIn(b'Cliffs tour',excursion.data)
 
+    def test_editorial_workspace_has_route_switcher_and_city_gallery(self):
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+        res=self.client.get(f"/trip/{trip}/workspace")
+        self.assertEqual(res.status_code,200)
+        self.assertIn(b'atlas-route-identity',res.data)
+        self.assertIn(b'atlas-city-gallery',res.data)
+        self.assertIn(b'furlong-bear.svg',res.data)
+        self.assertNotIn(b'atlas-stamp',res.data)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
