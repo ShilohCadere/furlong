@@ -500,6 +500,28 @@ def update_saved_option_quote(trip_id,option_id):
     return redirect(url_for("saved_options",trip_id=trip_id))
 
 
+@app.route("/trip/<int:trip_id>/options/<int:option_id>/link",methods=["POST"])
+def update_saved_option_link(trip_id,option_id):
+    get_trip(trip_id)
+    link=request.form.get("link","").strip()
+    if len(link)>500:
+        abort(400,"Booking link must be 500 characters or fewer")
+    if link and not link.lower().startswith(("https://","http://")):
+        abort(400,"Booking link must begin with https:// or http://")
+    with get_db_connection() as db:
+        item=db.execute("SELECT city,category FROM saved_options WHERE id=? AND trip_id=?",(option_id,trip_id)).fetchone()
+        if item is None: abort(404)
+        if item["category"]!="hotel":abort(400)
+        sid=request.form.get("scenario_id",type=int)
+        if sid is not None and not db.execute("SELECT 1 FROM trip_scenarios WHERE trip_id=? AND id=?",(trip_id,sid)).fetchone():
+            abort(404)
+        db.execute("UPDATE saved_options SET link=? WHERE id=? AND trip_id=?",(link or None,option_id,trip_id))
+    if sid is not None:
+        slug="".join(c.lower() if c.isalnum() or c=="-" else "-" for c in item["city"]).strip("-")
+        return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+"#hotel-"+slug)
+    return redirect(url_for("saved_options",trip_id=trip_id))
+
+
 @app.route("/trip/<int:trip_id>/options/<int:option_id>/edit",methods=["POST"])
 def edit_saved_option(trip_id,option_id):
     get_trip(trip_id)
