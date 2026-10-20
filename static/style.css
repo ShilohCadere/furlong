@@ -1050,3 +1050,18 @@ h2 {
 .option-empty p {color:var(--muted);font-size:13px;}
 @media(max-width:850px){.option-form{grid-template-columns:repeat(2,minmax(0,1fr));}.options-heading{flex-direction:column;}.options-total{width:100%;}}
 @media(max-width:550px){.option-form{grid-template-columns:1fr;}.option-form .wide{grid-column:auto;}.option-add{padding:17px;}.option-grid{grid-template-columns:1fr;}}
+
+.scenario-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:28px 0 14px}.scenario-active{background:var(--pine)!important;color:white!important}
+.scenario-new{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px}
+.scenario-new input,.choice-row select,.option-edit input,.option-edit textarea,.option-edit select{min-width:0;padding:10px;border:1px solid var(--border);border-radius:8px;background:white;font:inherit;color:var(--pine)}
+.workspace-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:30px}
+.workspace-metrics>div{background:white;border:1px solid var(--border);border-radius:12px;padding:17px;display:flex;flex-direction:column;gap:8px}
+.workspace-metrics span,.choice-row small{font-size:12px;color:var(--muted)}
+.workspace-metrics strong{font-size:25px;font-family:var(--font-heading);font-weight:500}
+.timeline-list{display:grid;gap:10px;margin:16px 0}.timeline-list>div{border-left:3px solid var(--sage);background:white;padding:13px;border-radius:5px}
+.workspace-warning{color:#86511f;background:#fff1dc;padding:10px 14px;border-radius:7px;margin:8px 0;font-size:13px}
+.workspace-choices{display:grid;gap:11px;margin:19px 0}.choice-row{background:white;border:1px solid var(--border);border-radius:10px;padding:13px;display:grid;grid-template-columns:minmax(100px,1fr) minmax(180px,3fr) auto;gap:12px;align-items:center}
+.choice-row>div{display:flex;flex-direction:column;gap:3px}
+.option-edit{padding:10px 0;border-top:1px solid var(--border)}.option-edit summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--sage)}
+.option-edit-fields{display:grid;gap:8px;margin-top:12px}.option-edit-fields label{display:flex;flex-direction:column;font-size:12px;gap:4px}.option-edit textarea{resize:vertical}
+@media(max-width:850px){.workspace-metrics{grid-template-columns:repeat(2,1fr)}}@media(max-width:550px){.workspace-metrics{grid-template-columns:1fr}.choice-row{grid-template-columns:1fr}.choice-row button{width:100%}}
