@@ -273,6 +273,29 @@ def add_day_activity(trip_id):
     return redirect(url_for("itinerary",trip_id=trip_id,scenario=sid))
 
 
+
+@app.route("/trip/<int:trip_id>/itinerary/activity/<int:activity_id>/edit",methods=["POST"])
+def edit_day_activity(trip_id,activity_id):
+    get_trip(trip_id)
+    sid=request.form.get("scenario_id",type=int)
+    dest=request.form.get("itinerary_id",type=int)
+    title=request.form.get("title","").strip()
+    timing=request.form.get("start_time","").strip()
+    notes=request.form.get("notes","").strip()
+    if not title or len(title)>160 or len(timing)>30 or len(notes)>1000:abort(400)
+    with get_db_connection() as db:
+        activity=db.execute("""SELECT a.id FROM day_activities a JOIN scenario_itinerary d ON d.id=a.itinerary_id
+            WHERE a.id=? AND d.trip_id=? AND d.scenario_id=?""",(activity_id,trip_id,sid)).fetchone()
+        destination=db.execute("SELECT id FROM scenario_itinerary WHERE id=? AND trip_id=? AND scenario_id=?",
+            (dest,trip_id,sid)).fetchone()
+        if not activity or not destination:abort(404)
+        pos=db.execute("SELECT COALESCE(MAX(position),0)+1 FROM day_activities WHERE itinerary_id=?",
+            (dest,)).fetchone()[0]
+        db.execute("""UPDATE day_activities SET itinerary_id=?,title=?,start_time=?,notes=?,position=?
+            WHERE id=?""",(dest,title,timing,notes,pos,activity_id))
+    return redirect(url_for("itinerary",trip_id=trip_id,scenario=sid))
+
+
 @app.route("/trip/<int:trip_id>/itinerary/activity/<int:activity_id>/delete",methods=["POST"])
 def delete_day_activity(trip_id,activity_id):
     get_trip(trip_id)
