@@ -386,6 +386,13 @@ def trip_workspace(trip_id):
         selected_id=request.args.get("scenario",type=int) or scenarios[0]["id"]
         scenario=next((s for s in scenarios if s["id"]==selected_id),None)
         if scenario is None: abort(404)
+        # Upgrade legacy flight allowances without changing the selected amounts.
+        db.execute("""UPDATE saved_options SET category='flight'
+            WHERE trip_id=? AND category='transport'
+              AND city='International flights'""",(trip_id,))
+        db.execute("""UPDATE scenario_choices SET category='flight'
+            WHERE scenario_id IN (SELECT id FROM trip_scenarios WHERE trip_id=?)
+              AND city='International flights' AND category='transport'""",(trip_id,))
         options=db.execute("SELECT * FROM saved_options WHERE trip_id=? ORDER BY city,category,price,name",(trip_id,)).fetchall()
         # Historical Europe imports predate scenario_tag; identify them without
         # disturbing user-created shared options or their saved selections.
@@ -397,13 +404,6 @@ def trip_workspace(trip_id):
             db.execute("""UPDATE saved_options SET scenario_tag=substr(name,1,2)
                 WHERE trip_id=? AND scenario_tag IS NULL
                 AND (name LIKE 'S1: %' OR name LIKE 'L1: %')""",(trip_id,))
-        # Upgrade legacy flight allowances without changing the selected amounts.
-        db.execute("""UPDATE saved_options SET category='flight'
-            WHERE trip_id=? AND category='transport'
-              AND city='International flights'""",(trip_id,))
-        db.execute("""UPDATE scenario_choices SET category='flight'
-            WHERE scenario_id IN (SELECT id FROM trip_scenarios WHERE trip_id=?)
-              AND city='International flights' AND category='transport'""",(trip_id,))
         choices=db.execute("""SELECT sc.city, sc.category, sc.option_id FROM scenario_choices sc
             JOIN saved_options o ON o.id=sc.option_id AND o.trip_id=?
             WHERE sc.scenario_id=?""",(trip_id,scenario["id"])).fetchall()
@@ -428,8 +428,9 @@ def trip_workspace(trip_id):
     flights={k:v for k,v in groups.items() if k[1]=="flight"}
     excursions={k:v for k,v in groups.items() if k[1]=="activity"}
     transport={k:v for k,v in groups.items() if k[1]=="transport"}
+    selected_flights=[p for p in picked if p["category"]=="flight"]
     total=subtotal+scenario["other_costs"]
-    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,flights=flights,excursions=excursions,transport=transport,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total)
+    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,flights=flights,excursions=excursions,transport=transport,selected_flights=selected_flights,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total)
 
 
 @app.route("/trip/<int:trip_id>/flights/add", methods=["POST"])
