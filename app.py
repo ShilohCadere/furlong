@@ -452,6 +452,8 @@ def trip_workspace(trip_id):
             add_missing_europe_candidates(db,trip_id)
             from europe_seed import add_europe_route_days
             add_europe_route_days(db,trip_id)
+            from europe_seed import fill_europe_day_details
+            fill_europe_day_details(db,trip_id)
         scenarios=db.execute("SELECT * FROM trip_scenarios WHERE trip_id=? ORDER BY id",(trip_id,)).fetchall()
         if not scenarios:
             db.execute("INSERT INTO trip_scenarios (trip_id,name) VALUES (?,?)",(trip_id,"Plan A"))
@@ -605,7 +607,8 @@ def edit_flight_option(trip_id,option_id):
             departure_time=?,arrival_time=?,layovers=?,price=? WHERE id=? AND trip_id=?""",
             (fields["name"],fields["origin"],fields["destination"],fields["carrier"],
              fields["departure_time"],fields["arrival_time"],fields["layovers"],price,option_id,trip_id))
-    return redirect(url_for("trip_workspace",trip_id=trip_id)+"#flights")
+    sid=request.form.get("scenario_id",type=int)
+    return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+"#flights")
 
 
 
