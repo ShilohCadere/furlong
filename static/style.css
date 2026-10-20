@@ -1361,3 +1361,34 @@ body{background:radial-gradient(ellipse at top right,rgba(39,113,148,.11),transp
 .city-days>.primary-btn{display:inline-block;margin-top:20px}
 @media(max-width:1100px){.hotel-comparison-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.city-hub-grid,.hotel-comparison-grid{grid-template-columns:1fr}.city-day{grid-template-columns:1fr;gap:3px}.city-page-hero{padding:22px}}
+
+
+/* Exploratory budget workspace — distinctly separate from recorded spending */
+.playground-page{padding-top:35px}
+.playground-tabs{margin:20px 0 23px}
+.playground-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:26px}
+.playground-summary>div{background:linear-gradient(145deg,#123E6E,#086E74);border-radius:13px;padding:17px;color:white;min-width:0}
+.playground-summary>div:nth-child(2){background:linear-gradient(145deg,#453672,#70528D)}
+.playground-summary>div:nth-child(3){background:linear-gradient(145deg,#075C63,#16847A)}
+.playground-summary>div:nth-child(4){background:linear-gradient(145deg,#1C4A7A,#315B9B)}
+.playground-summary small{font-size:10px;letter-spacing:1px;display:block;color:#D7E7ED}
+.playground-summary strong{font:500 clamp(25px,3vw,36px) var(--font-heading);display:block;margin-top:10px}
+.playground-summary .pg-over{color:#FFD3C7}
+.playground-panel{border:1px solid #BDD2DC;background:#FBFDFF;border-radius:15px;margin:18px 0;padding:24px}
+.playground-panel h2{font-size:32px;color:#174E74;margin-bottom:8px}
+.playground-panel>p,.playground-heading p{font-size:13px;color:#4C6578}
+.playground-heading{display:flex;justify-content:space-between;gap:14px;align-items:start;margin-bottom:18px}
+.playground-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.playground-option{padding:12px;background:#EAF3F8;border-radius:10px;border:1px solid #C0D9E3;min-width:0}
+.playground-option label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px}
+.playground-option label small{color:#547387}
+.playground-option select{width:100%;min-width:0;margin-top:9px;padding:10px;border:1px solid #9BBBCB;border-radius:8px;background:white;color:#173F5D;font:inherit;font-size:12px}
+.pg-warning{color:#864C2C!important;font-weight:600;margin:13px 0 0}
+.playground-whatif{display:grid;grid-template-columns:2fr 1fr auto;gap:10px;align-items:end}
+.playground-whatif label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700}
+.playground-whatif input{padding:11px;min-width:0;border:1px solid #9CBFCE;border-radius:8px}
+.pg-extra{display:flex;align-items:center;gap:16px;padding:10px 0;border-bottom:1px solid #D2E3E9}
+.pg-extra span{flex:1}.pg-extra strong{font-size:14px}
+.playground-baseline .secondary-btn{display:inline-block;margin-top:8px}
+@media(max-width:1050px){.playground-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:750px){.playground-options{grid-template-columns:1fr}.playground-whatif{grid-template-columns:1fr}.playground-heading{flex-direction:column}}
