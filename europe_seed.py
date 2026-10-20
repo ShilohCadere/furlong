@@ -74,6 +74,21 @@ def split_edinburgh_stays(db, trip_id):
     """
     for plan in db.execute("SELECT id,name FROM trip_scenarios WHERE trip_id=?",(trip_id,)).fetchall():
         if plan["name"] not in ("S1","L1"):continue
+        for castle in ("Melville Castle","Dalhousie Castle"):
+            name=castle+" — two castle rooms"
+            exists=db.execute("""SELECT 1 FROM saved_options WHERE trip_id=? AND city='Edinburgh'
+                AND category='castle' AND name=? AND scenario_tag=?""",
+                (trip_id,name,plan["name"])).fetchone()
+            excluded=db.execute("""SELECT 1 FROM excluded_seed_options WHERE trip_id=?
+                AND city='Edinburgh' AND category='castle' AND name=? AND scenario_tag=?""",
+                (trip_id,name,plan["name"])).fetchone()
+            if not exists and not excluded:
+                db.execute("""INSERT INTO saved_options
+                    (trip_id,city,category,name,price,start_date,end_date,notes,scenario_tag)
+                    VALUES (?,?,?,?,?,?,?,?,?)""",
+                    (trip_id,"Edinburgh","castle",name,None,"2027-09-07","2027-09-08",
+                     "Two genuine rooms inside the castle for four adults; check direct group quote and transfers.",
+                     plan["name"]))
         selection=db.execute("""SELECT o.* FROM scenario_choices c JOIN saved_options o ON o.id=c.option_id
             WHERE c.scenario_id=? AND c.city='Edinburgh' AND c.category='hotel'""",(plan["id"],)).fetchone()
         if not selection or " + " not in selection["name"] or "Castle" not in selection["name"]:continue
