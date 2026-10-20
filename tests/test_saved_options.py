@@ -343,7 +343,7 @@ class SavedOptionsTests(unittest.TestCase):
             option_id=db.execute("SELECT id FROM saved_options").fetchone()[0]
             other_id=db.execute("SELECT MAX(id) FROM trips").fetchone()[0]
         self.assertEqual(self.client.post(f"/trip/{other_id}/options/{option_id}/prefer").status_code,404)
-        self.assertEqual(self.client.post(f"/trip/{other_id}/options/{option_id}/remove",follow_redirects=True).status_code,200)
+        self.assertEqual(self.client.post(f"/trip/{other_id}/options/{option_id}/remove",follow_redirects=True).status_code,404)
         self.assertIn(b"Galway stay",self.client.get(f"/trip/{self.trip_id}/options").data)
 
 
