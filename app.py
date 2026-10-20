@@ -34,6 +34,12 @@ def init_db():
             )
         """)
 
+        connection.execute("""CREATE TABLE IF NOT EXISTS excluded_seed_options (
+            trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+            city TEXT NOT NULL, name TEXT NOT NULL, category TEXT NOT NULL,
+            scenario_tag TEXT NOT NULL DEFAULT '',
+            PRIMARY KEY (trip_id,city,name,category,scenario_tag)
+        )""")
         connection.execute("""
             CREATE TABLE IF NOT EXISTS itinerary_days (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -418,9 +424,18 @@ def prefer_saved_option(trip_id, option_id):
 def remove_saved_option(trip_id, option_id):
     get_trip(trip_id)
     with get_db_connection() as connection:
-        connection.execute("DELETE FROM saved_options WHERE id = ? AND trip_id = ?", (option_id, trip_id))
+        item=connection.execute("SELECT * FROM saved_options WHERE id=? AND trip_id=?",(option_id,trip_id)).fetchone()
+        if item is None:abort(404)
+        connection.execute("""INSERT OR IGNORE INTO excluded_seed_options
+            (trip_id,city,name,category,scenario_tag) VALUES (?,?,?,?,?)""",
+            (trip_id,item["city"],item["name"],item["category"],item["scenario_tag"] or ""))
+        connection.execute("DELETE FROM saved_options WHERE id=? AND trip_id=?",(option_id,trip_id))
+    if request.form.get("return_workspace")=="1":
+        sid=request.form.get("scenario_id",type=int)
+        with get_db_connection() as db:
+            valid=db.execute("SELECT 1 FROM trip_scenarios WHERE trip_id=? AND id=?",(trip_id,sid)).fetchone()
+        if valid:return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+"#stays")
     return redirect(url_for("saved_options", trip_id=trip_id))
-
 
 
 def option_fields():
