@@ -263,6 +263,27 @@ class SavedOptionsTests(unittest.TestCase):
         itinerary=self.client.get(f"/trip/{trip}/itinerary?scenario={plans['S1']}")
         self.assertIn(b"Galway to Edinburgh",itinerary.data)
 
+    def test_budget_playground_is_read_only_and_scenario_scoped(self):
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+            plans={p["name"]:p["id"] for p in db.execute("SELECT id,name FROM trip_scenarios WHERE trip_id=?",(trip,))}
+            before=db.execute("SELECT COUNT(*) FROM scenario_choices").fetchone()[0]
+            expenses=db.execute("SELECT COUNT(*) FROM scenario_expenses").fetchone()[0]
+        s1=self.client.get(f"/trip/{trip}/budget-playground?scenario={plans['S1']}")
+        self.assertEqual(s1.status_code,200)
+        self.assertIn(b'Budget playground',s1.data)
+        self.assertIn(b'Quote needed',s1.data)
+        self.assertIn(b'18939',s1.data)
+        self.assertIn(b'pg-option',s1.data)
+        l1=self.client.get(f"/trip/{trip}/budget-playground?scenario={plans['L1']}")
+        self.assertEqual(l1.status_code,200)
+        self.assertIn(b'19817',l1.data)
+        self.assertEqual(self.client.get(f"/trip/{trip}/budget-playground?scenario=999999").status_code,404)
+        with furlong.get_db_connection() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM scenario_choices").fetchone()[0],before)
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM scenario_expenses").fetchone()[0],expenses)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
