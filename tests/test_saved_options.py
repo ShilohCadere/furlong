@@ -356,6 +356,27 @@ class SavedOptionsTests(unittest.TestCase):
             "return_workspace":"1","scenario_id":999999,"city":"Galway",
             "category":"hotel","name":"Invalid plan"}).status_code,400)
 
+    def test_quick_hotel_quote_does_not_validate_unrelated_fields(self):
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+            sid=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name='S1'",(trip,)).fetchone()["id"]
+            hotel=db.execute("""SELECT id FROM saved_options WHERE trip_id=? AND name='Harbour Hotel'
+                AND scenario_tag='S1'""",(trip,)).fetchone()
+            self.assertIsNotNone(hotel)
+            oid=hotel["id"]
+            db.execute("UPDATE saved_options SET link='legacy.example',notes=? WHERE id=?",("x"*1100,oid))
+        res=self.client.post(f"/trip/{trip}/options/{oid}/quote",
+            data={"price":"1250.50","scenario_id":sid})
+        self.assertEqual(res.status_code,302)
+        self.assertIn("scenario="+str(sid),res.headers["Location"])
+        with furlong.get_db_connection() as db:
+            row=db.execute("SELECT price,link FROM saved_options WHERE id=?",(oid,)).fetchone()
+            self.assertEqual(row["price"],1250.50)
+            self.assertEqual(row["link"],"legacy.example")
+        self.assertEqual(self.client.post(f"/trip/{trip}/options/{oid}/quote",
+            data={"price":"-10","scenario_id":sid}).status_code,400)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
