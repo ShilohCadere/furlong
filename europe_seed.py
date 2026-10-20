@@ -80,12 +80,41 @@ def add_missing_europe_candidates(db, trip_id):
                  city_dates[0],city_dates[1],variant))
 
 
+
+def add_europe_route_days(db, trip_id):
+    """Seed date/city skeletons without claiming unverified daily activities."""
+    from datetime import date,timedelta
+    city_spans={
+      "S1":[("2027-09-01","Dublin"),("2027-09-02","Dublin"),
+            ("2027-09-03","Galway"),("2027-09-04","Galway"),
+            ("2027-09-05","Edinburgh"),("2027-09-06","Edinburgh"),
+            ("2027-09-07","Edinburgh"),("2027-09-08","Inverness"),
+            ("2027-09-09","Inverness"),("2027-09-10","London"),
+            ("2027-09-11","London"),("2027-09-12","London"),
+            ("2027-09-13","Departure")],
+      "L1":[("2027-08-30","Dublin"),("2027-08-31","Dublin"),
+            ("2027-09-01","Dublin"),("2027-09-02","Galway"),
+            ("2027-09-03","Galway"),("2027-09-04","Galway"),
+            ("2027-09-05","Edinburgh"),("2027-09-06","Edinburgh"),
+            ("2027-09-07","Edinburgh"),("2027-09-08","Inverness"),
+            ("2027-09-09","Inverness"),("2027-09-10","London"),
+            ("2027-09-11","London"),("2027-09-12","London"),
+            ("2027-09-13","Departure")]
+    }
+    for variant,route in city_spans.items():
+        row=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name=?",(trip_id,variant)).fetchone()
+        if not row:continue
+        for when,city in route:
+            db.execute("""INSERT OR IGNORE INTO scenario_itinerary(trip_id,scenario_id,day_date,city,title)
+                VALUES (?,?,?,?,?)""",(trip_id,row["id"],when,city,"Departure day" if city=="Departure" else city+" · explore and discover"))
+
 def import_europe_2027(db):
     """Create a separate trip and scenarios, not overwriting any existing trip."""
     existing=db.execute("SELECT id FROM trips WHERE name=? ORDER BY id LIMIT 1",("Europe 2027",)).fetchone()
     if existing:
         # Repeat clicks never duplicate or overwrite user changes.
         add_missing_europe_candidates(db, existing["id"])
+        add_europe_route_days(db, existing["id"])
         return existing["id"]
     db.execute("INSERT INTO trips(name,destination) VALUES (?,?)",
                ("Europe 2027","Ireland · Scotland · England"))
@@ -132,4 +161,5 @@ def import_europe_2027(db):
             db.execute("INSERT INTO scenario_choices(scenario_id,city,category,option_id) VALUES (?,?,?,?)",
                        (scenario,city,category,lookup[(variant,city,name)]))
     add_missing_europe_candidates(db, trip_id)
+    add_europe_route_days(db, trip_id)
     return trip_id
