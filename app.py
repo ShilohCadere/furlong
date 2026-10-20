@@ -393,11 +393,21 @@ def add_saved_option(trip_id):
         abort(400, description="Price must be a number.")
     if price is not None and (not 0 <= price <= 10000000 or not __import__("math").isfinite(price)):
         abort(400, description="Price must be a valid nonnegative amount.")
+    sid=request.form.get("scenario_id",type=int) if request.form.get("return_workspace")=="1" else None
     with get_db_connection() as connection:
+        scenario_tag=None
+        if sid is not None:
+            plan=connection.execute("SELECT name FROM trip_scenarios WHERE id=? AND trip_id=?",(sid,trip_id)).fetchone()
+            if not plan or category!="hotel":abort(400)
+            scenario_tag=plan["name"]
         connection.execute(
-            "INSERT INTO saved_options (trip_id, city, name, category, price, link, notes, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (trip_id, city, name, category, price, link, notes, start_date or None, end_date or None)
+            """INSERT INTO saved_options (trip_id, city, name, category, price, link, notes, start_date, end_date, scenario_tag)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (trip_id, city, name, category, price, link, notes, start_date or None, end_date or None,scenario_tag)
         )
+    if sid is not None:
+        slug=city.lower().replace(" ","-")
+        return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+"#hotel-"+slug)
     return redirect(url_for("saved_options", trip_id=trip_id))
 
 
