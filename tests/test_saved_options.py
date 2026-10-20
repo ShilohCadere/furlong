@@ -89,7 +89,9 @@ class SavedOptionsTests(unittest.TestCase):
                     JOIN saved_options o ON o.id=sc.option_id WHERE sc.scenario_id=?""",(plan["id"],)).fetchall()
                 total=round(plan["other_costs"]+sum(row["price"] or 0 for row in picked),2)
                 self.assertEqual(total,{"S1":18939,"L1":19817}[plan["name"]])
-                self.assertEqual(len(picked),8)
+                # Edinburgh is now two independently selected stays:
+                # two city nights and one castle night.
+                self.assertEqual(len(picked),9)
 
     def test_europe_options_cannot_cross_scenarios(self):
         self.client.post("/trips/import-europe-2027")
