@@ -328,6 +328,30 @@ class SavedOptionsTests(unittest.TestCase):
         page=self.client.get(f"/trip/{trip}/workspace?scenario={sid}")
         self.assertIn(b'hotel-delete-btn',page.data)
 
+    def test_add_stay_from_workspace_keeps_scenarios_separate(self):
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+            ids={row["name"]:row["id"] for row in db.execute(
+                "SELECT id,name FROM trip_scenarios WHERE trip_id=?",(trip,))}
+        added=self.client.post(f"/trip/{trip}/options/add",data={
+            "return_workspace":"1","scenario_id":ids["S1"],"city":"Galway",
+            "category":"hotel","name":"New apartment test","price":"999",
+            "start_date":"2027-09-03","end_date":"2027-09-05"})
+        self.assertEqual(added.status_code,302)
+        self.assertIn("scenario="+str(ids["S1"])+"#hotel-galway",added.headers["Location"])
+        with furlong.get_db_connection() as db:
+            row=db.execute("SELECT scenario_tag FROM saved_options WHERE trip_id=? AND name=?",
+                           (trip,"New apartment test")).fetchone()
+            self.assertEqual(row["scenario_tag"],"S1")
+        self.assertIn(b"New apartment test",self.client.get(
+            f"/trip/{trip}/workspace?scenario={ids['S1']}").data)
+        self.assertNotIn(b"New apartment test",self.client.get(
+            f"/trip/{trip}/workspace?scenario={ids['L1']}").data)
+        self.assertEqual(self.client.post(f"/trip/{trip}/options/add",data={
+            "return_workspace":"1","scenario_id":999999,"city":"Galway",
+            "category":"hotel","name":"Invalid plan"}).status_code,400)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
