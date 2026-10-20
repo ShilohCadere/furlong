@@ -304,6 +304,30 @@ class SavedOptionsTests(unittest.TestCase):
         with furlong.get_db_connection() as db:
             self.assertEqual(db.execute("SELECT COUNT(*) FROM saved_options WHERE trip_id=?",(trip,)).fetchone()[0],before)
 
+    def test_deleted_europe_candidate_stays_deleted(self):
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+            sid=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name='S1'",(trip,)).fetchone()["id"]
+            option=db.execute("""SELECT id FROM saved_options WHERE trip_id=? AND city='Galway'
+                AND scenario_tag='S1' AND name='Canal Court'""",(trip,)).fetchone()
+            self.assertIsNotNone(option)
+            oid=option["id"]
+        deleted=self.client.post(f"/trip/{trip}/options/{oid}/remove",
+            data={"return_workspace":"1","scenario_id":sid})
+        self.assertEqual(deleted.status_code,302)
+        self.assertIn("#stays",deleted.headers["Location"])
+        self.client.get(f"/trip/{trip}/workspace?scenario={sid}")
+        self.client.post("/trips/import-europe-2027")
+        with furlong.get_db_connection() as db:
+            self.assertIsNone(db.execute("SELECT id FROM saved_options WHERE id=?",(oid,)).fetchone())
+            self.assertEqual(db.execute("""SELECT COUNT(*) FROM saved_options
+                WHERE trip_id=? AND name='Canal Court' AND scenario_tag='S1'""",(trip,)).fetchone()[0],0)
+            self.assertEqual(db.execute("""SELECT COUNT(*) FROM saved_options
+                WHERE trip_id=? AND name='Canal Court' AND scenario_tag='L1'""",(trip,)).fetchone()[0],1)
+        page=self.client.get(f"/trip/{trip}/workspace?scenario={sid}")
+        self.assertIn(b'hotel-delete-btn',page.data)
+
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
         self.assertEqual(self.add("Bad",price="nan").status_code,400)
