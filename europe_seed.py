@@ -45,9 +45,9 @@ def import_europe_2027(db):
             if dates is None:continue
             actual_price=PRICE_OVERRIDES.get((variant,city,name),price)
             db.execute("""INSERT INTO saved_options
-                (trip_id,city,name,category,price,link,notes,start_date,end_date)
-                VALUES (?,?,?,?,?,?,?,?,?)""",
-                (trip_id,city,name,"hotel",actual_price,None,f"[{variant} estimate] {notes}",dates[0],dates[1]))
+                (trip_id,city,name,category,price,link,notes,start_date,end_date,scenario_tag)
+                VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                (trip_id,city,name,"hotel",actual_price,None,f"[{variant} estimate] {notes}",dates[0],dates[1],variant))
             oid=db.execute("SELECT last_insert_rowid()").fetchone()[0]
             lookup[(variant,city,name)]=oid
     for variant,info in BASELINES.items():
@@ -59,10 +59,10 @@ def import_europe_2027(db):
         ]
         for city,category,label,amount in components:
             db.execute("""INSERT INTO saved_options
-                (trip_id,city,name,category,price,notes)
-                VALUES (?,?,?,?,?,?)""",
+                (trip_id,city,name,category,price,notes,scenario_tag)
+                VALUES (?,?,?,?,?,?,?)""",
                 (trip_id,city,f"{variant}: {label}",category,amount,
-                 f"{variant} whole-trip USD group planning allowance; not a booked price."))
+                 f"{variant} whole-trip USD group planning allowance; not a booked price.",variant))
             option_id=db.execute("SELECT last_insert_rowid()").fetchone()[0]
             lookup[(variant,city,f"{variant}: {label}")]=option_id
         subtotal=sum(db.execute("SELECT price FROM saved_options WHERE id=?",
