@@ -4,7 +4,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}"></head>
-<body><div class="app-layout"><aside class="sidebar"><a class="brand" href="{{ url_for('home') }}">furlong<span>.</span></a>
+<body><div class="app-layout"><aside class="sidebar"><a class="brand" href="{{ url_for('home') }}"><img class="furlong-bear-mark" src="{{ url_for('static',filename='furlong-bear.svg') }}" alt=""><span class="brand-wordmark">furlong<span>.</span></span></a>
 <nav class="sidebar-nav" aria-label="Trip navigation">
 <a class="nav-link" href="{{ url_for('home') }}">⌂ My Journeys</a>
 <a class="nav-link" href="{{ url_for('trip_overview',trip_id=trip.id) }}">◫ Overview</a>
