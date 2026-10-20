@@ -89,7 +89,7 @@ class SavedOptionsTests(unittest.TestCase):
                     JOIN saved_options o ON o.id=sc.option_id WHERE sc.scenario_id=?""",(plan["id"],)).fetchall()
                 total=round(plan["other_costs"]+sum(row["price"] or 0 for row in picked),2)
                 self.assertEqual(total,{"S1":18939,"L1":19817}[plan["name"]])
-                self.assertEqual(len(picked),5)
+                self.assertEqual(len(picked),8)
 
     def test_bad_price_rejected(self):
         self.assertEqual(self.add("Bad",price="-5").status_code,400)
