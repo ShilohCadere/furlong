@@ -1,5 +1,9 @@
 
 import sqlite3
+import os
+import secrets
+from functools import wraps
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date
 from pathlib import Path
 
@@ -9,12 +13,25 @@ from flask import (
     request,
     redirect,
     url_for,
-    abort
+    abort, session, g
 )
 
 app = Flask(__name__)
 
 DATABASE = Path(__file__).resolve().parent / "furlong.db"
+# Local development sessions remain valid when Flask restarts.
+_secret_path = Path(__file__).resolve().parent / ".furlong_session_secret"
+if os.environ.get("FURLONG_SECRET_KEY"):
+    app.secret_key=os.environ["FURLONG_SECRET_KEY"]
+else:
+    if not _secret_path.exists():
+        try:
+            fd=os.open(_secret_path,os.O_CREAT | os.O_EXCL | os.O_WRONLY,0o600)
+            with os.fdopen(fd,"w") as stream:stream.write(secrets.token_hex(32))
+        except FileExistsError:pass
+    app.secret_key=_secret_path.read_text().strip()
+app.config.update(SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE="Lax")
+
 
 
 def get_db_connection():
@@ -34,6 +51,14 @@ def init_db():
             )
         """)
 
+        connection.execute("""CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+            password_hash TEXT NOT NULL
+        )""")
+        trip_columns={row["name"] for row in connection.execute("PRAGMA table_info(trips)")}
+        if "user_id" not in trip_columns:
+            connection.execute("ALTER TABLE trips ADD COLUMN user_id INTEGER REFERENCES users(id)")
         connection.execute("""CREATE TABLE IF NOT EXISTS excluded_seed_options (
             trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
             city TEXT NOT NULL, name TEXT NOT NULL, category TEXT NOT NULL,
@@ -132,14 +157,69 @@ def init_db():
 def get_trip(trip_id):
     with get_db_connection() as connection:
         trip = connection.execute(
-            "SELECT * FROM trips WHERE id = ?",
-            (trip_id,)
+            "SELECT * FROM trips WHERE id = ? AND user_id = ?",
+            (trip_id,session.get("user_id"))
         ).fetchone()
 
     if trip is None:
         abort(404)
 
     return trip
+
+
+@app.before_request
+def require_login():
+    if request.endpoint in ("login","register","static") or request.endpoint is None:
+        return
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
+
+
+@app.context_processor
+def logged_in_user():
+    return {"active_username":session.get("username")}
+
+
+@app.route("/register",methods=["GET","POST"])
+def register():
+    if request.method=="GET":return render_template("auth.html",mode="register",error=None)
+    username=request.form.get("username","").strip()
+    password=request.form.get("password","")
+    if not 3<=len(username)<=40 or not username.replace("_","").replace("-","").isalnum() or len(password)<10:
+        return render_template("auth.html",mode="register",
+            error="Use a 3–40 character username (letters, numbers, _ or -) and a password of at least 10 characters."),400
+    with get_db_connection() as db:
+        if db.execute("SELECT 1 FROM users WHERE username=?",(username,)).fetchone():
+            return render_template("auth.html",mode="register",error="That username is already taken."),409
+        had_users=db.execute("SELECT COUNT(*) FROM users").fetchone()[0]>0
+        db.execute("INSERT INTO users(username,password_hash) VALUES (?,?)",
+                   (username,generate_password_hash(password)))
+        uid=db.execute("SELECT last_insert_rowid()").fetchone()[0]
+        # First local account inherits this installation's existing guest trips.
+        # Future accounts never inherit other users' trips.
+        if not had_users:db.execute("UPDATE trips SET user_id=? WHERE user_id IS NULL",(uid,))
+    session.clear()
+    session.update(user_id=uid,username=username)
+    return redirect(url_for("home"))
+
+
+@app.route("/login",methods=["GET","POST"])
+def login():
+    if request.method=="GET":return render_template("auth.html",mode="login",error=None)
+    username=request.form.get("username","").strip()
+    with get_db_connection() as db:
+        user=db.execute("SELECT * FROM users WHERE username=?",(username,)).fetchone()
+    if not user or not check_password_hash(user["password_hash"],request.form.get("password","")):
+        return render_template("auth.html",mode="login",error="Incorrect username or password."),401
+    session.clear()
+    session.update(user_id=user["id"],username=user["username"])
+    return redirect(url_for("home"))
+
+
+@app.route("/logout",methods=["POST"])
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -152,17 +232,18 @@ def home():
             with get_db_connection() as connection:
                 connection.execute(
                     """
-                    INSERT INTO trips (name, destination)
-                    VALUES (?, ?)
+                    INSERT INTO trips (name, destination, user_id)
+                    VALUES (?, ?, ?)
                     """,
-                    (trip_name, destination)
+                    (trip_name, destination,session["user_id"])
                 )
 
         return redirect(url_for("home"))
 
     with get_db_connection() as connection:
         trips = connection.execute(
-            "SELECT * FROM trips ORDER BY id DESC"
+            "SELECT * FROM trips WHERE user_id=? ORDER BY id DESC"
+            ,(session["user_id"],)
         ).fetchall()
 
     return render_template("index.html", trips=trips)
