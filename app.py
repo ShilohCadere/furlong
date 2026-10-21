@@ -173,6 +173,13 @@ def require_login():
         return
     if not session.get("user_id"):
         return redirect(url_for("login"))
+    # Enforce ownership even for legacy handlers that do not call get_trip().
+    trip_id=(request.view_args or {}).get("trip_id")
+    if trip_id is not None:
+        with get_db_connection() as db:
+            allowed=db.execute("SELECT 1 FROM trips WHERE id=? AND user_id=?",
+                               (trip_id,session["user_id"])).fetchone()
+        if not allowed:abort(404)
 
 
 @app.context_processor
