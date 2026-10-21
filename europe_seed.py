@@ -40,6 +40,9 @@ MORE_HOTELS = [
     ("Edinburgh","Motel One Edinburgh-Princes",None,"Central near Waverley and Princes Street; verify two-room group cost."),
     ("Edinburgh","Holiday Inn Express Edinburgh – Royal Mile",None,"Old Town city stay; check two rooms for Sep 5–7."),
     ("Edinburgh","Premier Inn Edinburgh City Centre (Royal Mile)",None,"Royal Mile area alternative; verify location and two-room total."),
+    ("Edinburgh","Destiny Scotland – Hill Street Apartments",None,"To investigate. Central New Town; two-bedroom apartment. Check stairs and accessibility for four adults."),
+    ("Edinburgh","Wilde Aparthotels – Grassmarket",None,"To investigate. Historic Grassmarket location; verify actual two-bedroom layout and bathroom arrangement for two couples."),
+    ("Edinburgh","No.1 Apartments – Edinburgh",None,"To investigate. Castle views; verify noise, stair access and two private bedrooms for four adults."),
 
     ("Inverness","Premier Inn Inverness Centre (River Ness)",None,"Central riverside budget candidate; two rooms unquoted."),
     ("Inverness","Aye Stay",None,"Guesthouse candidate; room availability and group price unverified."),
@@ -152,7 +155,7 @@ def add_missing_europe_candidates(db, trip_id):
                       "London":("2027-09-10","2027-09-13")},
                 "L1":{"Dublin":("2027-08-30","2027-09-02"),
                       "Galway":("2027-09-02","2027-09-05"),
-                      "Edinburgh":("2027-09-05","2027-09-08"),
+                      "Edinburgh":("2027-09-05","2027-09-07"),
                       "Inverness":("2027-09-08","2027-09-10"),
                       "London":("2027-09-10","2027-09-13")}
             }[variant][city]
