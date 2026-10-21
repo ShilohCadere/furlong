@@ -223,9 +223,9 @@ def add_europe_route_days(db, trip_id):
             db.execute("""INSERT OR IGNORE INTO scenario_itinerary(trip_id,scenario_id,day_date,city,title)
                 VALUES (?,?,?,?,?)""",(trip_id,row["id"],when,city,"Departure day" if city=="Departure" else city+" · explore and discover"))
 
-def import_europe_2027(db):
+def import_europe_2027(db, user_id):
     """Create a separate trip and scenarios, not overwriting any existing trip."""
-    existing=db.execute("SELECT id FROM trips WHERE name=? ORDER BY id LIMIT 1",("Europe 2027",)).fetchone()
+    existing=db.execute("SELECT id FROM trips WHERE name=? AND user_id=? ORDER BY id LIMIT 1",("Europe 2027",user_id)).fetchone()
     if existing:
         # Repeat clicks never duplicate or overwrite user changes.
         add_missing_europe_candidates(db, existing["id"])
@@ -233,8 +233,8 @@ def import_europe_2027(db):
         add_europe_route_days(db, existing["id"])
         fill_europe_day_details(db, existing["id"])
         return existing["id"]
-    db.execute("INSERT INTO trips(name,destination) VALUES (?,?)",
-               ("Europe 2027","Ireland · Scotland · England"))
+    db.execute("INSERT INTO trips(name,destination,user_id) VALUES (?,?,?)",
+               ("Europe 2027","Ireland · Scotland · England",user_id))
     trip_id=db.execute("SELECT last_insert_rowid()").fetchone()[0]
     # Distinct dated candidate records for each route, so dates aren't lost.
     lookup={}
