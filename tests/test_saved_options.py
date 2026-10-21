@@ -40,6 +40,11 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertEqual(self.client.get(f"/trip/{trip}").status_code,404)
         self.assertNotIn(b"Test trip",self.client.get("/").data)
         self.assertEqual(self.client.post("/trips/import-europe-2027").status_code,302)
+        with furlong.get_db_connection() as db:
+            owned=db.execute("""SELECT user_id FROM trips WHERE name='Europe 2027'
+                ORDER BY id DESC LIMIT 1""").fetchone()["user_id"]
+            another=db.execute("SELECT id FROM users WHERE username='anotheruser'").fetchone()["id"]
+            self.assertEqual(owned,another)
         self.client.post("/logout")
         self.client.post("/login",data={"username":"testuser","password":"correct-horse-battery"})
         self.assertEqual(self.client.get(f"/trip/{trip}").status_code,200)
