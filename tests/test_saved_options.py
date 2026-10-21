@@ -13,8 +13,11 @@ class SavedOptionsTests(unittest.TestCase):
         furlong.DATABASE = Path(self.tmp.name) / "test.db"
         furlong.init_db()
         self.client = furlong.app.test_client()
+        registered=self.client.post("/register",data={"username":"testuser","password":"correct-horse-battery"})
+        self.assertEqual(registered.status_code,302)
         with furlong.get_db_connection() as conn:
-            conn.execute("INSERT INTO trips (name,destination) VALUES (?,?)", ("Test trip", "Ireland"))
+            user_id=conn.execute("SELECT id FROM users WHERE username='testuser'").fetchone()[0]
+            conn.execute("INSERT INTO trips (name,destination,user_id) VALUES (?,?,?)", ("Test trip", "Ireland",user_id))
             self.trip_id = conn.execute("SELECT id FROM trips").fetchone()[0]
 
     def tearDown(self):
@@ -27,6 +30,22 @@ class SavedOptionsTests(unittest.TestCase):
             data={"city":city,"name":name,"price":price,"category":category},
             follow_redirects=True
         )
+
+    def test_accounts_keep_trips_private_and_login_restores_them(self):
+        trip=self.trip_id
+        self.client.post("/logout")
+        self.assertEqual(self.client.get(f"/trip/{trip}").status_code,302)
+        self.assertEqual(self.client.post("/register",data={
+            "username":"anotheruser","password":"another-long-password"}).status_code,302)
+        self.assertEqual(self.client.get(f"/trip/{trip}").status_code,404)
+        self.assertNotIn(b"Test trip",self.client.get("/").data)
+        self.assertEqual(self.client.post("/trips/import-europe-2027").status_code,302)
+        self.client.post("/logout")
+        self.client.post("/login",data={"username":"testuser","password":"correct-horse-battery"})
+        self.assertEqual(self.client.get(f"/trip/{trip}").status_code,200)
+        self.assertIn(b"Test trip",self.client.get("/").data)
+        self.assertEqual(self.client.post("/login",data={
+            "username":"testuser","password":"wrong-password"}).status_code,401)
 
     def test_multiple_options_and_preference_preserves_alternatives(self):
         self.assertEqual(self.add("Eyre Square").status_code, 200)
