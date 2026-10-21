@@ -931,7 +931,7 @@ def choose_scenario_option(trip_id):
 def import_europe_trip():
     from europe_seed import import_europe_2027
     with get_db_connection() as db:
-        trip_id=import_europe_2027(db)
+        trip_id=import_europe_2027(db,session["user_id"])
     return redirect(url_for("trip_workspace",trip_id=trip_id))
 
 
