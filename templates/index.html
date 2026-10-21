@@ -30,7 +30,7 @@
             </nav>
 
             <div class="sidebar-footer">
-                <span>Make room for the journey.</span>
+                <span>Signed in as {{ active_username }}</span><form action="{{ url_for('logout') }}" method="post"><button class="secondary-btn" type="submit">Sign out</button></form>
             </div>
         </aside>
 
