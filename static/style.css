@@ -1400,3 +1400,16 @@ body{background:radial-gradient(ellipse at top right,rgba(39,113,148,.11),transp
 .hotel-add-stay[open]{padding-bottom:17px}
 
 .hotel-quick-quote{display:flex;align-items:end;gap:9px;flex-wrap:wrap;padding:9px 0}.hotel-quick-quote label{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px;font-size:12px;font-weight:700}.hotel-quick-quote input{width:100%;min-width:0;border:1px solid #AAC4D0;border-radius:7px;padding:8px;font:inherit}.hotel-quick-quote button{white-space:nowrap}
+
+.auth-shell{min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 20% 10%,#17587a 0,#113755 45%,#142944 100%);padding:24px}
+.auth-card{width:min(100%,460px);background:#fbfdff;border-radius:18px;padding:35px;box-shadow:0 22px 60px #001e3b50}
+.auth-card .brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-bottom:24px}
+.auth-card h1{font-size:clamp(32px,5vw,45px);color:#183d5a}
+.auth-card .page-subtitle{margin:10px 0 20px}
+.auth-card a{color:#176e88}
+.auth-form{display:grid;gap:17px;margin-top:22px}
+.auth-form label{display:flex;flex-direction:column;gap:8px;font-size:13px;font-weight:700;color:#25536c}
+.auth-form input{padding:13px;border-radius:8px;border:1px solid #9dbdcf;background:white;font:inherit}
+.auth-form button{margin-top:4px}
+.auth-error{background:#fff0f1;color:#922b49;padding:12px;border-radius:9px;font-size:13px}
+.auth-disclaimer{font-size:11px;color:#657f90;line-height:1.5;margin-top:24px}
