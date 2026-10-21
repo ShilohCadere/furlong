@@ -117,6 +117,25 @@ class SavedOptionsTests(unittest.TestCase):
                 # two city nights and one castle night.
                 self.assertEqual(len(picked),9)
 
+    def test_edinburgh_apartment_candidates_both_routes_idempotent(self):
+        for _ in range(2):
+            self.client.post("/trips/import-europe-2027")
+        names=("Destiny Scotland – Hill Street Apartments",
+               "Wilde Aparthotels – Grassmarket",
+               "No.1 Apartments – Edinburgh")
+        with furlong.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
+            for variant in ("S1","L1"):
+                for name in names:
+                    rows=db.execute("""SELECT * FROM saved_options
+                        WHERE trip_id=? AND scenario_tag=? AND city='Edinburgh'
+                        AND category='hotel' AND name=?""",(trip,variant,name)).fetchall()
+                    self.assertEqual(len(rows),1)
+                    self.assertIsNone(rows[0]["price"])
+                    self.assertEqual((rows[0]["start_date"],rows[0]["end_date"]),
+                        ("2027-09-05","2027-09-07"))
+                    self.assertIn("To investigate",rows[0]["notes"])
+
     def test_europe_options_cannot_cross_scenarios(self):
         self.client.post("/trips/import-europe-2027")
         with furlong.get_db_connection() as db:
