@@ -1635,3 +1635,38 @@ dialog::backdrop{background:#00141bdb}
 .option-empty{background:#103847!important;border:1px solid #8296ab!important;border-radius:12px;color:#b5d9db}
 .option-empty p{color:#b5d9db}
 @media(max-width:550px){.option-card{padding:14px!important}.option-card.is-preferred{padding:13px!important}.option-add{padding:16px!important}}
+
+/* DESIGN ATLAS — Budget Playground (visual only; calculations remain in template JS). */
+.playground-page{background:var(--bg,#071f2b);color:var(--text,#f4e7b8)}
+.playground-page>h1{color:var(--text,#f4e7b8);font-family:var(--font-heading)}
+.playground-page>.page-subtitle{color:var(--soft,#b5d9db);max-width:850px}
+.playground-page>.page-subtitle strong{color:var(--platinum,#d8e5eb)}
+.playground-tabs .scenario-active{background:var(--gold,#f4be4f)!important;color:#172a31!important;border-color:var(--gold,#f4be4f)!important}
+.playground-summary{gap:12px;margin-bottom:22px}
+.playground-summary>div{border:1px solid var(--silver,#c4d4e2);box-shadow:inset 0 1px 0 #e8f4ff32;background:linear-gradient(145deg,#174d78,#0b364f);color:#f4e7b8}
+.playground-summary>div:nth-child(2){background:linear-gradient(145deg,#4b277c,#281d51);border-color:var(--platinum,#d8e5eb)}
+.playground-summary>div:nth-child(3){background:linear-gradient(145deg,#08715c,#073f42);border-color:var(--copper,#e5a17c)}
+.playground-summary>div:nth-child(4){background:linear-gradient(145deg,#912647,#481e3c);border-color:var(--bronze,#c69a60)}
+.playground-summary small{color:#d5e7ec!important}
+.playground-summary strong{color:#f4e7b8!important}
+.playground-summary .pg-over{color:#ffd2bd!important}
+.playground-panel{background:#103847!important;color:#d8e5eb!important;border:1px solid #8296ab!important;border-radius:12px;padding:22px}
+.playground-panel h2{color:#f4e7b8!important;font-family:var(--font-heading);font-weight:400}
+.playground-panel>p,.playground-heading p{color:#b5d9db!important}
+.playground-panel strong{color:#f4e7b8}
+.playground-option{background:#0a2d3c!important;border:1px solid #587b8a!important;border-radius:9px;color:#d8e5eb!important}
+.playground-option label,.playground-option label strong{color:#d8e5eb!important}
+.playground-option label small{color:#e5a17c!important}
+.playground-option select,.playground-whatif input{background:#0d3040!important;color:#f4e7b8!important;border:1px solid #8fa5b8!important;border-radius:8px}
+.playground-option select option{background:#0d3040;color:#f4e7b8}
+.playground-whatif label{color:#d8e5eb}
+.playground-whatif input::placeholder{color:#adc8d0}
+.playground-panel .secondary-btn{background:#123b4a!important;color:#d8e5eb!important;border:1px solid #99aabb!important}
+.playground-panel .secondary-btn:hover{background:#205469!important;color:#fff!important}
+.playground-panel .primary-btn{background:#f4be4f!important;color:#172a31!important;border:1px solid #f4be4f!important}
+.pg-warning:not(:empty){background:#4b2338!important;color:#ffe0d1!important;border:1px solid #c69a60!important;border-radius:8px;padding:10px 13px}
+.pg-extra{border-bottom:1px solid #416a79!important;color:#d8e5eb}
+.pg-extra strong{color:#f4be4f!important}
+.playground-baseline{border-color:#c69a60!important}
+.playground-baseline a.secondary-btn{display:inline-block;margin-top:12px}
+@media(max-width:750px){.playground-panel{padding:17px}.playground-summary>div{padding:14px}}
