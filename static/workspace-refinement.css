@@ -80,3 +80,12 @@
 .atlas-timeline>div span:not(.atlas-time-dot){color:#d8e5eb!important}
 .atlas-timeline>div small{color:#b5d9db!important}
 .atlas-time-dot{background:#c69a60!important;flex-shrink:0}
+
+/* Accessible new-route control: remove legacy light input. */
+.scenario-new{align-items:center}
+.scenario-new-label{color:#d8e5eb;font-size:13px;font-weight:600;letter-spacing:.01em}
+.scenario-new input[name="name"]{background:#0d3040!important;color:#f4e7b8!important;border:1px solid #a9bccb!important;border-radius:8px;padding:10px 12px;min-height:44px;min-width:min(220px,100%);font:inherit}
+.scenario-new input[name="name"]::placeholder{color:#b8cdd5;opacity:1}
+.scenario-new input[name="name"]:focus-visible{outline:3px solid #f4be4f!important;outline-offset:3px!important}
+.scenario-new button{min-height:44px}
+@media(max-width:550px){.scenario-new-label{width:100%}.scenario-new input[name="name"]{flex:1 1 100%;min-width:0}}
