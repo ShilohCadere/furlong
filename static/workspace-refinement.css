@@ -71,3 +71,12 @@
 .atlas-budget .option-form input{background:#0d3040;color:#f4e7b8;border-color:#8fa5b8}
 .workspace-warning{background:#4b2338;color:#ffe0d1;border:1px solid #c69a60}
 @media(max-width:650px){.atlas-jump{position:static}.hotel-editor-drawer{width:100vw;border-radius:0}.hotel-editor-header{padding:20px}.hotel-editor-body{padding:20px}.hotel-drawer-form{grid-template-columns:1fr}.hotel-drawer-form label{grid-column:1/-1}.atlas-city-tile{min-height:120px!important}}
+
+/* Stay timeline: explicit dark Atlas surface and accessible text contrast. */
+.atlas-timeline{background:#103847!important;color:#d8e5eb!important;border:1px solid #8296ab!important;border-left:4px solid #e5a17c!important;border-radius:10px;padding:18px 22px}
+.atlas-timeline .eyebrow{color:#e5a17c!important}
+.atlas-timeline>div{border-top:1px solid #416a79!important;color:#d8e5eb!important}
+.atlas-timeline>div strong{color:#f4e7b8!important}
+.atlas-timeline>div span:not(.atlas-time-dot){color:#d8e5eb!important}
+.atlas-timeline>div small{color:#b5d9db!important}
+.atlas-time-dot{background:#c69a60!important;flex-shrink:0}
