@@ -193,7 +193,7 @@
                             <h3>No saved ideas yet</h3>
                             <p>Save hotels, places, and experiences to compare later.</p>
                         </div>
-                    {% endif %>
+                    {% endif %}
 
                     <div class="preview-footer">
                         <a class="preview-action" href="{{ url_for('saved_options',trip_id=trip.id) }}">{{ "View saved options" if saved_ideas else "Add saved ideas" }} →</a>
