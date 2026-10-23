@@ -201,3 +201,11 @@
 .atlas-page .atlas-choice-field-label select{display:block;width:100%;margin-top:5px}
 .atlas-page section#budget{background:#092936!important;border:1px solid #547588!important;border-radius:12px}
 .atlas-page section#budget .atlas-section-head>div>p:not(.eyebrow){background:#092936!important;color:#ffffff!important}
+
+/* Route naming: match Atlas controls with readable, responsive editing. */
+.scenario-rename{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px}
+.scenario-rename label{color:#d8e5eb;font-size:12px;font-weight:600}
+.scenario-rename input{background:#0d3040!important;color:#f4e7b8!important;border:1px solid #a9bccb!important;border-radius:8px;padding:9px 11px;min-height:44px;max-width:240px;width:100%}
+.scenario-rename button{min-height:44px}
+.scenario-rename input:focus-visible{outline:3px solid #f4be4f!important;outline-offset:3px}
+@media(max-width:550px){.scenario-rename label{width:100%}.scenario-rename input{max-width:none;flex:1 1 100%}}
