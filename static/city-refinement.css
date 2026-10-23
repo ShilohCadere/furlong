@@ -1,0 +1,20 @@
+/* Destination workspace refinement: one city, compare without page-hopping. */
+.city-page-hero{padding-bottom:18px!important}
+.city-page-hero>p:not(.eyebrow){color:#506680}
+.city-hub-grid{align-items:start}
+.city-compare-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:21px;margin-bottom:10px}
+.city-compare-heading h3{font-family:var(--font-body);font-size:14px;margin:0;color:#263C5B}
+.city-compare-heading small{font-size:12px;font-weight:400}
+.city-compare-heading a,.city-manage-link{font-size:12px;color:#325C8F;text-decoration:underline;text-underline-offset:3px}
+.city-hotel-list{display:grid;gap:7px}
+.city-hotel-row{border:1px solid #D4DEEB;border-radius:10px;background:#F8FAFE;padding:9px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.city-hotel-current{background:#E8F4F1;border-color:#388478}
+.city-hotel-description{display:flex;flex-direction:column;min-width:0;gap:3px}
+.city-hotel-description strong{font-size:13px;line-height:1.35;color:#263952;overflow-wrap:anywhere}
+.city-hotel-description small{font-size:11px;color:#52667D}
+.city-hotel-row form{flex-shrink:0}
+.city-hotel-row .secondary-btn{padding:7px 10px;font-size:11px}
+.city-hotel-row button:disabled{opacity:.72;cursor:default}
+.city-manage-link{display:inline-block;margin-top:12px}
+.city-empty{font-size:13px;color:#657589}
+@media(max-width:650px){.city-compare-heading{align-items:flex-start;flex-direction:column}.city-hotel-row{padding:10px 8px}}
