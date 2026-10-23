@@ -1699,3 +1699,20 @@ dialog::backdrop{background:#00141bdb}
 .auth-error{background:#4b2338!important;border:1px solid #e5a17c;color:#ffe0d1!important;line-height:1.5}
 .auth-disclaimer{color:#c4d4e2!important;font-size:12px;line-height:1.6}
 @media(max-width:500px){.auth-card{padding:23px!important}}
+
+/* Beta onboarding: high-contrast New Journey modal and empty account state. */
+.trip-dialog .trip-form input{
+ background:#092936!important;color:#fff1dc!important;border:1px solid #a9bccb!important;
+ min-height:46px;caret-color:#f4be4f;
+}
+.trip-dialog .trip-form input::placeholder{color:#b8cdd5!important;opacity:1}
+.trip-dialog .trip-form input:focus-visible{outline:3px solid #f4be4f!important;outline-offset:3px}
+.trip-dialog .trip-form label{color:#d8e5eb!important}
+.trip-dialog .dialog-description{color:#d8e5eb!important}
+.trip-dialog .dialog-heading h2{color:#f4e7b8!important}
+.trip-dialog .close-btn{color:#d8e5eb!important}
+.empty-state{background:#103847!important;color:#d8e5eb!important;border:1px solid #8296ab!important}
+.empty-state h3{color:#f4e7b8!important}
+.empty-state p{color:#d8e5eb!important}
+.empty-state .empty-symbol{color:#e5a17c!important}
+.empty-state .primary-btn{background:#f4be4f!important;color:#172a31!important;border-color:#f4be4f!important}
