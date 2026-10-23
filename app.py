@@ -990,6 +990,9 @@ def choose_scenario_option(trip_id):
 
 @app.route("/trips/import-europe-2027",methods=["POST"])
 def import_europe_trip():
+    # Development fixture only; disabled for regular accounts and beta deployments.
+    if not app.config.get("ENABLE_EUROPE_IMPORT", False):
+        abort(404)
     from europe_seed import import_europe_2027
     with get_db_connection() as db:
         trip_id=import_europe_2027(db,session["user_id"])
