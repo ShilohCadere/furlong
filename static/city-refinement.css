@@ -1,20 +1,53 @@
-/* Destination workspace refinement: one city, compare without page-hopping. */
-.city-page-hero{padding-bottom:18px!important}
-.city-page-hero>p:not(.eyebrow){color:#506680}
-.city-hub-grid{align-items:start}
-.city-compare-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:21px;margin-bottom:10px}
-.city-compare-heading h3{font-family:var(--font-body);font-size:14px;margin:0;color:#263C5B}
-.city-compare-heading small{font-size:12px;font-weight:400}
-.city-compare-heading a,.city-manage-link{font-size:12px;color:#325C8F;text-decoration:underline;text-underline-offset:3px}
+/* Furlong Design Atlas: City Views.
+   Visual-only replacement. Preserves city selection, links, scenarios and records. */
+.city-page{background:var(--bg,#071f2b);color:var(--text,#f4e7b8)}
+.city-page .city-back{color:#d8e5eb;text-decoration:none}
+.city-page .city-back:hover{color:#f4be4f}
+.city-page-hero{padding:25px 30px 22px!important;background:radial-gradient(ellipse at 85% 10%,#19718b,transparent 48%),linear-gradient(120deg,#07543f,#123777)!important;border:1px solid #e5a17c!important;box-shadow:inset 0 1px 0 #d8e5eb33}
+.city-page-hero h1{color:#f4e7b8!important}
+.city-page-hero .eyebrow{color:#e5a17c!important}
+.city-page-hero>p:not(.eyebrow){color:#d8e5eb!important}
+.city-page-hero .scenario-tabs{margin-top:13px!important}
+.city-page .sidebar-city-jumps a{color:#c4d4e2}
+.city-page .sidebar-city-jumps .city-nav-active,.sidebar-city-jumps .city-nav-active{color:#f4be4f!important;border-color:#c69a60!important;background:#164657!important}
+.city-hub-grid{align-items:start;gap:15px}
+.city-hub-panel,.city-days{background:#103847!important;border:1px solid #8296ab!important;border-radius:12px!important;padding:20px!important;color:#d8e5eb!important;box-shadow:inset 0 1px 0 #d8e5eb22}
+.city-hub-panel:first-child{border-top:3px solid #c4d4e2!important}
+.city-hub-panel:nth-child(2){border-top:3px solid #e5a17c!important}
+.city-days{border-top:3px solid #c69a60!important}
+.city-hub-panel h2,.city-days h2{color:#f4e7b8!important;font-weight:400;margin-bottom:13px!important}
+.city-hub-panel p,.city-days>p:not(.eyebrow){color:#b5d9db!important}
+.city-hub-panel .eyebrow,.city-days .eyebrow{color:#e5a17c!important}
+.city-selected-stay{background:#0a2d3c!important;border:1px solid #678d98!important;border-left:4px solid #26a38a!important;border-radius:9px!important;color:#d8e5eb!important;padding:11px 13px!important}
+.city-selected-stay strong{color:#f4e7b8!important}
+.city-selected-stay p{color:#b5d9db!important}
+.city-selected-stay p:last-child{color:#f4be4f!important}
+.city-compare-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;margin-bottom:10px}
+.city-compare-heading h3{font-family:var(--font-body);font-size:14px;margin:0;color:#d8e5eb!important}
+.city-compare-heading small{font-size:12px;font-weight:400;color:#b5d9db}
+.city-compare-heading a,.city-manage-link{font-size:12px;color:#e5a17c!important;text-decoration:underline;text-underline-offset:3px}
+.city-compare-heading a:hover,.city-manage-link:hover{color:#f4be4f!important}
 .city-hotel-list{display:grid;gap:7px}
-.city-hotel-row{border:1px solid #D4DEEB;border-radius:10px;background:#F8FAFE;padding:9px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.city-hotel-current{background:#E8F4F1;border-color:#388478}
+.city-hotel-row{border:1px solid #547588!important;border-radius:9px;background:#0a2d3c!important;padding:9px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;color:#d8e5eb!important}
+.city-hotel-current{background:#12433e!important;border-color:#f4be4f!important;box-shadow:inset 3px 0 0 #f4be4f}
 .city-hotel-description{display:flex;flex-direction:column;min-width:0;gap:3px}
-.city-hotel-description strong{font-size:13px;line-height:1.35;color:#263952;overflow-wrap:anywhere}
-.city-hotel-description small{font-size:11px;color:#52667D}
+.city-hotel-description strong{font-size:13px;line-height:1.35;color:#f4e7b8!important;overflow-wrap:anywhere}
+.city-hotel-description small{font-size:11px;color:#b5d9db!important}
 .city-hotel-row form{flex-shrink:0}
-.city-hotel-row .secondary-btn{padding:7px 10px;font-size:11px}
-.city-hotel-row button:disabled{opacity:.72;cursor:default}
+.city-hotel-row .secondary-btn{padding:7px 10px;font-size:11px;background:#123b4a!important;border:1px solid #99aabb!important;color:#d8e5eb!important}
+.city-hotel-row button:disabled{opacity:1!important;color:#f4be4f!important;background:#164a45!important;border-color:#c69a60!important;cursor:default}
 .city-manage-link{display:inline-block;margin-top:12px}
-.city-empty{font-size:13px;color:#657589}
+.city-empty{font-size:13px;color:#b5d9db!important}
+.city-idea{background:#0b3040!important;border:1px solid #547588!important;border-left:3px solid #e5a17c!important;border-radius:8px!important;padding:11px 12px!important;margin:9px 0!important}
+.city-idea strong{color:#f4e7b8!important}
+.city-idea span{color:#b5d9db!important}
+.city-hub-panel>.secondary-btn{background:#123b4a!important;border:1px solid #99aabb!important;color:#d8e5eb!important}
+.city-day{border-bottom:1px solid #416a79!important;color:#d8e5eb!important}
+.city-day-date{color:#e5a17c!important}
+.city-day h3{color:#f4e7b8!important}
+.city-day p{color:#b5d9db!important}
+.city-day-activity{background:#0a2d3c!important;border:1px solid #547588;border-radius:8px;color:#d8e5eb!important}
+.city-day-activity strong{color:#f4be4f!important}
+.city-days>.primary-btn{background:#f4be4f!important;border-color:#f4be4f!important;color:#172a31!important}
+@media(max-width:720px){.city-page-hero{padding:20px!important}.city-hub-grid{grid-template-columns:1fr}.city-hub-panel,.city-days{padding:16px!important}}
 @media(max-width:650px){.city-compare-heading{align-items:flex-start;flex-direction:column}.city-hotel-row{padding:10px 8px}}
