@@ -23,10 +23,16 @@
 document.querySelectorAll(".open-hotel-editor").forEach((button) => {
   button.addEventListener("click", () => {
     const dialog = document.getElementById(button.dataset.editor);
-    if (dialog) dialog.showModal();
+    if (!dialog) return;
+    dialog.returnFocusTo = button;
+    dialog.showModal();
+    dialog.querySelector(".hotel-editor-close").focus();
   });
 });
 document.querySelectorAll(".hotel-editor-drawer").forEach((dialog) => {
+  dialog.addEventListener("close", () => {
+    if (dialog.returnFocusTo && dialog.returnFocusTo.isConnected) dialog.returnFocusTo.focus();
+  });
   dialog.querySelector(".hotel-editor-close").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();
