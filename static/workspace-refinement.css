@@ -1,0 +1,28 @@
+/* Furlong: compact stay comparison and off-canvas editor. */
+.atlas-metrics > div:nth-child(2) span{letter-spacing:.07em}
+.hotel-comparison-grid{gap:12px!important;align-items:start}
+.hotel-comparison-card{padding:15px 17px!important;min-height:0!important;box-shadow:0 2px 12px rgba(18,37,55,.035)}
+.hotel-comparison-card h4{margin:4px 0 5px!important;font-size:19px!important;line-height:1.25}
+.hotel-comparison-card .hotel-card-top{margin-bottom:5px!important}
+.hotel-comparison-card .hotel-price{margin:3px 0!important;font-size:20px!important}
+.hotel-comparison-card .hotel-dates{margin:3px 0 7px!important;font-size:12px!important}
+.hotel-comparison-card .hotel-card-notes{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:12px;margin:4px 0 8px!important}
+.compact-hotel-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:10px!important}
+.compact-hotel-actions .primary-btn,.compact-hotel-actions .secondary-btn{padding:8px 12px!important;font-size:12px}
+.compact-hotel-actions a{font-size:12px}
+.hotel-editor-drawer{position:fixed;inset:0 0 0 auto;margin:0;width:min(480px,100vw);max-width:100vw;height:100dvh;max-height:100dvh;padding:0;border:0;border-radius:16px 0 0 16px;background:#FAFBFF;color:#24354B;box-shadow:-16px 0 50px rgba(16,30,52,.22);overflow-y:auto}
+.hotel-editor-drawer::backdrop{background:rgba(16,29,46,.48)}
+.hotel-editor-header{display:flex;justify-content:space-between;gap:20px;align-items:start;padding:26px 27px 16px;border-bottom:1px solid #D9E1ED;background:#F1F4FA;position:sticky;top:0;z-index:1}
+.hotel-editor-header h3{font-size:25px;margin:4px 0}
+.hotel-editor-close{background:transparent;border:0;font-size:30px;color:#3B557A;line-height:1;cursor:pointer}
+.hotel-editor-body{padding:21px 27px 40px}
+.hotel-editor-hint{font-size:13px;color:#51637C}
+.hotel-drawer-form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.hotel-drawer-form label{color:#35496A;font-size:12px}
+.hotel-drawer-form input,.hotel-drawer-form textarea{background:#fff;border:1px solid #BDCBDE;color:#24354B}
+.hotel-drawer-form label:first-of-type,.hotel-drawer-form .hotel-notes-input,.hotel-drawer-form label:nth-of-type(5){grid-column:1/-1}
+.hotel-drawer-form button{grid-column:1/-1;justify-self:stretch;margin-top:5px}
+.hotel-editor-danger{margin-top:30px;padding-top:15px;border-top:1px solid #D9E1ED;color:#81556A;font-size:12px}
+.hotel-editor-danger summary{cursor:pointer}
+.hotel-editor-danger button{margin-top:12px}
+@media(max-width:650px){.hotel-editor-drawer{width:100vw;border-radius:0}.hotel-editor-header{padding:20px}.hotel-editor-body{padding:20px}.hotel-drawer-form{grid-template-columns:1fr}.hotel-drawer-form label{grid-column:1/-1}}
