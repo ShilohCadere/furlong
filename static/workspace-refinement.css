@@ -165,3 +165,25 @@
 .atlas-page .ledger-item small{color:#d8e5eb!important}
 .atlas-page .atlas-add summary,
 .atlas-page .hotel-add-stay summary{color:#fff1d5!important}
+
+/* Firefox accessibility follow-up: remaining confirmed link and budget text failures. */
+.atlas-page .hotel-city-heading a.city-hub-shortcut,
+.atlas-page a.city-hub-shortcut{
+  color:#f5d3a8!important;
+  text-decoration:underline;
+  text-decoration-thickness:1.5px;
+  text-underline-offset:3px;
+  font-weight:600;
+}
+.atlas-page a.city-hub-shortcut:hover{color:#ffffff!important}
+.atlas-page .atlas-budget .atlas-section-head p,
+.atlas-page .atlas-budget .page-subtitle,
+.atlas-page .ledger-section h3,
+.atlas-page .ledger-section p,
+.atlas-page .ledger-section label,
+.atlas-page .ledger-section small{
+  color:#d8e5eb!important;
+}
+.atlas-page .atlas-budget .atlas-section-head h2,
+.atlas-page .ledger-section h3{color:#f4e7b8!important}
+.atlas-page .atlas-budget .atlas-section-head .eyebrow{color:#f5c9aa!important}
