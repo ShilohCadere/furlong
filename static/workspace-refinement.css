@@ -187,3 +187,11 @@
 .atlas-page .atlas-budget .atlas-section-head h2,
 .atlas-page .ledger-section h3{color:#f4e7b8!important}
 .atlas-page .atlas-budget .atlas-section-head .eyebrow{color:#f5c9aa!important}
+
+/* Accessibility follow-up: budget section descriptive copy. */
+.atlas-page section#budget .atlas-section-head > div > p:not(.eyebrow){
+  color:#f1f5f8!important;
+  background:#103847;
+  border-radius:6px;
+  padding:5px 8px;
+}
