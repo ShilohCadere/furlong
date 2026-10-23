@@ -958,6 +958,8 @@ def choose_scenario_option(trip_id):
                 ON CONFLICT(scenario_id,city,category) DO UPDATE SET option_id=excluded.option_id""",(sid,city,category,oid))
         else:
             db.execute("DELETE FROM scenario_choices WHERE scenario_id=? AND city=? AND category=?",(sid,city,category))
+    if request.form.get("return_city")=="1" and category=="hotel":
+        return redirect(url_for("city_view",trip_id=trip_id,city=city,scenario=sid))
     return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid))
 
 
