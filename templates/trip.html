@@ -35,7 +35,7 @@
                 </a>
 
                 <a
-                    href="{{ url_for('itinerary', trip_id=trip.id) }}"
+                    href="{{ url_for('itinerary', trip_id=trip.id, scenario=itinerary_scenario) }}"
                     class="nav-link"
                 >
                     <span class="nav-icon">▤</span>
@@ -95,6 +95,15 @@
                 </button>
             </header>
 
+            {% if scenarios %}
+            <nav class="scenario-tabs itinerary-tabs" aria-label="Itinerary route">
+                {% for plan in scenarios %}
+                <a class="secondary-btn {% if scenario and plan.id == scenario.id %}scenario-active{% endif %}"
+                   href="{{ url_for('trip_overview', trip_id=trip.id, scenario=plan.id) }}">{{ plan.name }}</a>
+                {% endfor %}
+            </nav>
+            {% endif %}
+
             <div style="margin:0 0 25px"><a class="primary-btn" href="{{ url_for('trip_workspace',trip_id=trip.id) }}">Open Trip Workspace →</a></div><section class="overview-sections" aria-label="Trip planning">
                 <article class="overview-preview">
                     <div class="preview-heading">
@@ -112,7 +121,7 @@
                             {% for day in days %}
                                 <a
                                     class="overview-day-link"
-                                    href="{{ url_for('itinerary', trip_id=trip.id) }}#day-{{ day.id }}"
+                                    href="{{ url_for('itinerary', trip_id=trip.id, scenario=itinerary_scenario) }}#{{ day_anchor_prefix }}{{ day.id }}"
                                 >
                                     <span class="overview-day-number">
                                         {{ "%02d"|format(day.day_number) }}
@@ -144,7 +153,7 @@
                     <div class="preview-footer">
                         <a
                             class="preview-action"
-                            href="{{ url_for('itinerary', trip_id=trip.id) }}"
+                            href="{{ url_for('itinerary', trip_id=trip.id, scenario=itinerary_scenario) }}"
                         >
                             {{ "View itinerary" if days else "Start planning" }}
                             <span aria-hidden="true">→</span>
@@ -290,3 +299,4 @@
     </script>
 </body>
 </html>
+

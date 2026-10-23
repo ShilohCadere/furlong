@@ -4,7 +4,7 @@ import os
 import secrets
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 from flask import (
@@ -261,31 +261,42 @@ def trip_overview(trip_id):
     trip = get_trip(trip_id)
 
     with get_db_connection() as connection:
-        days = connection.execute(
-            """
-            SELECT *
-            FROM itinerary_days
-            WHERE trip_id = ?
-            ORDER BY day_number
-            LIMIT 3
-            """,
-            (trip_id,)
+        scenarios = connection.execute(
+            "SELECT * FROM trip_scenarios WHERE trip_id=? ORDER BY id", (trip_id,)
+        ).fetchall()
+        sid = request.args.get("scenario", type=int)
+        scenario = next((s for s in scenarios if s["id"] == sid), None) if sid is not None else (scenarios[0] if scenarios else None)
+        if sid is not None and scenario is None:
+            abort(404)
+        route_days = connection.execute(
+            "SELECT * FROM scenario_itinerary WHERE scenario_id=? ORDER BY day_date",
+            (scenario["id"],)
+        ).fetchall() if scenario else []
+        legacy_days = connection.execute(
+            "SELECT * FROM itinerary_days WHERE trip_id=? ORDER BY day_number", (trip_id,)
         ).fetchall()
 
-        day_count = connection.execute(
-            """
-            SELECT COUNT(*)
-            FROM itinerary_days
-            WHERE trip_id = ?
-            """,
-            (trip_id,)
-        ).fetchone()[0]
+    itinerary_scenario = scenario["id"] if scenario else None
+    if route_days:
+        numbered_days = [dict(day, day_number=i) for i, day in enumerate(route_days, 1)]
+        upcoming = [day for day in numbered_days if day["day_date"] >= date.today().isoformat()]
+        days = (upcoming or numbered_days)[:3]
+        day_count = len(numbered_days)
+        day_anchor_prefix = "day-"
+    else:
+        days = legacy_days[:3]
+        day_count = len(legacy_days)
+        day_anchor_prefix = "legacy-day-"
 
     return render_template(
         "trip.html",
         trip=trip,
         days=days,
-        day_count=day_count
+        day_count=day_count,
+        scenarios=scenarios,
+        scenario=scenario,
+        itinerary_scenario=itinerary_scenario,
+        day_anchor_prefix=day_anchor_prefix
     )
 
 
@@ -324,9 +335,24 @@ def itinerary(trip_id):
         activity_rows=db.execute("""SELECT a.* FROM day_activities a JOIN scenario_itinerary d ON d.id=a.itinerary_id
             WHERE d.scenario_id=? ORDER BY a.position,a.id""",(scenario["id"],)).fetchall() if scenario else []
     activities={}
-    for item in activity_rows:activities.setdefault(item["itinerary_id"],[]).append(item)
+    for item in sorted(activity_rows, key=activity_sort_key):activities.setdefault(item["itinerary_id"],[]).append(item)
     return render_template("itinerary.html",trip=trip,days=days,scenarios=scenarios,
        scenario=scenario,route_days=route_days,activities=activities)
+
+
+def activity_sort_key(activity):
+    """Sort clock times first, descriptive timing next, and untimed items last."""
+    timing = " ".join((activity["start_time"] or "").upper().split())
+    stable = (activity["position"], activity["id"])
+    if not timing:
+        return (2, 0, *stable)
+    for fmt in ("%H:%M", "%I:%M %p", "%I %p"):
+        try:
+            clock = datetime.strptime(timing, fmt)
+            return (0, clock.hour * 60 + clock.minute, *stable)
+        except ValueError:
+            continue
+    return (1, 0, *stable)
 
 
 @app.route("/trip/<int:trip_id>/itinerary/day",methods=["POST"])
@@ -731,7 +757,7 @@ def city_view(trip_id,city):
         day_ids=[d["id"] for d in days]
         activities={}
         for d in days:
-            activities[d["id"]]=db.execute("SELECT * FROM day_activities WHERE itinerary_id=? ORDER BY position,id",(d["id"],)).fetchall()
+            activities[d["id"]]=sorted(db.execute("SELECT * FROM day_activities WHERE itinerary_id=? ORDER BY position,id",(d["id"],)).fetchall(), key=activity_sort_key)
         hotels=db.execute("""SELECT * FROM saved_options WHERE trip_id=? AND city=? AND category='hotel'
             AND (scenario_tag IS NULL OR scenario_tag=?) ORDER BY price IS NULL,price,name""",
             (trip_id,city,plan["name"])).fetchall()
@@ -837,7 +863,9 @@ def add_scenario_expense(trip_id):
     sid=request.form.get("scenario_id",type=int)
     category=request.form.get("category","").strip()
     name=request.form.get("name","").strip()
-    included=int(request.form.get("included_in_allowance","1"))
+    included_raw=request.form.get("included_in_allowance","1")
+    if included_raw not in ("0","1"):abort(400,"Choose whether this expense is included in the allowance")
+    included=int(included_raw)
     if category not in ("food","excursion","flight","transport","other") or not name or len(name)>160 or included not in (0,1):abort(400)
     try:amount=float(request.form.get("amount",""))
     except ValueError:abort(400)
@@ -930,6 +958,8 @@ def choose_scenario_option(trip_id):
                 ON CONFLICT(scenario_id,city,category) DO UPDATE SET option_id=excluded.option_id""",(sid,city,category,oid))
         else:
             db.execute("DELETE FROM scenario_choices WHERE scenario_id=? AND city=? AND category=?",(sid,city,category))
+    if request.form.get("return_city")=="1" and category=="hotel":
+        return redirect(url_for("city_view",trip_id=trip_id,city=city,scenario=sid))
     return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid))
 
 
@@ -946,3 +976,4 @@ init_db()
 
 if __name__ == "__main__":
     app.run(debug=True)
+
