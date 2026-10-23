@@ -195,3 +195,9 @@
   border-radius:6px;
   padding:5px 8px;
 }
+
+/* Visible labels for scenario option selectors; keep card grid layout intact. */
+.atlas-page .atlas-choice-field-label{display:block;min-width:0;color:#f1f5f8!important;font-size:12px;font-weight:600;line-height:1.5}
+.atlas-page .atlas-choice-field-label select{display:block;width:100%;margin-top:5px}
+.atlas-page section#budget{background:#092936!important;border:1px solid #547588!important;border-radius:12px}
+.atlas-page section#budget .atlas-section-head>div>p:not(.eyebrow){background:#092936!important;color:#ffffff!important}
