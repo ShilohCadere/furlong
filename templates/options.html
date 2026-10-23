@@ -4,14 +4,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}"></head>
-<body><div class="app-layout"><aside class="sidebar"><a class="brand" href="{{ url_for('home') }}"><img class="furlong-bear-mark" src="{{ url_for('static',filename='furlong-bear.svg') }}" alt=""><span class="brand-wordmark">furlong<span>.</span></span></a>
+<body><a class="skip-link" href="#main-content">Skip to main content</a><div class="app-layout"><aside class="sidebar"><a class="brand" href="{{ url_for('home') }}"><img class="furlong-bear-mark" src="{{ url_for('static',filename='furlong-bear.svg') }}" alt=""><span class="brand-wordmark">furlong<span>.</span></span></a>
 <nav class="sidebar-nav" aria-label="Trip navigation">
 <a class="nav-link" href="{{ url_for('home') }}">⌂ My Journeys</a>
 <a class="nav-link" href="{{ url_for('trip_overview',trip_id=trip.id) }}">◫ Overview</a>
 <a class="nav-link" href="{{ url_for('itinerary',trip_id=trip.id) }}">▤ Itinerary</a>
 <a class="nav-link active" aria-current="page" href="{{ url_for('saved_options',trip_id=trip.id) }}">◇ Saved Options</a>
 </nav><div class="sidebar-footer">Make room for the journey.</div></aside>
-<main class="main-content options-page"><p><a class="secondary-btn" href="{{ url_for('trip_workspace',trip_id=trip.id) }}">← Whole-trip workspace</a></p>
+<main id="main-content" tabindex="-1" class="main-content options-page"><p><a class="secondary-btn" href="{{ url_for('trip_workspace',trip_id=trip.id) }}">← Whole-trip workspace</a></p>
 <nav class="breadcrumbs"><a href="{{ url_for('trip_overview',trip_id=trip.id) }}">{{ trip.name }}</a><span> / </span> Saved Options</nav>
 <header class="options-heading"><div><p class="eyebrow">KEEP YOUR OPTIONS OPEN</p><h1>Saved options</h1><p class="page-subtitle">Collect alternatives. Pick a favorite without deleting the others.</p></div><div class="options-total"><span>Preferred options subtotal</span><strong>{{ "$%.2f"|format(preferred_total) }}</strong><small>Only options with entered prices; not a full trip budget.</small></div></header>
 <section class="option-add"><h2>Add an option</h2><form method="post" action="{{ url_for('add_saved_option',trip_id=trip.id) }}" class="option-form">
