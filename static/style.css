@@ -2,14 +2,14 @@
 /* FURLONG — DESIGN FOUNDATION */
 
 :root {
-    --ivory: #F8F5EF;
+    --ivory: #EAF1F5;
     --white: #FFFFFF;
     --pine: #283C36;
-    --sage: #547563;
-    --clay: #C77D62;
-    --muted: #7C867F;
-    --border: #E6E5DE;
-    --soft-green: #EEF2EC;
+    --sage: #116C68;
+    --clay: #7B3F83;
+    --muted: #4F6775;
+    --border: #BDD0DA;
+    --soft-green: #DCEEEB;
 
     --font-heading: "Newsreader", Georgia, serif;
     --font-body: "DM Sans", Arial, sans-serif;
@@ -256,7 +256,7 @@ h2 {
     justify-content: space-between;
     align-items: flex-start;
     background: linear-gradient(
-        145deg, #92A69C, #547563 58%, #283C36
+        145deg, #92A69C, #116C68 58%, #283C36
     );
     color: var(--white);
 }
@@ -415,7 +415,7 @@ h2 {
     padding: 13px 14px;
     border-radius: 9px;
     border: 1px solid var(--border);
-    background: #FCFCFA;
+    background: #F5FAFC;
     color: var(--pine);
     outline-offset: 2px;
 }
@@ -463,7 +463,7 @@ h2 {
     overflow: hidden;
     border-radius: 18px;
     background: linear-gradient(
-        120deg, #7D9C8A 0%, #547563 50%, #283C36 100%
+        120deg, #7D9C8A 0%, #116C68 50%, #283C36 100%
     );
 }
 
@@ -758,7 +758,7 @@ h2 {
 }
 
 .day-card-heading:hover {
-    background: #FCFBF8;
+    background: #E5F0F8;
 }
 
 .day-heading-text .eyebrow {
@@ -1073,21 +1073,21 @@ h2 {
 @media(max-width:550px){.workspace-footer .primary-btn{width:100%;}}
 
 /* Europe planning visual pass: lively, restrained Furlong palette. */
-.workspace-revamp {--accent-light:#f3e6d9;--sea:#dfeee9;}
+.workspace-revamp {--accent-light:#EDE3F5;--sea:#dfeee9;}
 .workspace-hero {background:linear-gradient(112deg,#263e38 2%,#47776b 70%,#77988c);border-radius:19px;padding:31px 38px;margin:0 0 22px;color:#fff;position:relative;overflow:hidden;}
 .workspace-hero:after{content:"✦";font-size:180px;line-height:1;position:absolute;right:18px;top:-26px;color:rgba(255,255,255,.10);pointer-events:none}
-.workspace-hero .eyebrow{color:#e2c6a8}.workspace-hero h1{color:#fff;margin-bottom:9px}.workspace-hero .page-subtitle{color:#e1ebe5;max-width:670px}
+.workspace-hero .eyebrow{color:#C8E9EA}.workspace-hero h1{color:#fff;margin-bottom:9px}.workspace-hero .page-subtitle{color:#e1ebe5;max-width:670px}
 .workspace-revamp .scenario-tabs .secondary-btn{border-color:#b2c9bd;background:#eff5ef;color:#2b5147}
-.workspace-revamp .scenario-tabs .scenario-active{background:#c87855!important;border-color:#c87855;color:#fff!important;box-shadow:0 4px 12px rgba(125,57,34,.19)}
+.workspace-revamp .scenario-tabs .scenario-active{background:#174F81!important;border-color:#174F81;color:#fff!important;box-shadow:0 4px 12px rgba(125,57,34,.19)}
 .workspace-revamp .workspace-metrics>div{border-top:4px solid #5b8c79;box-shadow:0 5px 18px rgba(35,60,50,.035)}
-.workspace-revamp .workspace-metrics>div:nth-child(2){border-top-color:#ba9b75}
-.workspace-revamp .workspace-metrics>div:nth-child(3){border-top-color:#cb7c5f;background:#fff8f3}
+.workspace-revamp .workspace-metrics>div:nth-child(2){border-top-color:#654A99}
+.workspace-revamp .workspace-metrics>div:nth-child(3){border-top-color:#2459A3;background:#E5EDF9}
 .workspace-revamp .workspace-metrics>div:nth-child(4){border-top-color:#89a9a0;background:#eff7f3}
-.workspace-revamp .option-add{background:#fffaf4;border:1px solid #ebdece}
+.workspace-revamp .option-add{background:#F5FAFC;border:1px solid #BDD0DA}
 .workspace-revamp .option-add h2{color:#396052}
 .workspace-revamp .workspace-timeline{background:#e8f1e9;border-radius:16px;padding:24px}
 .workspace-revamp .workspace-timeline h2{margin-bottom:12px}
-.workspace-revamp .timeline-list>div{border-left-color:#c87855;box-shadow:0 2px 12px rgba(39,60,50,.035)}
+.workspace-revamp .timeline-list>div{border-left-color:#174F81;box-shadow:0 2px 12px rgba(39,60,50,.035)}
 .workspace-revamp .workspace-picker{background:#fff;border:1px solid #e5e8dc;border-radius:16px;padding:23px}
 .workspace-revamp .choice-row{background:#fafbf7;border-color:#dee5d9}
 .workspace-revamp .choice-row strong{color:#305f51}
@@ -1101,13 +1101,13 @@ h2 {
 /* Furlong Field Guide workspace */
 .atlas-page{max-width:1380px;padding-top:35px}
 .atlas-hero{background:#253c36;color:#fff;position:relative;border-radius:7px 7px 32px 7px;padding:26px 38px 0;overflow:hidden;box-shadow:0 16px 34px rgba(28,59,50,.13)}
-.atlas-overline{letter-spacing:2px;font-size:10px;color:#d8cbb1;font-weight:700;border-bottom:1px solid rgba(255,255,255,.22);padding-bottom:15px}
-.atlas-overline span{color:#e6aa7d;padding:0 9px}
+.atlas-overline{letter-spacing:2px;font-size:10px;color:#D7EBF4;font-weight:700;border-bottom:1px solid rgba(255,255,255,.22);padding-bottom:15px}
+.atlas-overline span{color:#9DE2D6;padding:0 9px}
 .atlas-hero-grid{display:flex;justify-content:space-between;gap:28px;align-items:center;padding:30px 0 20px}
-.atlas-kicker{font-family:var(--font-heading);font-size:21px;font-style:italic;color:#e2af8c;margin-bottom:10px}
+.atlas-kicker{font-family:var(--font-heading);font-size:21px;font-style:italic;color:#B6E7E6;margin-bottom:10px}
 .atlas-hero h1{font-size:clamp(43px,5vw,70px);color:#fff;margin-bottom:15px}
 .atlas-hero-grid p:last-child{color:#cde0d5;margin-bottom:0}
-.atlas-stamp{border:2px dashed #e7bb8e;min-width:128px;height:128px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;transform:rotate(9deg);color:#efd1aa}
+.atlas-stamp{border:2px dashed #9DE2D6;min-width:128px;height:128px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;transform:rotate(9deg);color:#D7EBF4}
 .atlas-stamp span{font-size:23px}.atlas-stamp strong{font-family:var(--font-heading);font-size:28px}.atlas-stamp small{font-size:8px;letter-spacing:1px}
 .atlas-wave{color:#9eb6a9;opacity:.65;font-size:23px;letter-spacing:11px;white-space:nowrap;line-height:1.5}
 .atlas-route-bar{display:flex;justify-content:space-between;align-items:end;gap:14px;margin:26px 0;flex-wrap:wrap}.atlas-route-bar small{font-weight:700;letter-spacing:1.5px;color:#5c796a;font-size:10px}
@@ -1203,7 +1203,7 @@ body{background:radial-gradient(ellipse at top right,rgba(39,113,148,.11),transp
 .sidebar .nav-link:hover{background:#245D6F;color:#FFFFFF}
 .sidebar .nav-link.active{background:#1D777B;color:#FFFFFF;box-shadow:inset 3px 0 #E1B25B}
 .sidebar .sidebar-footer{color:#A7CBD5}
-:focus-visible{outline-color:#D3A34F}
+:focus-visible{outline-color:#173D77}
 .primary-btn{background:#116A69;border-color:#116A69;color:#fff}
 .primary-btn:hover{background:#095251;border-color:#095251}
 .secondary-btn{background:#fff;border-color:#91B5C4;color:#174C62}
@@ -1413,3 +1413,41 @@ body{background:radial-gradient(ellipse at top right,rgba(39,113,148,.11),transp
 .auth-form button{margin-top:4px}
 .auth-error{background:#fff0f1;color:#922b49;padding:12px;border-radius:9px;font-size:13px}
 .auth-disclaimer{font-size:11px;color:#657f90;line-height:1.5;margin-top:24px}
+
+
+
+/* Finish the jewel palette on shared controls and summary surfaces. */
+.sidebar :focus-visible,
+.atlas-hero :focus-visible,
+.city-page-hero :focus-visible { outline-color: #9DE2D6; }
+
+.atlas-metrics > div {
+    background: #075E57;
+    border-color: #075E57;
+    color: #FFFFFF;
+}
+.atlas-metrics > div:nth-child(2) {
+    background: #523269;
+    border-color: #523269;
+}
+.atlas-metrics > div:nth-child(3) {
+    background: #173D77;
+    border-color: #173D77;
+}
+.atlas-metrics > div:nth-child(4) {
+    background: #14646D;
+    border-color: #14646D;
+}
+.atlas-metrics span { color: #E2EDF4; }
+.atlas-metrics .over-budget {
+    background: #FFF0E9 !important;
+    color: #7A3027;
+}
+.atlas-metrics .over-budget span { color: #7A3027; }
+.atlas-choice-label small,
+.atlas-timeline > div small { color: #4F6775; }
+.atlas-hero-caption { color: #C8E9EA; }
+.atlas-route-bar small { color: #37647B; }
+.workspace-hero {
+    background: linear-gradient(112deg, #075E57, #173D77 70%, #523269);
+}
