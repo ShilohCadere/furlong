@@ -1676,3 +1676,8 @@ dialog::backdrop{background:#00141bdb}
   html:focus-within{scroll-behavior:auto!important}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
+
+/* Accessibility: skip repetitive navigation with the keyboard. */
+.skip-link{position:fixed;z-index:9999;top:10px;left:12px;transform:translateY(-160%);padding:12px 16px;background:#f4be4f;color:#071f2b!important;border:2px solid #071f2b;border-radius:8px;font-weight:700;text-decoration:none}
+.skip-link:focus,.skip-link:focus-visible{transform:translateY(0);outline:3px solid #d8e5eb!important;outline-offset:2px}
+#main-content:focus{outline:none}
