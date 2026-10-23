@@ -686,7 +686,7 @@ def edit_saved_option(trip_id,option_id):
 def trip_workspace(trip_id):
     trip=get_trip(trip_id)
     with get_db_connection() as db:
-        if trip["name"] == "Europe 2027":
+        if trip["name"] == "Europe 2027" and db.execute("SELECT 1 FROM trip_scenarios WHERE trip_id=? AND name='S1'", (trip_id,)).fetchone():
             from europe_seed import add_missing_europe_candidates
             add_missing_europe_candidates(db,trip_id)
             from europe_seed import split_edinburgh_stays
@@ -712,7 +712,7 @@ def trip_workspace(trip_id):
         options=db.execute("SELECT * FROM saved_options WHERE trip_id=? ORDER BY city,category,price,name",(trip_id,)).fetchall()
         # Historical Europe imports predate scenario_tag; identify them without
         # disturbing user-created shared options or their saved selections.
-        if trip["name"] == "Europe 2027":
+        if trip["name"] == "Europe 2027" and db.execute("SELECT 1 FROM trip_scenarios WHERE trip_id=? AND name='S1'", (trip_id,)).fetchone():
             db.execute("""UPDATE saved_options SET scenario_tag=substr(notes,2,2)
                 WHERE trip_id=? AND scenario_tag IS NULL
                 AND notes GLOB '[[]S1 estimate]*' OR
@@ -990,6 +990,9 @@ def choose_scenario_option(trip_id):
 
 @app.route("/trips/import-europe-2027",methods=["POST"])
 def import_europe_trip():
+    # Development fixture only; disabled for regular accounts and beta deployments.
+    if not app.config.get("ENABLE_EUROPE_IMPORT", False):
+        abort(404)
     from europe_seed import import_europe_2027
     with get_db_connection() as db:
         trip_id=import_europe_2027(db,session["user_id"])
