@@ -1564,3 +1564,34 @@ dialog::backdrop{background:#00141bdb}
 .overview-idea-information small{color:var(--soft);font-size:11px}
 .overview-idea-price{flex-shrink:0;color:var(--gold);font-size:12px;font-weight:600}
 @media(max-width:650px){.overview-banner{height:145px!important}.overview-planning-toolbar{align-items:stretch}.overview-planning-toolbar .primary-btn{width:100%}.overview-idea-row{align-items:flex-start}.overview-idea-price{font-size:11px}}
+
+/* Atlas phase 3: itinerary cards and controls. No route/data changes. */
+.itinerary-modern{color:var(--text);background:var(--bg)}
+.itinerary-modern h1{color:var(--text)}
+.itinerary-modern .page-subtitle{color:var(--soft)}
+.itinerary-story{gap:13px}
+.itinerary-story-day{background:#103847!important;border:1px solid #8296ab!important;border-radius:12px;overflow:hidden;box-shadow:inset 0 1px 0 #d8e5eb2a}
+.itinerary-story-date{background:linear-gradient(155deg,#173d92,#07694f)!important;color:#f4e7b8!important;border-right:1px solid #c4d4e2;padding:19px 15px}
+.itinerary-story-body{padding:19px 22px!important;background:#103847!important;color:#d8e5eb!important}
+.itinerary-story-body h2{font-size:29px!important;margin:0 0 9px!important;color:#f4e7b8!important}
+.itinerary-story-body>.eyebrow{color:#e5a17c!important}
+.itinerary-story-body>p:not(.eyebrow){color:#b5d9db!important;margin:8px 0 12px}
+.itinerary-story-body .itinerary-edit-day{margin:12px 0;background:#0b2e3c!important;border:1px solid #547588!important;border-radius:8px;padding:8px 12px}
+.itinerary-story-body .itinerary-edit-day summary{color:#d8e5eb!important;cursor:pointer}
+.itinerary-story-body .itinerary-edit-day summary:hover{color:#f4be4f!important}
+.itinerary-modern .atlas-add,.itinerary-modern .itinerary-add-day{background:#103847!important;border:1px dashed #8296ab!important;border-radius:10px}
+.itinerary-modern .atlas-add summary,.itinerary-modern .itinerary-add-day summary{color:#f4be4f!important;font-weight:600!important}
+.itinerary-modern .atlas-add summary:hover{color:#d8e5eb!important}
+.itinerary-modern .atlas-add-grid label{color:#d8e5eb}
+.itinerary-modern input,.itinerary-modern textarea,.itinerary-modern select{background:#0d3040!important;border:1px solid #8fa5b8!important;color:#f4e7b8!important}
+.itinerary-modern input::placeholder,.itinerary-modern textarea::placeholder{color:#a8c3cc}
+.itinerary-activities{margin-top:12px;gap:7px}
+.itinerary-activity{background:#0a2d3d!important;border:1px solid #4d758b;border-radius:9px;padding:10px 12px}
+.itinerary-activity>span{color:#e5a17c!important}
+.itinerary-activity strong{color:#d8e5eb}
+.itinerary-activity small{color:#b5d9db!important}
+.itinerary-story-body .secondary-btn{background:#123b4a!important;color:#d8e5eb!important;border:1px solid #99aabb!important}
+.itinerary-story-body .primary-btn{background:#f4be4f!important;color:#182c2e!important}
+.itinerary-modern .itinerary-story-body .atlas-add{margin-top:12px}
+.itinerary-modern .itinerary-story-body .atlas-add summary{color:#f4be4f!important}
+@media(max-width:620px){.itinerary-story-day{grid-template-columns:1fr}.itinerary-story-date{border-right:0;border-bottom:1px solid #c4d4e2;padding:12px 18px}.itinerary-story-body{padding:16px!important}.itinerary-story-body h2{font-size:25px!important}}
