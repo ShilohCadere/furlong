@@ -1451,3 +1451,98 @@ body{background:radial-gradient(ellipse at top right,rgba(39,113,148,.11),transp
 .workspace-hero {
     background: linear-gradient(112deg, #075E57, #173D77 70%, #523269);
 }
+
+
+
+/* FURLONG DESIGN ATLAS — October 2026 approved mixed-metal visual system.
+   Preserves original page structure and behaviors. */
+:root{
+ --bg:#071f2b;--panel:#103847;--text:#f4e7b8;--soft:#b5d9db;
+ --gold:#f4be4f;--emerald:#07694f;--sapphire:#193e9b;
+ --purple:#652b8d;--ruby:#9c244b;--silver:#c4d4e2;
+ --copper:#e5a17c;--bronze:#c69a60;--platinum:#d8e5eb;
+ --ivory:#071f2b;--white:#103847;--pine:#f4e7b8;
+ --sage:#26a38a;--clay:#e5a17c;--muted:#b5d9db;
+ --border:#416a79;--soft-green:#123f43;
+ --font-heading:"Newsreader",Georgia,serif;--font-body:"DM Sans",Arial,sans-serif;
+}
+html{background:var(--bg);color-scheme:dark}
+body{background:var(--bg);color:var(--text)}
+h1,h2,h3,h4,.brand-wordmark{color:var(--text)}
+h1,h2,h3{font-family:var(--font-heading);font-weight:400}
+p,.page-subtitle,.overview-destination,.muted{color:var(--soft)}
+a{color:inherit}
+a:hover{color:var(--gold)}
+:focus-visible,button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--gold)!important;outline-offset:3px}
+.sidebar{background:#092936;border-right:1px solid #8a694f}
+.brand{color:var(--platinum)}
+.brand-wordmark{color:var(--platinum)}
+.brand-wordmark span{color:var(--gold)}
+.furlong-bear-mark{filter:brightness(0) saturate(100%) invert(94%) sepia(10%) saturate(174%) hue-rotate(165deg)}
+.sidebar-footer{color:var(--soft);border-color:#42616e}
+.sidebar-nav .nav-link{color:var(--silver);background:transparent;border:1px solid transparent}
+.sidebar-nav .nav-link:hover{background:#164b59;color:var(--platinum);border-color:#618a8a}
+.sidebar-nav .nav-link.active{color:#132e36;background:var(--gold);border-color:var(--gold)}
+.main-content{background:var(--bg);color:var(--text)}
+.breadcrumbs,.breadcrumbs a{color:var(--silver)}
+.breadcrumbs span:last-child{color:var(--gold)}
+.eyebrow,small.eyebrow,.atlas-overline,.atlas-kicker{color:var(--copper)}
+button,.primary-btn,.secondary-btn,.preview-action{font-family:var(--font-body)}
+.primary-btn,button.primary-btn,a.primary-btn{background:var(--gold);border:1px solid var(--gold);color:#182c2e!important;border-radius:7px}
+.primary-btn:hover,button.primary-btn:hover,a.primary-btn:hover{background:#ffd57d}
+.secondary-btn,button.secondary-btn,a.secondary-btn{background:#123b4a;color:var(--silver);border:1px solid #99aabb;border-radius:7px}
+.secondary-btn:hover,button.secondary-btn:hover,a.secondary-btn:hover{background:#1d5062;color:var(--platinum)}
+.secondary-btn.scenario-active,.scenario-tabs .scenario-active{background:var(--gold)!important;color:#182c2e!important;border-color:var(--gold)!important}
+input,select,textarea{background:#0d3040;border:1px solid #8fa5b8;border-radius:6px;color:var(--text)}
+input::placeholder,textarea::placeholder{color:#99b7c1}
+label{color:var(--platinum)}
+input:focus,select:focus,textarea:focus{border-color:var(--platinum)}
+details,.overview-preview,.option-card,.hotel-comparison-card,.city-hub-panel,.city-days,.city-day,.atlas-choice,.atlas-add,.ledger-item,.pg-option,.trip-card,.stats-card{background:var(--panel);border-color:#8296ab;color:var(--text);box-shadow:inset 0 1px 0 #d8e5eb22}
+summary{color:var(--copper)}
+dialog,.trip-dialog{background:#0a2936;color:var(--text);border:1px solid var(--gold)}
+dialog::backdrop{background:#00141bdb}
+.overview-banner{background:radial-gradient(ellipse at 84% 9%,#19718b,transparent 50%),linear-gradient(120deg,#07543f,#123777);border:1px solid var(--copper);box-shadow:inset 0 1px 0 #f5c4a977}
+.banner-hill,.banner-circle{opacity:.25}
+.overview-header{border-color:#42616e}
+.overview-header h1{color:var(--text)}
+.overview-preview{border:1px solid #8296ab;background:var(--panel);border-radius:12px}
+.overview-preview:nth-child(2){border-color:var(--copper)}
+.preview-heading{border-color:#42616e}
+.preview-heading h2{color:var(--platinum)}
+.preview-heading-icon,.empty-icon-wrap{background:#153d50;color:var(--copper);border-color:#63818e}
+.overview-day-link{color:var(--platinum);border-color:#42616e}
+.overview-day-link:hover{background:#18485a}
+.overview-day-number{color:var(--gold)}
+.overview-day-count{color:var(--silver)}
+.preview-footer{border-color:#42616e}
+.preview-action{color:var(--gold)}
+.preview-empty h3{color:var(--text)}
+.preview-empty p{color:var(--soft)}
+.page-footer{border-color:#42616e;color:var(--silver)}
+.overview-atlas-meta{display:flex;gap:10px;flex-wrap:wrap;margin:5px 0 22px}
+.overview-atlas-meta span{border:1px solid var(--silver);border-radius:30px;padding:6px 12px;color:var(--platinum);font-size:11px;letter-spacing:.03em}
+.overview-atlas-divider{height:2px;max-width:110px;background:linear-gradient(90deg,var(--copper),var(--gold),transparent);margin:12px 0 0}
+.overview-sections{gap:17px}
+.overview-preview:first-child{border-color:var(--silver)}
+.overview-preview:last-child{border-color:var(--copper)}
+/* Workspace components retain their real content and actions. */
+.atlas-page,.city-page,.itinerary-modern{background:var(--bg)}
+.atlas-hero,.city-page-hero{background:radial-gradient(ellipse at 85% 10%,#19718b,transparent 48%),linear-gradient(120deg,#07543f,#123777);border:1px solid var(--copper);color:var(--text)}
+.atlas-metrics>div,.atlas-section,.hotel-city-section,.hotel-castle-panel,.atlas-flight-ticket,.city-selected-stay{background:var(--panel);border-color:#8296ab;color:var(--text)}
+.atlas-metrics>div:nth-child(2){border-color:var(--silver)}
+.atlas-metrics>div:nth-child(3){border-color:var(--copper)}
+.atlas-number,.atlas-mark{color:var(--copper)}
+.hotel-price,.hotel-price-missing{color:var(--gold)}
+.hotel-card-chosen{color:#b6f0d8}
+.hotel-card-candidate,.hotel-dates,.hotel-card-notes{color:var(--soft)}
+.hotel-editor-drawer{background:#092936;color:var(--text);border-left:1px solid var(--copper)}
+.hotel-editor-header{background:#103847;border-color:#8296ab}
+.hotel-editor-header h3{color:var(--text)}
+.hotel-editor-close,.hotel-editor-hint,.hotel-drawer-form label{color:var(--silver)}
+.hotel-drawer-form input,.hotel-drawer-form textarea{background:#0d3040;color:var(--text);border-color:#8fa5b8}
+.hotel-editor-danger{border-color:#8296ab}
+.atlas-city-tile:nth-child(4n+1){border-color:var(--silver)}
+.atlas-city-tile:nth-child(4n+2){border-color:var(--copper)}
+.atlas-city-tile:nth-child(4n+3){border-color:var(--platinum)}
+.atlas-city-tile:nth-child(4n){border-color:var(--bronze)}
+@media(max-width:700px){.overview-sections{grid-template-columns:1fr}.sidebar{background:#092936}.overview-atlas-meta{margin-bottom:17px}}
