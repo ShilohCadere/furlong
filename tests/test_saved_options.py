@@ -271,8 +271,13 @@ class SavedOptionsTests(unittest.TestCase):
         page=self.client.get(f"/trip/{trip}/workspace?scenario={sid}")
         self.assertIn(b'href="#hotel-galway"',page.data)
         self.assertIn(b'id="hotel-galway"',page.data)
-        self.assertIn(b'Edit other hotel details',page.data)
-        self.assertIn(b'Save quote',page.data)
+        self.assertIn(b'Edit details',page.data)
+        self.assertIn(f'id="hotel-editor-{option["id"]}"'.encode(),page.data)
+        self.assertIn(f'/trip/{trip}/options/{option["id"]}/edit'.encode(),page.data)
+        self.assertIn(b'Group quote (USD, all rooms)',page.data)
+        self.assertIn(b'Booking link',page.data)
+        self.assertIn(b'Save changes',page.data)
+        self.assertNotIn(b'Edit other hotel details',page.data)
         changed=self.client.post(f"/trip/{trip}/options/{option['id']}/edit",data={
             "return_workspace":"1","scenario_id":sid,
             "city":"Galway","name":option["name"],"category":"hotel",
