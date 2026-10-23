@@ -275,6 +275,28 @@ def trip_overview(trip_id):
         legacy_days = connection.execute(
             "SELECT * FROM itinerary_days WHERE trip_id=? ORDER BY day_number", (trip_id,)
         ).fetchall()
+        # Preview the actual saved options available to the active trip version.
+        # Shared options are eligible; alternatives from other versions are not.
+        if scenario:
+            saved_ideas = connection.execute(
+                """SELECT id, name, city, category, price, start_date FROM saved_options
+                   WHERE trip_id=? AND (scenario_tag IS NULL OR scenario_tag=?)
+                   ORDER BY id DESC LIMIT 3""",
+                (trip_id, scenario["name"])
+            ).fetchall()
+            saved_ideas_count = connection.execute(
+                """SELECT COUNT(*) FROM saved_options
+                   WHERE trip_id=? AND (scenario_tag IS NULL OR scenario_tag=?)""",
+                (trip_id, scenario["name"])
+            ).fetchone()[0]
+        else:
+            saved_ideas = connection.execute(
+                """SELECT id, name, city, category, price, start_date FROM saved_options
+                   WHERE trip_id=? ORDER BY id DESC LIMIT 3""", (trip_id,)
+            ).fetchall()
+            saved_ideas_count = connection.execute(
+                "SELECT COUNT(*) FROM saved_options WHERE trip_id=?", (trip_id,)
+            ).fetchone()[0]
 
     itinerary_scenario = scenario["id"] if scenario else None
     if route_days:
@@ -296,7 +318,9 @@ def trip_overview(trip_id):
         scenarios=scenarios,
         scenario=scenario,
         itinerary_scenario=itinerary_scenario,
-        day_anchor_prefix=day_anchor_prefix
+        day_anchor_prefix=day_anchor_prefix,
+        saved_ideas=saved_ideas,
+        saved_ideas_count=saved_ideas_count
     )
 
 
