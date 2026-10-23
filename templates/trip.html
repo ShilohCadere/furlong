@@ -96,16 +96,17 @@
                 </button>
             </header>
 
-            {% if scenarios %}
-            <nav class="scenario-tabs itinerary-tabs" aria-label="Itinerary route">
-                {% for plan in scenarios %}
-                <a class="secondary-btn {% if scenario and plan.id == scenario.id %}scenario-active{% endif %}"
-                   href="{{ url_for('trip_overview', trip_id=trip.id, scenario=plan.id) }}">{{ plan.name }}</a>
-                {% endfor %}
-            </nav>
-            {% endif %}
-
-            <div style="margin:0 0 25px"><a class="primary-btn" href="{{ url_for('trip_workspace',trip_id=trip.id) }}">Open Trip Workspace →</a></div><section class="overview-sections" aria-label="Trip planning">
+            <div class="overview-planning-toolbar">
+                {% if scenarios %}
+                <nav class="scenario-tabs itinerary-tabs" aria-label="Trip version">
+                    {% for plan in scenarios %}
+                    <a class="secondary-btn {% if scenario and plan.id == scenario.id %}scenario-active{% endif %}"
+                       href="{{ url_for('trip_overview', trip_id=trip.id, scenario=plan.id) }}">{{ plan.name }}</a>
+                    {% endfor %}
+                </nav>
+                {% endif %}
+                <a class="primary-btn" href="{{ url_for('trip_workspace',trip_id=trip.id,scenario=itinerary_scenario) }}">Open Trip Workspace →</a>
+            </div><section class="overview-sections" aria-label="Trip planning">
                 <article class="overview-preview">
                     <div class="preview-heading">
                         <div>
@@ -173,19 +174,29 @@
                         </div>
                     </div>
 
-                    <div class="preview-empty">
-                        <div class="empty-icon-wrap" aria-hidden="true">
-                            <span>✦</span>
+                    {% if saved_ideas %}
+                        <div class="overview-idea-list">
+                            {% for idea in saved_ideas %}
+                                <div class="overview-idea-row">
+                                    <div class="overview-idea-information">
+                                        <strong>{{ idea.name }}</strong>
+                                        <small>{{ idea.city }}{% if idea.category %} · {{ idea.category|capitalize }}{% endif %}</small>
+                                    </div>
+                                    <span class="overview-idea-price">{% if idea.price is not none %}{{ "$%.0f"|format(idea.price) }}{% else %}Quote needed{% endif %}</span>
+                                </div>
+                            {% endfor %}
                         </div>
-                        <h3>Good ideas start somewhere.</h3>
-                        <p>
-                            Collect multiple places, hotels,
-                            experiences, and links; keep alternatives while choosing favorites.
-                        </p>
-                    </div>
+                        <p class="overview-day-count">{{ saved_ideas_count }} saved {{ "option" if saved_ideas_count == 1 else "options" }} in this trip version</p>
+                    {% else %}
+                        <div class="preview-empty">
+                            <div class="empty-icon-wrap" aria-hidden="true"><span>✦</span></div>
+                            <h3>No saved ideas yet</h3>
+                            <p>Save hotels, places, and experiences to compare later.</p>
+                        </div>
+                    {% endif %>
 
                     <div class="preview-footer">
-                        <a class="preview-action" href="{{ url_for('saved_options',trip_id=trip.id) }}">Explore saved options →</a>
+                        <a class="preview-action" href="{{ url_for('saved_options',trip_id=trip.id) }}">{{ "View saved options" if saved_ideas else "Add saved ideas" }} →</a>
                     </div>
                 </article>
             </section>
