@@ -1595,3 +1595,43 @@ dialog::backdrop{background:#00141bdb}
 .itinerary-modern .itinerary-story-body .atlas-add{margin-top:12px}
 .itinerary-modern .itinerary-story-body .atlas-add summary{color:#f4be4f!important}
 @media(max-width:620px){.itinerary-story-day{grid-template-columns:1fr}.itinerary-story-date{border-right:0;border-bottom:1px solid #c4d4e2;padding:12px 18px}.itinerary-story-body{padding:16px!important}.itinerary-story-body h2{font-size:25px!important}}
+
+/* DESIGN ATLAS — Saved Options / Saved Ideas */
+.options-page{background:var(--bg,#071f2b);color:var(--text,#f4e7b8)}
+.options-heading{gap:22px;margin-bottom:24px}
+.options-heading h1,.option-add h2,.option-city-heading h2,.option-empty h2{color:var(--text,#f4e7b8);font-family:var(--font-heading)}
+.options-heading .page-subtitle{color:var(--soft,#b5d9db)}
+.options-total{background:#103847!important;border:1px solid #c69a60!important;border-radius:12px;color:#d8e5eb;box-shadow:inset 0 1px 0 #d8e5eb2a}
+.options-total span,.options-total small{color:#b5d9db!important}
+.options-total strong{color:#f4be4f!important}
+.option-add{background:#103847!important;border:1px solid #8296ab!important;border-radius:12px;padding:20px!important}
+.option-form label,.option-edit-fields label{color:#d8e5eb!important}
+.option-form input,.option-form select,.option-edit-fields input,.option-edit-fields select,.option-edit-fields textarea{background:#0d3040!important;color:#f4e7b8!important;border:1px solid #8fa5b8!important;border-radius:7px}
+.option-form input::placeholder,.option-edit-fields input::placeholder{color:#a8c3cc}
+.option-city{border-color:#416a79}
+.option-city-heading{border-bottom:1px solid #416a79}
+.option-city-heading h2{color:#d8e5eb!important}
+.option-city-heading span{color:#b5d9db!important}
+.option-grid{gap:12px}
+.option-card{background:#103847!important;color:#d8e5eb!important;border:1px solid #8296ab!important;border-radius:12px;padding:16px!important;box-shadow:inset 0 1px 0 #d8e5eb2a;gap:8px}
+.option-card.is-preferred{background:#123d41!important;border:2px solid #f4be4f!important;padding:15px!important}
+.option-card h3{color:#f4e7b8!important;font-size:21px!important;line-height:1.2}
+.option-category{background:#193e9b!important;color:#e1ebfa!important;border:1px solid #8eaacb!important}
+.preferred-chip{background:#f4be4f!important;color:#172a31!important;border:1px solid #f4be4f!important}
+.option-dates,.option-notes{color:#b5d9db!important}
+.option-price{color:#f4be4f!important;margin:3px 0!important}
+.option-price small{color:#b5d9db!important}
+.option-price.missing{color:#d8e5eb!important}
+.option-link{color:#e5a17c!important;text-decoration:underline;text-underline-offset:3px}
+.option-link:hover{color:#f4be4f!important}
+.option-edit{background:#0b2d3b!important;border:1px solid #547588!important;border-radius:8px;padding:9px 12px!important;margin-top:6px}
+.option-edit summary{color:#f4be4f!important;font-weight:600}
+.option-edit-fields{padding-top:10px}
+.option-actions{margin-top:auto;padding-top:10px;border-top:1px solid #416a79}
+.option-actions .secondary-btn{background:#123b4a!important;color:#d8e5eb!important;border:1px solid #99aabb!important}
+.option-current{color:#aee7d0!important}
+.option-remove{color:#f1b0bb!important;border-color:#9c244b!important;background:#401c32!important}
+.option-remove:hover{background:#702743!important;color:#fff!important}
+.option-empty{background:#103847!important;border:1px solid #8296ab!important;border-radius:12px;color:#b5d9db}
+.option-empty p{color:#b5d9db}
+@media(max-width:550px){.option-card{padding:14px!important}.option-card.is-preferred{padding:13px!important}.option-add{padding:16px!important}}
