@@ -10,6 +10,8 @@ class SavedOptionsTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.old_database = furlong.DATABASE
+        self.old_import_setting = furlong.app.config.get("ENABLE_EUROPE_IMPORT", False)
+        furlong.app.config["ENABLE_EUROPE_IMPORT"] = True
         furlong.DATABASE = Path(self.tmp.name) / "test.db"
         furlong.init_db()
         self.client = furlong.app.test_client()
@@ -21,6 +23,7 @@ class SavedOptionsTests(unittest.TestCase):
             self.trip_id = conn.execute("SELECT id FROM trips").fetchone()[0]
 
     def tearDown(self):
+        furlong.app.config["ENABLE_EUROPE_IMPORT"] = self.old_import_setting
         furlong.DATABASE = self.old_database
         self.tmp.cleanup()
 
