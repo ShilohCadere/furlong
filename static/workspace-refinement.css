@@ -89,3 +89,38 @@
 .scenario-new input[name="name"]:focus-visible{outline:3px solid #f4be4f!important;outline-offset:3px!important}
 .scenario-new button{min-height:44px}
 @media(max-width:550px){.scenario-new-label{width:100%}.scenario-new input[name="name"]{flex:1 1 100%;min-width:0}}
+
+/* Firefox Accessibility Inspector contrast remediation — Trip Workspace.
+   Keep approved jewel colors, but use higher contrast text on colored surfaces. */
+.atlas-page .atlas-hero .eyebrow,
+.atlas-page .atlas-hero-caption,
+.atlas-page .atlas-hero p,
+.atlas-page .atlas-hero small{color:#fff1d5!important}
+.atlas-page .atlas-hero .atlas-route-identity,
+.atlas-page .atlas-route-bar small,
+.atlas-page .atlas-section-head .eyebrow{color:#f5c9aa!important}
+.atlas-page .atlas-section-head p,
+.atlas-page .atlas-section-head small,
+.atlas-page .atlas-section-head span,
+.atlas-page .atlas-choice-label small,
+.atlas-page .hotel-city-heading>span,
+.atlas-page .hotel-card-notes,
+.atlas-page .hotel-dates,
+.atlas-page .hotel-card-candidate,
+.atlas-page .ledger-item small,
+.atlas-page .atlas-flight-ticket small,
+.atlas-page .atlas-flight-ticket span,
+.atlas-page .atlas-add summary,
+.atlas-page .hotel-add-stay summary,
+.atlas-page .hotel-quick-quote label,
+.atlas-page .atlas-budget label{color:#d8e5eb!important}
+.atlas-page .atlas-city-tile:nth-child(4n+1){background:linear-gradient(145deg,#19418f,#122348)!important}
+.atlas-page .atlas-city-tile:nth-child(4n+2){background:linear-gradient(145deg,#075d48,#073438)!important}
+.atlas-page .atlas-city-tile:nth-child(4n+3){background:linear-gradient(145deg,#652580,#2c1746)!important}
+.atlas-page .atlas-city-tile:nth-child(4n){background:linear-gradient(145deg,#8f2649,#47152e)!important}
+.atlas-page .atlas-city-tile strong,
+.atlas-page .atlas-city-tile small,
+.atlas-page .atlas-city-tile span{color:#fff1dc!important}
+.atlas-page .atlas-number,
+.atlas-page .atlas-mark{color:#f5c9aa!important}
+.atlas-page :is(a,button,summary,input,select,textarea):focus-visible{outline:3px solid #f4be4f!important;outline-offset:3px}
