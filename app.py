@@ -234,6 +234,8 @@ def home():
     if request.method == "POST":
         trip_name = request.form.get("trip-name", "").strip()
         destination = request.form.get("destination", "").strip()
+        first_route = request.form.get("first-route-name", "Main route").strip()
+        if not first_route or len(first_route) > 50: abort(400, "Enter a route name up to 50 characters.")
 
         if trip_name and len(trip_name) <= 120:
             with get_db_connection() as connection:
@@ -244,6 +246,8 @@ def home():
                     """,
                     (trip_name, destination,session["user_id"])
                 )
+                trip_id=connection.execute("SELECT last_insert_rowid()").fetchone()[0]
+                connection.execute("INSERT INTO trip_scenarios (trip_id,name) VALUES (?,?)",(trip_id,first_route))
 
         return redirect(url_for("home"))
 
@@ -946,6 +950,23 @@ def add_trip_scenario(trip_id):
         except sqlite3.IntegrityError:
             abort(400,"Scenario name already used")
         sid=db.execute("SELECT last_insert_rowid()").fetchone()[0]
+    return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid))
+
+
+@app.route("/trip/<int:trip_id>/workspace/scenarios/rename",methods=["POST"])
+def rename_trip_scenario(trip_id):
+    get_trip(trip_id)
+    sid=request.form.get("scenario_id",type=int)
+    name=request.form.get("name","").strip()
+    if not name or len(name)>50:abort(400,"Enter a route name up to 50 characters.")
+    with get_db_connection() as db:
+        row=db.execute("SELECT name FROM trip_scenarios WHERE id=? AND trip_id=?",(sid,trip_id)).fetchone()
+        if row is None:abort(404)
+        if row["name"]!=name:
+            taken=db.execute("SELECT 1 FROM trip_scenarios WHERE trip_id=? AND name=?",(trip_id,name)).fetchone()
+            if taken:abort(400,"Route name already used.")
+            db.execute("UPDATE trip_scenarios SET name=? WHERE id=? AND trip_id=?",(name,sid,trip_id))
+            db.execute("UPDATE saved_options SET scenario_tag=? WHERE trip_id=? AND scenario_tag=?",(name,trip_id,row["name"]))
     return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid))
 
 
