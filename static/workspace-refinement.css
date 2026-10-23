@@ -124,3 +124,44 @@
 .atlas-page .atlas-number,
 .atlas-page .atlas-mark{color:#f5c9aa!important}
 .atlas-page :is(a,button,summary,input,select,textarea):focus-visible{outline:3px solid #f4be4f!important;outline-offset:3px}
+
+/* Accessibility: audited workspace contrast surfaces (WCAG AA normal text target).
+   Darken underlying gradients instead of endlessly layering foreground overrides. */
+.atlas-page .atlas-hero{
+  background:linear-gradient(115deg,#092f34 0%,#0c334a 65%,#15294c 100%)!important;
+}
+.atlas-page .atlas-overline{
+  color:#ffffff!important;
+  font-size:12px;
+  letter-spacing:.12em;
+  line-height:1.65;
+}
+.atlas-page .atlas-overline span{color:#f8d6b1!important}
+.atlas-page .atlas-kicker,
+.atlas-page .atlas-hero-grid p,
+.atlas-page .atlas-hero-caption,
+.atlas-page .atlas-route-identity span,
+.atlas-page .atlas-route-identity small{color:#f4e7d9!important}
+.atlas-page .atlas-route-identity{background:#092c3d!important}
+.atlas-page .atlas-section-head .eyebrow,
+.atlas-page .atlas-section-head .atlas-number,
+.atlas-page .atlas-section-head .atlas-mark{color:#f5c9aa!important}
+.atlas-page .atlas-section-head p,
+.atlas-page .atlas-section-head small,
+.atlas-page .atlas-section-head span:not(.atlas-mark):not(.atlas-number){color:#d8e5eb!important}
+.atlas-page .atlas-city-tile:nth-child(4n+1){background:linear-gradient(145deg,#193b78,#12223e)!important}
+.atlas-page .atlas-city-tile:nth-child(4n+2){background:linear-gradient(145deg,#084937,#082e32)!important}
+.atlas-page .atlas-city-tile:nth-child(4n+3){background:linear-gradient(145deg,#522367,#271638)!important}
+.atlas-page .atlas-city-tile:nth-child(4n){background:linear-gradient(145deg,#74233d,#39152a)!important}
+.atlas-page .atlas-city-tile :is(strong,small,span){color:#ffffff!important}
+.atlas-page .atlas-city-tile small{font-size:12px}
+.atlas-page .hotel-comparison-card .hotel-price small,
+.atlas-page .hotel-comparison-card .hotel-card-candidate,
+.atlas-page .hotel-comparison-card .hotel-dates,
+.atlas-page .hotel-comparison-card .hotel-card-notes,
+.atlas-page .hotel-quick-quote label,
+.atlas-page .atlas-flight-ticket :is(small,span),
+.atlas-page .atlas-choice-label small,
+.atlas-page .ledger-item small{color:#d8e5eb!important}
+.atlas-page .atlas-add summary,
+.atlas-page .hotel-add-stay summary{color:#fff1d5!important}
