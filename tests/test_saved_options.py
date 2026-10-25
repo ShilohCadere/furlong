@@ -60,6 +60,25 @@ class SavedOptionsTests(unittest.TestCase):
                        (hashlib.sha256(b"expired-token").hexdigest(), uid, now - 1))
         self.assertEqual(self.client.get("/activate/expired-token").status_code, 400)
 
+    def test_beta_invitation_validation(self):
+        import hashlib
+        from datetime import datetime, timezone
+        now = int(datetime.now(timezone.utc).timestamp())
+        token = "private-invitation"
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        with furlong.get_db_connection() as db:
+            db.execute("INSERT INTO beta_invitations(token_hash,email,expires_at) VALUES (?,?,?)",
+                       (digest, "tester@example.com", now + 3600))
+        self.assertEqual(furlong.valid_beta_invitation(token), "tester@example.com")
+        self.assertIsNone(furlong.valid_beta_invitation("wrong-invitation"))
+        with furlong.get_db_connection() as db:
+            db.execute("UPDATE beta_invitations SET used_at=? WHERE token_hash=?", (now, digest))
+        self.assertIsNone(furlong.valid_beta_invitation(token))
+        with furlong.get_db_connection() as db:
+            db.execute("UPDATE beta_invitations SET used_at=NULL, expires_at=? WHERE token_hash=?",
+                       (now - 1, digest))
+        self.assertIsNone(furlong.valid_beta_invitation(token))
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.old_database = furlong.DATABASE
