@@ -14,6 +14,15 @@ Furlong is not yet approved for public production deployment. Verify security an
 - Keep `ENABLE_EUROPE_IMPORT` disabled. It is a development fixture, not a public feature.
 - Do not run `python app.py` as a public server: the local development entry point enables debug mode. Use a production WSGI server and reverse proxy.
 
+## Private beta invitations and email activation
+- Production registration requires an unused invitation token tied to an email address; registration links use `/register?invitation=TOKEN`.
+- Invitation records live in the `beta_invitations` SQLite table. Issue invitations only through a trusted administrator workflow; no public invitation creation endpoint exists yet.
+- Set `FURLONG_PUBLIC_URL` to the exact public HTTPS origin (for example `https://your-domain.example`).
+- Configure `FURLONG_SMTP_HOST`, `FURLONG_SMTP_PORT` (default 587), `FURLONG_SMTP_USERNAME`, `FURLONG_SMTP_PASSWORD`, and `FURLONG_SMTP_FROM` as deployment secrets.
+- SMTP must support authenticated STARTTLS. Never commit passwords or invitation/activation tokens.
+- Email activation links expire after 24 hours and can be used only once. Unverified accounts cannot sign in to production.
+- **Beta launch blocker:** add safe activation-email resend/recovery, administrator invitation issuance, and complete end-to-end tests. A failed SMTP send currently leaves an unverified account that requires administrator recovery.
+
 ## Backups
 Run `python scripts/backup_database.py /path/to/offsite-backups` on a schedule. The script uses SQLite's online backup API, verifies integrity, and creates a private file. Store backups outside the app and database volume, with retention and access controls. Test recovery using `python scripts/verify_restore.py /path/to/backup.db`, which copies into a temporary database and checks integrity and required tables. This **does not replace the live database**.
 
