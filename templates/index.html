@@ -18,9 +18,7 @@
     <div class="app-layout">
 
         <aside class="sidebar">
-            <a href="{{ url_for('home') }}" class="brand">
-                furlong<span>.</span>
-            </a>
+            <a href="{{ url_for('home') }}" class="brand"><img class="furlong-bear-mark" src="{{ url_for('static',filename='furlong-bear.svg') }}" alt=""><span class="brand-wordmark">furlong<span>.</span></span></a>
 
             <nav class="sidebar-nav" aria-label="Main navigation">
                 <a href="{{ url_for('home') }}"
@@ -32,7 +30,8 @@
             </nav>
 
             <div class="sidebar-footer">
-                <span>Make room for the journey.</span>
+                <span>Signed in as {{ active_username }}</span><form action="{{ url_for('logout') }}" method="post">
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><button class="secondary-btn" type="submit">Sign out</button></form>
             </div>
         </aside>
 
@@ -158,6 +157,7 @@
         </div>
 
         <form method="POST" class="trip-form">
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
             <label for="trip-name">Trip name *</label>
             <input
                 type="text"
@@ -176,6 +176,9 @@
                 name="destination"
                 placeholder="Scotland, United Kingdom"
             >
+
+            <label for="first-route-name">First route name *</label>
+            <input id="first-route-name" name="first-route-name" maxlength="50" required value="Main route" autocomplete="off">
 
             <div class="form-actions">
                 <button

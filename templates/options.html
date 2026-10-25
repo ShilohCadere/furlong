@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Saved Options | {{ trip.name }} | Furlong</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}"></head>
+<body><a class="skip-link" href="#main-content">Skip to main content</a><div class="app-layout"><aside class="sidebar"><a class="brand" href="{{ url_for('home') }}"><img class="furlong-bear-mark" src="{{ url_for('static',filename='furlong-bear.svg') }}" alt=""><span class="brand-wordmark">furlong<span>.</span></span></a>
+<nav class="sidebar-nav" aria-label="Trip navigation">
+<a class="nav-link" href="{{ url_for('home') }}">⌂ My Journeys</a>
+<a class="nav-link" href="{{ url_for('trip_overview',trip_id=trip.id) }}">◫ Overview</a>
+<a class="nav-link" href="{{ url_for('itinerary',trip_id=trip.id) }}">▤ Itinerary</a>
+<a class="nav-link active" aria-current="page" href="{{ url_for('saved_options',trip_id=trip.id) }}">◇ Saved Options</a>
+</nav><div class="sidebar-footer">Make room for the journey.</div></aside>
+<main id="main-content" tabindex="-1" class="main-content options-page"><p><a class="secondary-btn" href="{{ url_for('trip_workspace',trip_id=trip.id) }}">← Whole-trip workspace</a></p>
+<nav class="breadcrumbs"><a href="{{ url_for('trip_overview',trip_id=trip.id) }}">{{ trip.name }}</a><span> / </span> Saved Options</nav>
+<header class="options-heading"><div><p class="eyebrow">KEEP YOUR OPTIONS OPEN</p><h1>Saved options</h1><p class="page-subtitle">Collect alternatives. Pick a favorite without deleting the others.</p></div><div class="options-total"><span>Preferred options subtotal</span><strong>{{ "$%.2f"|format(preferred_total) }}</strong><small>Only options with entered prices; not a full trip budget.</small></div></header>
+<section class="option-add"><h2>Add an option</h2><form method="post" action="{{ url_for('add_saved_option',trip_id=trip.id) }}" class="option-form">
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+<label>City<input name="city" required maxlength="100" placeholder="Galway"></label>
+<label>Name<input name="name" required maxlength="160" placeholder="Eyre Square Townhouse"></label>
+<label>Type<select name="category"><option value="hotel">Hotel</option><option value="activity">Activity</option><option value="transport">Transport</option></select></label>
+<label>Group price (USD)<input name="price" type="number" min="0" max="10000000" step="0.01" placeholder="For all travelers"></label>
+<label>Start date<input name="start_date" type="date"></label>
+<label>End date<input name="end_date" type="date"></label>
+<label>Link<input name="link" type="url" maxlength="500" placeholder="https://..."></label>
+<label class="wide">Notes<input name="notes" maxlength="1000" placeholder="Two rooms, location, tradeoffs, cancellation policy…"></label>
+<button class="primary-btn" type="submit">+ Save option</button></form></section>
+{% if groups %}
+{% for city, options in groups.items() %}
+<section class="option-city"><div class="option-city-heading"><h2>{{ city }}</h2><span>{{ options|length }} options</span></div>
+<div class="option-grid">{% for item in options %}<article class="option-card {% if item.is_preferred %}is-preferred{% endif %}">
+<div class="option-topline"><span class="option-category">{{ item.category|capitalize }}</span>{% if item.is_preferred %}<span class="preferred-chip">Preferred</span>{% endif %}</div>
+<h3>{{ item.name }}</h3>{% if item.start_date and item.end_date %}<p class="option-dates">{{ item.start_date }} → {{ item.end_date }}</p>{% endif %}{% if item.price is not none %}<p class="option-price">{{ "$%.2f"|format(item.price) }} <small>group estimate</small></p>{% else %}<p class="option-price missing">Price not added</p>{% endif %}
+{% if item.notes %}<p class="option-notes">{{ item.notes }}</p>{% endif %}
+{% if item.link %}<a class="option-link" href="{{ item.link }}" target="_blank" rel="noopener noreferrer">View original listing ↗</a>{% endif %}
+<details class="option-edit"><summary>Edit details & dates</summary><form method="post" action="{{ url_for('edit_saved_option',trip_id=trip.id,option_id=item.id) }}" class="option-edit-fields">
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><label>City<input name="city" required maxlength="100" value="{{ item.city }}"></label><label>Name<input name="name" required maxlength="160" value="{{ item.name }}"></label><label>Type<select name="category">{% for k in ["hotel","activity","transport"] %}<option value="{{ k }}" {% if item.category==k %}selected{% endif %}>{{ k|capitalize }}</option>{% endfor %}</select></label><label>Group price USD<input name="price" type="number" min="0" step=".01" value="{{ item.price if item.price is not none else '' }}"></label><label>Start date<input name="start_date" type="date" value="{{ item.start_date or '' }}"></label><label>End date<input name="end_date" type="date" value="{{ item.end_date or '' }}"></label><label>Link<input name="link" type="url" value="{{ item.link or '' }}"></label><label>Notes<textarea name="notes" rows="3">{{ item.notes or '' }}</textarea></label><button type="submit" class="primary-btn">Save changes</button></form></details><div class="option-actions">
+{% if not item.is_preferred %}<form method="post" action="{{ url_for('prefer_saved_option',trip_id=trip.id,option_id=item.id) }}">
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><button type="submit" class="secondary-btn">Make preferred</button></form>{% else %}<span class="option-current">Current favorite</span>{% endif %}
+<form method="post" action="{{ url_for('remove_saved_option',trip_id=trip.id,option_id=item.id) }}" onsubmit="return confirm('Remove this saved option?');">
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><button class="option-remove" type="submit">Remove</button></form></div>
+</article>{% endfor %}</div></section>{% endfor %}
+{% else %}<section class="option-empty"><h2>Your options start here.</h2><p>Add a few possibilities for a city, compare them, then choose a preferred option. Your alternatives remain saved.</p></section>{% endif %}
+</main></div></body></html>

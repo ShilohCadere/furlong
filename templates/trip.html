@@ -14,12 +14,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body>
+<body><a class="skip-link" href="#main-content">Skip to main content</a>
     <div class="app-layout">
         <aside class="sidebar">
-            <a href="{{ url_for('home') }}" class="brand">
-                furlong<span>.</span>
-            </a>
+            <a href="{{ url_for('home') }}" class="brand"><img class="furlong-bear-mark" src="{{ url_for('static',filename='furlong-bear.svg') }}" alt=""><span class="brand-wordmark">furlong<span>.</span></span></a>
 
             <nav class="sidebar-nav" aria-label="Main navigation">
                 <a href="{{ url_for('home') }}" class="nav-link">
@@ -37,7 +35,7 @@
                 </a>
 
                 <a
-                    href="{{ url_for('itinerary', trip_id=trip.id) }}"
+                    href="{{ url_for('itinerary', trip_id=trip.id, scenario=itinerary_scenario) }}"
                     class="nav-link"
                 >
                     <span class="nav-icon">▤</span>
@@ -50,7 +48,7 @@
             </div>
         </aside>
 
-        <main class="main-content">
+        <main id="main-content" tabindex="-1" class="main-content">
             <nav class="breadcrumbs" aria-label="Breadcrumb">
                 <a href="{{ url_for('home') }}">My Journeys</a>
                 <span aria-hidden="true">/</span>
@@ -84,6 +82,7 @@
                             Destination to be discovered
                         </p>
                     {% endif %}
+                    <div class="overview-atlas-divider" aria-hidden="true"></div>
                 </div>
 
                 <button
@@ -97,7 +96,17 @@
                 </button>
             </header>
 
-            <section class="overview-sections" aria-label="Trip planning">
+            <div class="overview-planning-toolbar">
+                {% if scenarios %}
+                <nav class="scenario-tabs itinerary-tabs" aria-label="Trip version">
+                    {% for plan in scenarios %}
+                    <a class="secondary-btn {% if scenario and plan.id == scenario.id %}scenario-active{% endif %}"
+                       href="{{ url_for('trip_overview', trip_id=trip.id, scenario=plan.id) }}">{{ plan.name }}</a>
+                    {% endfor %}
+                </nav>
+                {% endif %}
+                <a class="primary-btn" href="{{ url_for('trip_workspace',trip_id=trip.id,scenario=itinerary_scenario) }}">Open Trip Workspace →</a>
+            </div><section class="overview-sections" aria-label="Trip planning">
                 <article class="overview-preview">
                     <div class="preview-heading">
                         <div>
@@ -114,7 +123,7 @@
                             {% for day in days %}
                                 <a
                                     class="overview-day-link"
-                                    href="{{ url_for('itinerary', trip_id=trip.id) }}#day-{{ day.id }}"
+                                    href="{{ url_for('itinerary', trip_id=trip.id, scenario=itinerary_scenario) }}#{{ day_anchor_prefix }}{{ day.id }}"
                                 >
                                     <span class="overview-day-number">
                                         {{ "%02d"|format(day.day_number) }}
@@ -146,7 +155,7 @@
                     <div class="preview-footer">
                         <a
                             class="preview-action"
-                            href="{{ url_for('itinerary', trip_id=trip.id) }}"
+                            href="{{ url_for('itinerary', trip_id=trip.id, scenario=itinerary_scenario) }}"
                         >
                             {{ "View itinerary" if days else "Start planning" }}
                             <span aria-hidden="true">→</span>
@@ -165,19 +174,29 @@
                         </div>
                     </div>
 
-                    <div class="preview-empty">
-                        <div class="empty-icon-wrap" aria-hidden="true">
-                            <span>✦</span>
+                    {% if saved_ideas %}
+                        <div class="overview-idea-list">
+                            {% for idea in saved_ideas %}
+                                <div class="overview-idea-row">
+                                    <div class="overview-idea-information">
+                                        <strong>{{ idea.name }}</strong>
+                                        <small>{{ idea.city }}{% if idea.category %} · {{ idea.category|capitalize }}{% endif %}</small>
+                                    </div>
+                                    <span class="overview-idea-price">{% if idea.price is not none %}{{ "$%.0f"|format(idea.price) }}{% else %}Quote needed{% endif %}</span>
+                                </div>
+                            {% endfor %}
                         </div>
-                        <h3>Good ideas start somewhere.</h3>
-                        <p>
-                            Soon, you'll be able to collect places,
-                            experiences, and links worth remembering.
-                        </p>
-                    </div>
+                        <p class="overview-day-count">{{ saved_ideas_count }} saved {{ "option" if saved_ideas_count == 1 else "options" }} in this trip version</p>
+                    {% else %}
+                        <div class="preview-empty">
+                            <div class="empty-icon-wrap" aria-hidden="true"><span>✦</span></div>
+                            <h3>No saved ideas yet</h3>
+                            <p>Save hotels, places, and experiences to compare later.</p>
+                        </div>
+                    {% endif %}
 
                     <div class="preview-footer">
-                        <span>Idea collection coming soon</span>
+                        <a class="preview-action" href="{{ url_for('saved_options',trip_id=trip.id) }}">{{ "View saved options" if saved_ideas else "Add saved ideas" }} →</a>
                     </div>
                 </article>
             </section>
@@ -220,6 +239,7 @@
             class="trip-form"
             id="edit-trip-form"
         >
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
             <label for="edit-trip-name">Trip name *</label>
             <input
                 type="text"
@@ -292,3 +312,4 @@
     </script>
 </body>
 </html>
+
