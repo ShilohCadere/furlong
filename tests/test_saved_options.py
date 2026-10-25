@@ -37,6 +37,31 @@ class SavedOptionsTests(unittest.TestCase):
             follow_redirects=True
         )
 
+    def test_new_account_does_not_claim_unowned_trips_by_default(self):
+        import os
+        from unittest.mock import patch
+        old_database = furlong.DATABASE
+        try:
+            with tempfile.TemporaryDirectory() as temp:
+                furlong.DATABASE = Path(temp) / "fresh.db"
+                furlong.init_db()
+                with furlong.get_db_connection() as db:
+                    db.execute("INSERT INTO trips(name,destination) VALUES (?,?)",
+                               ("Legacy private trip", "Unknown"))
+                with patch.dict(os.environ, {"FURLONG_CLAIM_LEGACY_TRIPS": "0"}):
+                    client = furlong.app.test_client()
+                    response = client.post("/register", data={
+                        "username": "freshuser", "password": "strong-password-123"
+                    })
+                    self.assertEqual(response.status_code, 302)
+                    self.assertNotIn(b"Legacy private trip", client.get("/").data)
+                with furlong.get_db_connection() as db:
+                    owner = db.execute("SELECT user_id FROM trips WHERE name=?",
+                                       ("Legacy private trip",)).fetchone()[0]
+                    self.assertIsNone(owner)
+        finally:
+            furlong.DATABASE = old_database
+
     def test_csrf_rejects_missing_and_invalid_tokens(self):
         # Existing functional tests run with their historical direct POST setup;
         # this test explicitly checks production CSRF enforcement.
