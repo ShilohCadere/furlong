@@ -4,7 +4,7 @@ import os
 import secrets
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from flask import (
@@ -75,6 +75,11 @@ def init_db():
             )
         """)
 
+        connection.execute("""CREATE TABLE IF NOT EXISTS auth_attempts (
+            attempt_key TEXT PRIMARY KEY,
+            attempts INTEGER NOT NULL,
+            window_started INTEGER NOT NULL
+        )""")
         connection.execute("""CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL UNIQUE COLLATE NOCASE,
@@ -255,14 +260,57 @@ def register():
     return redirect(url_for("home"))
 
 
+# SQLite-backed throttling persists across workers and application restarts.
+# Use separate limits for source IP and username to resist username rotation.
+AUTH_WINDOW_SECONDS = 15 * 60
+AUTH_MAX_USER_ATTEMPTS = 5
+AUTH_MAX_IP_ATTEMPTS = 30
+
+def _auth_keys(username):
+    import hashlib
+    ip = request.remote_addr or "unknown"
+    digest = lambda value: hashlib.sha256(value.encode("utf-8")).hexdigest()
+    return (("ip:" + digest(ip), AUTH_MAX_IP_ATTEMPTS),
+            ("user:" + digest(username.casefold()), AUTH_MAX_USER_ATTEMPTS))
+
+def _auth_blocked(username):
+    now = int(datetime.now(timezone.utc).timestamp())
+    with get_db_connection() as db:
+        for key, limit in _auth_keys(username):
+            row = db.execute("SELECT attempts,window_started FROM auth_attempts WHERE attempt_key=?", (key,)).fetchone()
+            if row and now - row["window_started"] < AUTH_WINDOW_SECONDS and row["attempts"] >= limit:
+                return True
+    return False
+
+def _auth_failed(username):
+    now = int(datetime.now(timezone.utc).timestamp())
+    with get_db_connection() as db:
+        db.execute("BEGIN IMMEDIATE")
+        for key, _ in _auth_keys(username):
+            db.execute("""INSERT INTO auth_attempts(attempt_key,attempts,window_started)
+                VALUES(?,1,?) ON CONFLICT(attempt_key) DO UPDATE SET
+                attempts=CASE WHEN ? - window_started >= ? THEN 1 ELSE attempts+1 END,
+                window_started=CASE WHEN ? - window_started >= ? THEN ? ELSE window_started END""",
+                (key, now, now, AUTH_WINDOW_SECONDS, now, AUTH_WINDOW_SECONDS, now))
+
+def _auth_succeeded(username):
+    # Keep IP failure count to deter distributed username guessing from one address.
+    with get_db_connection() as db:
+        db.execute("DELETE FROM auth_attempts WHERE attempt_key=?", (_auth_keys(username)[1][0],))
+
+
 @app.route("/login",methods=["GET","POST"])
 def login():
     if request.method=="GET":return render_template("auth.html",mode="login",error=None)
     username=request.form.get("username","").strip()
+    if _auth_blocked(username):
+        return render_template("auth.html",mode="login",error="Too many attempts. Try again in 15 minutes."),429
     with get_db_connection() as db:
         user=db.execute("SELECT * FROM users WHERE username=?",(username,)).fetchone()
     if not user or not check_password_hash(user["password_hash"],request.form.get("password","")):
+        _auth_failed(username)
         return render_template("auth.html",mode="login",error="Incorrect username or password."),401
+    _auth_succeeded(username)
     session.clear()
     session.update(user_id=user["id"],username=user["username"])
     session.permanent = True
