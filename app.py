@@ -30,7 +30,8 @@ else:
             with os.fdopen(fd,"w") as stream:stream.write(secrets.token_hex(32))
         except FileExistsError:pass
     app.secret_key=_secret_path.read_text().strip()
-app.config.update(SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE="Lax")
+app.config.update(SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE="Lax",
+                  SESSION_COOKIE_SECURE=os.environ.get("FURLONG_HTTPS", "0") == "1")
 
 
 
@@ -165,6 +166,25 @@ def get_trip(trip_id):
         abort(404)
 
     return trip
+
+
+def csrf_token():
+    """Return a session-bound token for HTML POST forms."""
+    if "_csrf_token" not in session:
+        session["_csrf_token"] = secrets.token_urlsafe(32)
+    return session["_csrf_token"]
+
+
+app.jinja_env.globals["csrf_token"] = csrf_token
+
+
+@app.before_request
+def validate_csrf_token():
+    if request.method in ("POST", "PUT", "PATCH", "DELETE") and not app.config.get("TESTING", False):
+        submitted = request.form.get("_csrf_token") or request.headers.get("X-CSRF-Token")
+        expected = session.get("_csrf_token")
+        if not expected or not submitted or not secrets.compare_digest(expected, submitted):
+            abort(400, description="Invalid or missing CSRF token")
 
 
 @app.before_request
