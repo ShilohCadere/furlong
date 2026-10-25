@@ -40,6 +40,26 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertEqual(oversized.status_code, 413)
 
 
+    def test_email_activation_token_is_single_use_and_expires(self):
+        import hashlib
+        from datetime import datetime, timezone
+        now = int(datetime.now(timezone.utc).timestamp())
+        token = "test-activation-token"
+        with furlong.get_db_connection() as db:
+            uid = db.execute("SELECT id FROM users WHERE username='testuser'").fetchone()[0]
+            db.execute("UPDATE users SET email=?, email_verified=0 WHERE id=?",
+                       ("tester@example.com", uid))
+            db.execute("INSERT INTO email_activations(token_hash,user_id,expires_at) VALUES (?,?,?)",
+                       (hashlib.sha256(token.encode()).hexdigest(), uid, now + 3600))
+        self.assertEqual(self.client.get("/activate/" + token).status_code, 302)
+        with furlong.get_db_connection() as db:
+            self.assertEqual(db.execute("SELECT email_verified FROM users WHERE id=?", (uid,)).fetchone()[0], 1)
+        self.assertEqual(self.client.get("/activate/" + token).status_code, 400)
+        with furlong.get_db_connection() as db:
+            db.execute("INSERT INTO email_activations(token_hash,user_id,expires_at) VALUES (?,?,?)",
+                       (hashlib.sha256(b"expired-token").hexdigest(), uid, now - 1))
+        self.assertEqual(self.client.get("/activate/expired-token").status_code, 400)
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.old_database = furlong.DATABASE
