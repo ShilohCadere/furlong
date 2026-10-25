@@ -3,6 +3,10 @@
 Furlong is not yet approved for public production deployment. Verify security and test results before enabling outside registrations.
 
 ## Environment
+- Set `FURLONG_ENV=production` for any deployment reachable by testers. The app will refuse to start unless `FURLONG_SECRET_KEY` is set and `FURLONG_HTTPS=1` is configured. Configure TLS termination at the host/reverse proxy and verify HTTPS end to end; this setting alone does not provide TLS.
+- Sessions use a 12-hour permanent-cookie lifetime after registration or login. Re-authentication is required after expiration.
+- Registration is currently open to anyone who can reach the site. Do not expose the app publicly until the beta access policy is chosen and enforced.
+
 - Set `FURLONG_SECRET_KEY` to a long random secret. Keep it stable between deployments and outside source control.
 - Set `FURLONG_DATA_DIR` to a **persistent writable volume** that survives deploys and restarts. This is where `furlong.db` is stored. If unset, the local development database stays beside `app.py` for backward compatibility.
 - Set `FURLONG_HTTPS=1` **only when users connect through HTTPS**; it enables Secure session cookies. Production must use HTTPS.
