@@ -17,3 +17,10 @@ jobs:
         env:
           FURLONG_DATA_DIR: ${{ runner.temp }}/furlong-data
         run: python -m unittest discover -s tests -v
+      - name: Verify database backup and restore
+        env:
+          FURLONG_DATA_DIR: ${{ runner.temp }}/furlong-data
+        run: |
+          python -c "import app; app.init_db()"
+          python scripts/backup_database.py "${{ runner.temp }}/furlong-backups"
+          python scripts/verify_restore.py "${{ runner.temp }}/furlong-backups/"*.db
