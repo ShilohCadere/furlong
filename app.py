@@ -4,7 +4,7 @@ import os
 import secrets
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from flask import (
@@ -25,6 +25,8 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 DATABASE = DATA_DIR / "furlong.db"
 # Local development sessions remain valid when Flask restarts.
 _secret_path = Path(__file__).resolve().parent / ".furlong_session_secret"
+if os.environ.get("FURLONG_ENV") == "production" and (not os.environ.get("FURLONG_SECRET_KEY") or os.environ.get("FURLONG_HTTPS") != "1"):
+    raise RuntimeError("Production requires FURLONG_SECRET_KEY and FURLONG_HTTPS=1")
 if os.environ.get("FURLONG_SECRET_KEY"):
     app.secret_key=os.environ["FURLONG_SECRET_KEY"]
 else:
@@ -40,7 +42,7 @@ app.config.update(SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE="Lax",
 # Conservative limits for a text-based travel planner.
 app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024
 app.config["MAX_FORM_MEMORY_SIZE"] = 256 * 1024
-app.config["PERMANENT_SESSION_LIFETIME"] = __import__("datetime").timedelta(hours=12)
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=12)
 
 @app.after_request
 def add_security_headers(response):
@@ -249,6 +251,7 @@ def register():
             db.execute("UPDATE trips SET user_id=? WHERE user_id IS NULL",(uid,))
     session.clear()
     session.update(user_id=uid,username=username)
+    session.permanent = True
     return redirect(url_for("home"))
 
 
@@ -262,6 +265,7 @@ def login():
         return render_template("auth.html",mode="login",error="Incorrect username or password."),401
     session.clear()
     session.update(user_id=user["id"],username=user["username"])
+    session.permanent = True
     return redirect(url_for("home"))
 
 
