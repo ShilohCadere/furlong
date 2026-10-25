@@ -13,6 +13,8 @@ class ReleaseJourneyTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.old_database = furlong.DATABASE
+        self.old_testing = furlong.app.config.get('TESTING', False)
+        furlong.app.config['TESTING'] = True
         furlong.DATABASE = Path(self.tmp.name) / "journey.db"
         furlong.init_db()
         self.client = furlong.app.test_client()
@@ -26,6 +28,7 @@ class ReleaseJourneyTests(unittest.TestCase):
 
     def tearDown(self):
         furlong.DATABASE = self.old_database
+        furlong.app.config['TESTING'] = self.old_testing
         self.tmp.cleanup()
 
     def day(self, when, title):
