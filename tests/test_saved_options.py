@@ -103,6 +103,21 @@ class SavedOptionsTests(unittest.TestCase):
                 self.client.post("/resend-activation", data={"email": "test@example.com"})
                 self.assertEqual(send.call_count, 3)
 
+    def test_resend_activation_limits_rotating_emails_by_ip(self):
+        from unittest.mock import patch
+        with furlong.get_db_connection() as db:
+            uid = db.execute("SELECT id FROM users WHERE username='testuser'").fetchone()[0]
+            db.execute("UPDATE users SET email=?, email_verified=0 WHERE id=?",
+                       ("test@example.com", uid))
+        with patch.dict(furlong.os.environ, {"FURLONG_PUBLIC_URL": "https://example.test"}):
+            with patch.object(furlong, "send_beta_email") as send:
+                for i in range(15):
+                    self.assertEqual(self.client.post("/resend-activation",
+                        data={"email": "missing" + str(i) + "@example.com"}).status_code, 200)
+                self.assertEqual(self.client.post("/resend-activation",
+                    data={"email": "test@example.com"}).status_code, 200)
+                self.assertEqual(send.call_count, 0)
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.old_database = furlong.DATABASE
