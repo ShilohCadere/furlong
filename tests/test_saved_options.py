@@ -7,6 +7,18 @@ import app as furlong
 
 
 class SavedOptionsTests(unittest.TestCase):
+    def test_security_headers_and_request_size_limit(self):
+        response = furlong.app.test_client().get("/login")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["X-Content-Type-Options"], "nosniff")
+        self.assertEqual(response.headers["X-Frame-Options"], "DENY")
+        self.assertIn("frame-ancestors 'none'", response.headers["Content-Security-Policy"])
+        self.assertEqual(furlong.app.config["MAX_CONTENT_LENGTH"], 1024 * 1024)
+        oversized = furlong.app.test_client().post(
+            "/login", data={"username": "x" * (1024 * 1024 + 1)})
+        self.assertEqual(oversized.status_code, 413)
+
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.old_database = furlong.DATABASE
