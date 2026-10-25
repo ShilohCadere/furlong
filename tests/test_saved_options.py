@@ -7,6 +7,27 @@ import app as furlong
 
 
 class SavedOptionsTests(unittest.TestCase):
+    def test_login_throttles_repeated_failures_and_resets_on_success(self):
+        client = furlong.app.test_client()
+        for _ in range(5):
+            response = client.post("/login", data={"username": "testuser", "password": "incorrect"})
+            self.assertEqual(response.status_code, 401)
+        response = client.post("/login", data={"username": "testuser", "password": "correct-horse-battery"})
+        self.assertEqual(response.status_code, 429)
+        with furlong.get_db_connection() as db:
+            db.execute("DELETE FROM auth_attempts")
+        response = client.post("/login", data={"username": "testuser", "password": "correct-horse-battery"})
+        self.assertEqual(response.status_code, 302)
+        with furlong.get_db_connection() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM auth_attempts WHERE attempt_key LIKE 'user:%'").fetchone()[0], 0)
+
+    def test_login_throttles_username_rotation_by_ip(self):
+        client = furlong.app.test_client()
+        for i in range(30):
+            self.assertEqual(client.post("/login", data={"username": f"absent{i}", "password": "incorrect"}).status_code, 401)
+        self.assertEqual(client.post("/login", data={"username": "testuser", "password": "correct-horse-battery"}).status_code, 429)
+
+
     def test_security_headers_and_request_size_limit(self):
         response = furlong.app.test_client().get("/login")
         self.assertEqual(response.status_code, 200)
