@@ -237,6 +237,10 @@ def logged_in_user():
 
 @app.route("/register",methods=["GET","POST"])
 def register():
+    # Public registration is never allowed on a production beta deployment.
+    # Keep the route closed until invitation issuance and email activation are implemented.
+    if os.environ.get("FURLONG_ENV") == "production":
+        abort(403, description="Private beta registration requires an invitation.")
     if request.method=="GET":return render_template("auth.html",mode="register",error=None)
     username=request.form.get("username","").strip()
     password=request.form.get("password","")
