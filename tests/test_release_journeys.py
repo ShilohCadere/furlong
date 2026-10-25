@@ -113,6 +113,34 @@ class ReleaseJourneyTests(unittest.TestCase):
         with furlong.get_db_connection() as db:
             self.assertEqual(db.execute('SELECT COUNT(*) FROM scenario_expenses').fetchone()[0], 0)
 
+    def test_cross_account_scenario_and_option_ids_are_rejected(self):
+        self.client.post(f'/trip/{self.trip}/options/add', data={
+            'city': 'Edinburgh', 'name': 'Alice hotel', 'category': 'hotel', 'price': '300'})
+        with furlong.get_db_connection() as db:
+            alice_option = db.execute("SELECT id FROM saved_options WHERE trip_id=?", (self.trip,)).fetchone()[0]
+        bob = furlong.app.test_client()
+        bob.post('/register', data={'username': 'bob', 'password': 'bob-example-password'})
+        bob.post('/', data={'trip-name': 'Bob trip', 'destination': 'Ireland'})
+        with furlong.get_db_connection() as db:
+            bob_trip = db.execute("SELECT id FROM trips WHERE id!=?", (self.trip,)).fetchone()[0]
+            bob_scenario = db.execute("SELECT id FROM trip_scenarios WHERE trip_id=?", (bob_trip,)).fetchone()[0]
+        bob.post(f'/trip/{bob_trip}/options/add', data={
+            'city': 'Edinburgh', 'name': 'Bob hotel', 'category': 'hotel', 'price': '200'})
+        with furlong.get_db_connection() as db:
+            bob_option = db.execute("SELECT id FROM saved_options WHERE trip_id=?", (bob_trip,)).fetchone()[0]
+        self.assertEqual(self.client.get(f'/trip/{self.trip}/itinerary?scenario={bob_scenario}').status_code, 404)
+        self.assertEqual(self.client.get(f'/trip/{self.trip}?scenario={bob_scenario}').status_code, 404)
+        self.assertEqual(self.client.post(f'/trip/{self.trip}/itinerary/day', data={
+            'scenario_id': bob_scenario, 'day_date': '2027-09-01', 'city': 'Edinburgh'}).status_code, 404)
+        self.assertEqual(self.client.post(f'/trip/{self.trip}/workspace/choose', data={
+            'scenario_id': self.sid, 'option_id': bob_option, 'city': 'Edinburgh',
+            'category': 'hotel'}).status_code, 400)
+        self.assertEqual(bob.post(f'/trip/{bob_trip}/workspace/choose', data={
+            'scenario_id': bob_scenario, 'option_id': alice_option, 'city': 'Edinburgh',
+            'category': 'hotel'}).status_code, 400)
+        with furlong.get_db_connection() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM scenario_choices").fetchone()[0], 0)
+
     def test_foreign_account_cannot_read_or_change_trip_through_any_trip_route(self):
         day = self.day('2027-09-01', 'Private plan')
         self.client.post(f'/trip/{self.trip}/itinerary/activity', data={
