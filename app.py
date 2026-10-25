@@ -320,7 +320,41 @@ def register():
                                invitation=invitation_token if beta else None,
                                invite_email=invited_email)
     if beta:
-        abort(503, description="Invited account creation is not enabled until email delivery is configured.")
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        if not 3 <= len(username) <= 40 or not username.replace("_", "").replace("-", "").isalnum() or len(password) < 10:
+            return "Invalid username or password requirements.", 400
+        public_url = os.environ.get("FURLONG_PUBLIC_URL", "").rstrip("/")
+        if not public_url.startswith("https://"):
+            abort(503, description="A secure public URL is required for activation.")
+        token = secrets.token_urlsafe(32)
+        digest = hashlib.sha256(invitation_token.encode("utf-8")).hexdigest()
+        now = int(datetime.now(timezone.utc).timestamp())
+        with get_db_connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            invitation = db.execute(
+                "SELECT email FROM beta_invitations WHERE token_hash=? AND used_at IS NULL AND expires_at>?",
+                (digest, now)
+            ).fetchone()
+            if invitation is None:
+                abort(403)
+            if db.execute("SELECT 1 FROM users WHERE username=? OR email=? COLLATE NOCASE",
+                          (username, invitation["email"])).fetchone():
+                return "Username or invited email already registered.", 409
+            db.execute("INSERT INTO users(username,password_hash,email,email_verified) VALUES (?,?,?,0)",
+                       (username, generate_password_hash(password), invitation["email"]))
+            uid = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+            db.execute("INSERT INTO email_activations(token_hash,user_id,expires_at) VALUES (?,?,?)",
+                       (hashlib.sha256(token.encode("utf-8")).hexdigest(), uid, now + 86400))
+            db.execute("UPDATE beta_invitations SET used_at=? WHERE token_hash=?", (now, digest))
+        activation_link = public_url + url_for("activate_email", token=token)
+        try:
+            send_beta_email(invitation["email"], "Activate your Furlong account",
+                            "Activate your account within 24 hours: " + activation_link)
+        except (RuntimeError, OSError, smtplib.SMTPException):
+            # Keep the unverified account and token for a future controlled resend.
+            return "Your account was created, but activation email delivery failed. Contact the beta administrator.", 503
+        return "Check your email for your Furlong activation link.", 202
     username=request.form.get("username","").strip()
     password=request.form.get("password","")
     if not 3<=len(username)<=40 or not username.replace("_","").replace("-","").isalnum() or len(password)<10:
