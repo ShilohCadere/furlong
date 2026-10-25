@@ -300,6 +300,8 @@ def register():
         return render_template("auth.html", mode="register", error=None,
                                invitation=invitation_token if beta else None,
                                invite_email=invited_email)
+    if beta:
+        abort(503, description="Invited account creation is not enabled until email delivery is configured.")
     username=request.form.get("username","").strip()
     password=request.form.get("password","")
     if not 3<=len(username)<=40 or not username.replace("_","").replace("-","").isalnum() or len(password)<10:
