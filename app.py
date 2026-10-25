@@ -2,6 +2,7 @@
 import sqlite3
 import os
 import secrets
+import hashlib
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date, datetime, timedelta, timezone
@@ -236,7 +237,7 @@ def validate_csrf_token():
 
 @app.before_request
 def require_login():
-    if request.endpoint in ("login","register","static") or request.endpoint is None:
+    if request.endpoint in ("login","register","activate_email","static") or request.endpoint is None:
         return
     if not session.get("user_id"):
         return redirect(url_for("login"))
@@ -252,6 +253,26 @@ def require_login():
 @app.context_processor
 def logged_in_user():
     return {"active_username":session.get("username")}
+
+
+@app.route("/activate/<token>", methods=["GET"])
+def activate_email(token):
+    """Consume a single-use, 24-hour email activation token atomically."""
+    if len(token) > 256:
+        abort(400)
+    digest = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    now = int(datetime.now(timezone.utc).timestamp())
+    with get_db_connection() as db:
+        db.execute("BEGIN IMMEDIATE")
+        activation = db.execute(
+            "SELECT user_id FROM email_activations WHERE token_hash=? AND used_at IS NULL AND expires_at>?",
+            (digest, now)
+        ).fetchone()
+        if activation is None:
+            abort(400, description="Invalid or expired activation link.")
+        db.execute("UPDATE users SET email_verified=1 WHERE id=?", (activation["user_id"],))
+        db.execute("UPDATE email_activations SET used_at=? WHERE token_hash=?", (now, digest))
+    return redirect(url_for("login"))
 
 
 @app.route("/register",methods=["GET","POST"])
@@ -333,6 +354,9 @@ def login():
     if not user or not check_password_hash(user["password_hash"],request.form.get("password","")):
         _auth_failed(username)
         return render_template("auth.html",mode="login",error="Incorrect username or password."),401
+    if os.environ.get("FURLONG_ENV") == "production" and not user["email_verified"]:
+        return render_template("auth.html",mode="login",
+            error="Verify your email address before signing in."),403
     _auth_succeeded(username)
     session.clear()
     session.update(user_id=user["id"],username=user["username"])
