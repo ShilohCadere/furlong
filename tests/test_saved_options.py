@@ -34,6 +34,28 @@ class SavedOptionsTests(unittest.TestCase):
             follow_redirects=True
         )
 
+    def test_csrf_rejects_missing_and_invalid_tokens(self):
+        # Existing functional tests run with their historical direct POST setup;
+        # this test explicitly checks production CSRF enforcement.
+        old_testing = furlong.app.config.get("TESTING", False)
+        furlong.app.config["TESTING"] = False
+        try:
+            self.assertEqual(self.client.post("/", data={"trip-name": "Forged"}).status_code, 400)
+            self.assertEqual(self.client.post("/", data={
+                "trip-name": "Forged", "_csrf_token": "wrong"
+            }).status_code, 400)
+            page = self.client.get("/")
+            import re
+            token = re.search(rb'name="_csrf_token" value="([^"]+)"', page.data)
+            self.assertIsNotNone(token)
+            response = self.client.post("/", data={
+                "trip-name": "Protected", "first-route-name": "Main route",
+                "_csrf_token": token.group(1).decode()
+            })
+            self.assertEqual(response.status_code, 302)
+        finally:
+            furlong.app.config["TESTING"] = old_testing
+
     def test_accounts_keep_trips_private_and_login_restores_them(self):
         trip=self.trip_id
         self.client.post("/logout")
