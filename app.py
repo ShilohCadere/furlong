@@ -255,6 +255,20 @@ def logged_in_user():
     return {"active_username":session.get("username")}
 
 
+def valid_beta_invitation(token):
+    """Return the invited email only for an unused, unexpired invitation."""
+    if not token or len(token) > 256:
+        return None
+    digest = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    now = int(datetime.now(timezone.utc).timestamp())
+    with get_db_connection() as db:
+        invitation = db.execute(
+            "SELECT email FROM beta_invitations WHERE token_hash=? AND used_at IS NULL AND expires_at>?",
+            (digest, now)
+        ).fetchone()
+    return invitation["email"] if invitation else None
+
+
 @app.route("/activate/<token>", methods=["GET"])
 def activate_email(token):
     """Consume a single-use, 24-hour email activation token atomically."""
