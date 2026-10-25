@@ -37,6 +37,23 @@ else:
 app.config.update(SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE="Lax",
                   SESSION_COOKIE_SECURE=os.environ.get("FURLONG_HTTPS", "0") == "1")
 
+# Conservative limits for a text-based travel planner.
+app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024
+app.config["MAX_FORM_MEMORY_SIZE"] = 256 * 1024
+app.config["PERMANENT_SESSION_LIFETIME"] = __import__("datetime").timedelta(hours=12)
+
+@app.after_request
+def add_security_headers(response):
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Content-Security-Policy",
+        "frame-ancestors 'none'; object-src 'none'; base-uri 'self'")
+    if app.config["SESSION_COOKIE_SECURE"]:
+        response.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
+    return response
+
+
 
 
 def get_db_connection():
