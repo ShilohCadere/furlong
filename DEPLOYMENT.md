@@ -6,6 +6,7 @@ Furlong is not yet approved for public production deployment. Verify security an
 - Set `FURLONG_SECRET_KEY` to a long random secret. Keep it stable between deployments and outside source control.
 - Set `FURLONG_DATA_DIR` to a **persistent writable volume** that survives deploys and restarts. This is where `furlong.db` is stored. If unset, the local development database stays beside `app.py` for backward compatibility.
 - Set `FURLONG_HTTPS=1` **only when users connect through HTTPS**; it enables Secure session cookies. Production must use HTTPS.
+- Keep `FURLONG_CLAIM_LEGACY_TRIPS` unset for public registration. Only set it to `1` for a deliberate one-time migration of existing unowned local trips into the first account, then unset it.
 - Keep `ENABLE_EUROPE_IMPORT` disabled. It is a development fixture, not a public feature.
 - Do not run `python app.py` as a public server: the local development entry point enables debug mode. Use a production WSGI server and reverse proxy.
 
