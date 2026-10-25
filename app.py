@@ -18,7 +18,11 @@ from flask import (
 
 app = Flask(__name__)
 
-DATABASE = Path(__file__).resolve().parent / "furlong.db"
+# Set FURLONG_DATA_DIR to a persistent, writable volume in production.
+# Existing local installations retain their original database location.
+DATA_DIR = Path(os.environ.get("FURLONG_DATA_DIR", str(Path(__file__).resolve().parent))).expanduser().resolve()
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+DATABASE = DATA_DIR / "furlong.db"
 # Local development sessions remain valid when Flask restarts.
 _secret_path = Path(__file__).resolve().parent / ".furlong_session_secret"
 if os.environ.get("FURLONG_SECRET_KEY"):
