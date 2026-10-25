@@ -3,6 +3,8 @@ import sqlite3
 import os
 import secrets
 import hashlib
+import smtplib
+from email.message import EmailMessage
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date, datetime, timedelta, timezone
@@ -253,6 +255,23 @@ def require_login():
 @app.context_processor
 def logged_in_user():
     return {"active_username":session.get("username")}
+
+
+def send_beta_email(recipient, subject, body):
+    """Send transactional email over authenticated STARTTLS; never log credentials or tokens."""
+    required = ("FURLONG_SMTP_HOST", "FURLONG_SMTP_FROM", "FURLONG_SMTP_USERNAME", "FURLONG_SMTP_PASSWORD")
+    if not all(os.environ.get(name) for name in required):
+        raise RuntimeError("Beta email delivery is not configured")
+    message = EmailMessage()
+    message["From"] = os.environ["FURLONG_SMTP_FROM"]
+    message["To"] = recipient
+    message["Subject"] = subject
+    message.set_content(body)
+    with smtplib.SMTP(os.environ["FURLONG_SMTP_HOST"],
+                      int(os.environ.get("FURLONG_SMTP_PORT", "587")), timeout=10) as smtp:
+        smtp.starttls()
+        smtp.login(os.environ["FURLONG_SMTP_USERNAME"], os.environ["FURLONG_SMTP_PASSWORD"])
+        smtp.send_message(message)
 
 
 def valid_beta_invitation(token):
