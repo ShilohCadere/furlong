@@ -16,7 +16,7 @@ Furlong is not yet approved for public production deployment. Verify security an
 
 ## Private beta invitations and email activation
 - Production registration requires an unused invitation token tied to an email address; registration links use `/register?invitation=TOKEN`.
-- Invitation records live in the `beta_invitations` SQLite table. Issue invitations only through a trusted administrator workflow; no public invitation creation endpoint exists yet.
+- Invitation records live in the `beta_invitations` SQLite table. From a trusted administrator shell with access to the persistent database, run `python scripts/issue_beta_invitation.py tester@example.com` after setting `FURLONG_PUBLIC_URL`. The command prints a private registration URL. Deliver it directly to the intended tester; never post it publicly or include it in logs. Invitations expire after seven days and issuing a new one replaces unused invitations for the same email. No public invitation-creation endpoint exists.
 - Set `FURLONG_PUBLIC_URL` to the exact public HTTPS origin (for example `https://your-domain.example`).
 - Configure `FURLONG_SMTP_HOST`, `FURLONG_SMTP_PORT` (default 587), `FURLONG_SMTP_USERNAME`, `FURLONG_SMTP_PASSWORD`, and `FURLONG_SMTP_FROM` as deployment secrets.
 - SMTP must support authenticated STARTTLS. Never commit passwords or invitation/activation tokens.
