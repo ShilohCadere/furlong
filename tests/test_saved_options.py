@@ -79,6 +79,30 @@ class SavedOptionsTests(unittest.TestCase):
                        (now - 1, digest))
         self.assertIsNone(furlong.valid_beta_invitation(token))
 
+    def test_resend_activation_uses_generic_response_and_rotates_token(self):
+        import hashlib
+        from unittest.mock import patch
+        with furlong.get_db_connection() as db:
+            uid = db.execute("SELECT id FROM users WHERE username='testuser'").fetchone()[0]
+            db.execute("UPDATE users SET email=?, email_verified=0 WHERE id=?",
+                       ("test@example.com", uid))
+        with patch.dict(furlong.os.environ, {"FURLONG_PUBLIC_URL": "https://example.test"}):
+            with patch.object(furlong, "send_beta_email") as send:
+                first = self.client.post("/resend-activation", data={"email": "test@example.com"})
+                self.assertEqual(first.status_code, 200)
+                self.assertEqual(send.call_count, 1)
+                with furlong.get_db_connection() as db:
+                    first_hash = db.execute("SELECT token_hash FROM email_activations WHERE user_id=?", (uid,)).fetchone()[0]
+                second = self.client.post("/resend-activation", data={"email": "test@example.com"})
+                self.assertEqual(second.status_code, 200)
+                with furlong.get_db_connection() as db:
+                    second_hash = db.execute("SELECT token_hash FROM email_activations WHERE user_id=?", (uid,)).fetchone()[0]
+                self.assertNotEqual(first_hash, second_hash)
+                self.assertEqual(self.client.post("/resend-activation", data={"email": "missing@example.com"}).status_code, 200)
+                self.client.post("/resend-activation", data={"email": "test@example.com"})
+                self.client.post("/resend-activation", data={"email": "test@example.com"})
+                self.assertEqual(send.call_count, 3)
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.old_database = furlong.DATABASE
