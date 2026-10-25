@@ -85,6 +85,25 @@ def init_db():
             username TEXT NOT NULL UNIQUE COLLATE NOCASE,
             password_hash TEXT NOT NULL
         )""")
+        # Additive beta-account migration; preserve existing local users and trips.
+        user_columns = {row["name"] for row in connection.execute("PRAGMA table_info(users)")}
+        if "email" not in user_columns:
+            connection.execute("ALTER TABLE users ADD COLUMN email TEXT")
+        if "email_verified" not in user_columns:
+            connection.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0")
+        connection.execute("CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users(email COLLATE NOCASE) WHERE email IS NOT NULL")
+        connection.execute("""CREATE TABLE IF NOT EXISTS beta_invitations (
+            token_hash TEXT PRIMARY KEY,
+            email TEXT NOT NULL COLLATE NOCASE,
+            expires_at INTEGER NOT NULL,
+            used_at INTEGER
+        )""")
+        connection.execute("""CREATE TABLE IF NOT EXISTS email_activations (
+            token_hash TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            expires_at INTEGER NOT NULL,
+            used_at INTEGER
+        )""")
         trip_columns={row["name"] for row in connection.execute("PRAGMA table_info(trips)")}
         if "user_id" not in trip_columns:
             connection.execute("ALTER TABLE trips ADD COLUMN user_id INTEGER REFERENCES users(id)")
