@@ -239,6 +239,7 @@
             class="trip-form"
             id="edit-trip-form"
         >
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
             <label for="edit-trip-name">Trip name *</label>
             <input
                 type="text"
