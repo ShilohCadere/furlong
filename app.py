@@ -228,7 +228,8 @@ def register():
         uid=db.execute("SELECT last_insert_rowid()").fetchone()[0]
         # First local account inherits this installation's existing guest trips.
         # Future accounts never inherit other users' trips.
-        if not had_users:db.execute("UPDATE trips SET user_id=? WHERE user_id IS NULL",(uid,))
+        if not had_users and os.environ.get("FURLONG_CLAIM_LEGACY_TRIPS") == "1":
+            db.execute("UPDATE trips SET user_id=? WHERE user_id IS NULL",(uid,))
     session.clear()
     session.update(user_id=uid,username=username)
     return redirect(url_for("home"))
