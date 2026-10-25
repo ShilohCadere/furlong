@@ -239,7 +239,7 @@ def validate_csrf_token():
 
 @app.before_request
 def require_login():
-    if request.endpoint in ("login","register","activate_email","static") or request.endpoint is None:
+    if request.endpoint in ("login","register","activate_email","resend_activation","static") or request.endpoint is None:
         return
     if not session.get("user_id"):
         return redirect(url_for("login"))
@@ -286,6 +286,43 @@ def valid_beta_invitation(token):
             (digest, now)
         ).fetchone()
     return invitation["email"] if invitation else None
+
+
+@app.route("/resend-activation", methods=["POST"])
+def resend_activation():
+    """Resend only for an existing unverified account, with per-IP throttling."""
+    email = request.form.get("email", "").strip().lower()
+    generic = "If an unverified account exists, an activation email will be sent."
+    if not email or len(email) > 254:
+        return generic, 200
+    key = "resend:" + hashlib.sha256(((request.remote_addr or "unknown") + ":" + email).encode()).hexdigest()
+    now = int(datetime.now(timezone.utc).timestamp())
+    with get_db_connection() as db:
+        db.execute("BEGIN IMMEDIATE")
+        recent = db.execute("SELECT attempts,window_started FROM auth_attempts WHERE attempt_key=?", (key,)).fetchone()
+        if recent and now - recent["window_started"] < 3600 and recent["attempts"] >= 3:
+            return generic, 200
+        db.execute("""INSERT INTO auth_attempts(attempt_key,attempts,window_started) VALUES (?,1,?)
+            ON CONFLICT(attempt_key) DO UPDATE SET
+            attempts=CASE WHEN ?-window_started>=3600 THEN 1 ELSE attempts+1 END,
+            window_started=CASE WHEN ?-window_started>=3600 THEN ? ELSE window_started END""",
+            (key,now,now,now,now))
+        user = db.execute("SELECT id FROM users WHERE email=? COLLATE NOCASE AND email_verified=0", (email,)).fetchone()
+        if user is None:
+            return generic, 200
+        token = secrets.token_urlsafe(32)
+        db.execute("DELETE FROM email_activations WHERE user_id=?", (user["id"],))
+        db.execute("INSERT INTO email_activations(token_hash,user_id,expires_at) VALUES (?,?,?)",
+                   (hashlib.sha256(token.encode()).hexdigest(),user["id"],now+86400))
+    origin = os.environ.get("FURLONG_PUBLIC_URL", "").rstrip("/")
+    if not origin.startswith("https://"):
+        return generic, 200
+    try:
+        send_beta_email(email, "Activate your Furlong account",
+                        "Activate within 24 hours: " + origin + url_for("activate_email",token=token))
+    except (RuntimeError, OSError, smtplib.SMTPException):
+        pass
+    return generic, 200
 
 
 @app.route("/activate/<token>", methods=["GET"])
