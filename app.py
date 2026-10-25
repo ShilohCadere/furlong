@@ -451,7 +451,8 @@ def itinerary(trip_id):
     with get_db_connection() as db:
         scenarios=db.execute("SELECT * FROM trip_scenarios WHERE trip_id=? ORDER BY id",(trip_id,)).fetchall()
         sid=request.args.get("scenario",type=int)
-        scenario=next((p for p in scenarios if p["id"]==sid),None) if sid else (scenarios[0] if scenarios else None)
+        scenario=next((p for p in scenarios if p["id"]==sid),None) if sid is not None else (scenarios[0] if scenarios else None)
+        if sid is not None and scenario is None: abort(404)
         days=db.execute("SELECT * FROM itinerary_days WHERE trip_id=? ORDER BY day_number",(trip_id,)).fetchall()
         route_days=db.execute("SELECT * FROM scenario_itinerary WHERE scenario_id=? ORDER BY day_date",(scenario["id"],)).fetchall() if scenario else []
         activity_rows=db.execute("""SELECT a.* FROM day_activities a JOIN scenario_itinerary d ON d.id=a.itinerary_id
