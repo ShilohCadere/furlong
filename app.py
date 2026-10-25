@@ -295,10 +295,20 @@ def resend_activation():
     generic = "If an unverified account exists, an activation email will be sent."
     if not email or len(email) > 254:
         return generic, 200
+    ip_digest = hashlib.sha256((request.remote_addr or "unknown").encode()).hexdigest()
+    ip_key = "resend-ip:" + ip_digest
     key = "resend:" + hashlib.sha256(((request.remote_addr or "unknown") + ":" + email).encode()).hexdigest()
     now = int(datetime.now(timezone.utc).timestamp())
     with get_db_connection() as db:
         db.execute("BEGIN IMMEDIATE")
+        ip_recent = db.execute("SELECT attempts,window_started FROM auth_attempts WHERE attempt_key=?", (ip_key,)).fetchone()
+        if ip_recent and now - ip_recent["window_started"] < 3600 and ip_recent["attempts"] >= 15:
+            return generic, 200
+        db.execute("""INSERT INTO auth_attempts(attempt_key,attempts,window_started) VALUES (?,1,?)
+            ON CONFLICT(attempt_key) DO UPDATE SET
+            attempts=CASE WHEN ?-window_started>=3600 THEN 1 ELSE attempts+1 END,
+            window_started=CASE WHEN ?-window_started>=3600 THEN ? ELSE window_started END""",
+            (ip_key,now,now,now,now))
         recent = db.execute("SELECT attempts,window_started FROM auth_attempts WHERE attempt_key=?", (key,)).fetchone()
         if recent and now - recent["window_started"] < 3600 and recent["attempts"] >= 3:
             return generic, 200
