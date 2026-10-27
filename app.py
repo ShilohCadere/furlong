@@ -973,6 +973,7 @@ def trip_workspace(trip_id):
                 add_europe_route_days(db,trip_id)
                 from europe_seed import fill_europe_day_details
                 fill_europe_day_details(db,trip_id)
+        if trip["name"] == "Europe 2027":
             from reverse_routes import ensure_reverse_europe_routes
             ensure_reverse_europe_routes(db,trip_id)
         scenarios=db.execute("SELECT * FROM trip_scenarios WHERE trip_id=? ORDER BY id",(trip_id,)).fetchall()
