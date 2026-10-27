@@ -961,10 +961,18 @@ def trip_workspace(trip_id):
             add_missing_europe_candidates(db,trip_id)
             from europe_seed import split_edinburgh_stays
             split_edinburgh_stays(db,trip_id)
-            from europe_seed import add_europe_route_days
-            add_europe_route_days(db,trip_id)
-            from europe_seed import fill_europe_day_details
-            fill_europe_day_details(db,trip_id)
+            # Do not re-seed pre-revision route days after the user has
+            # shifted S1/L1 to September 2027; their dates and notes are authoritative.
+            revised_days = db.execute("""SELECT 1 FROM scenario_itinerary d
+                JOIN trip_scenarios s ON s.id=d.scenario_id
+                WHERE d.trip_id=? AND s.name IN ('S1','L1')
+                  AND d.day_date >= '2027-09-14' LIMIT 1""",
+                (trip_id,)).fetchone()
+            if not revised_days:
+                from europe_seed import add_europe_route_days
+                add_europe_route_days(db,trip_id)
+                from europe_seed import fill_europe_day_details
+                fill_europe_day_details(db,trip_id)
             from reverse_routes import ensure_reverse_europe_routes
             ensure_reverse_europe_routes(db,trip_id)
         scenarios=db.execute("SELECT * FROM trip_scenarios WHERE trip_id=? ORDER BY id",(trip_id,)).fetchall()
