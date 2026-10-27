@@ -980,6 +980,8 @@ def trip_workspace(trip_id):
             add_europe_flight_research(db,trip_id)
             from dublin_hotel_research import seed_dublin_hotel_research
             seed_dublin_hotel_research(db,trip_id)
+            from dublin_rental_research import seed_dublin_rentals
+            seed_dublin_rentals(db,trip_id)
         scenarios=db.execute("SELECT * FROM trip_scenarios WHERE trip_id=? ORDER BY id",(trip_id,)).fetchall()
         if not scenarios:
             db.execute("INSERT INTO trip_scenarios (trip_id,name) VALUES (?,?)",(trip_id,"Plan A"))
