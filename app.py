@@ -976,6 +976,8 @@ def trip_workspace(trip_id):
         if trip["name"] == "Europe 2027":
             from reverse_routes import ensure_reverse_europe_routes
             ensure_reverse_europe_routes(db,trip_id)
+            from europe_flight_research import add_europe_flight_research
+            add_europe_flight_research(db,trip_id)
         scenarios=db.execute("SELECT * FROM trip_scenarios WHERE trip_id=? ORDER BY id",(trip_id,)).fetchall()
         if not scenarios:
             db.execute("INSERT INTO trip_scenarios (trip_id,name) VALUES (?,?)",(trip_id,"Plan A"))
