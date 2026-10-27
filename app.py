@@ -1028,7 +1028,7 @@ def trip_workspace(trip_id):
     selected_flights=[p for p in picked if p["category"]=="flight"]
     extra_expenses=sum(row["amount"] for row in expenses if not row["included_in_allowance"])
     food_allowance=scenario["food_travelers"]*scenario["food_days"]*scenario["food_daily_rate"]
-    total=subtotal+scenario["other_costs"]+food_allowance+scenario["ground_transport_allowance"]+scenario["contingency_allowance"]+scenario["insurance_allowance"]+scenario["fees_allowance"]+extra_expenses
+    total=subtotal+food_allowance+scenario["ground_transport_allowance"]+scenario["contingency_allowance"]+scenario["insurance_allowance"]+scenario["fees_allowance"]+extra_expenses
     return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,castles=castles,flights=flights,excursions=excursions,transport=transport,selected_flights=selected_flights,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,food_allowance=food_allowance,total=total,remaining=scenario["budget_limit"]-total,expenses=expenses,extra_expenses=extra_expenses)
 
 
@@ -1095,11 +1095,12 @@ def budget_playground(trip_id):
         groups.setdefault((item["city"],item["category"]),[]).append(item)
     # Expenses outside allowances are already included in the active plan's estimate.
     extras=sum(e["amount"] for e in expenses if not e["included_in_allowance"])
-    total=plan["other_costs"]+plan["food_travelers"]*plan["food_days"]*plan["food_daily_rate"]+plan["ground_transport_allowance"]+plan["contingency_allowance"]+plan["insurance_allowance"]+plan["fees_allowance"]+extras+sum(
+    total=plan["food_travelers"]*plan["food_days"]*plan["food_daily_rate"]+plan["ground_transport_allowance"]+plan["contingency_allowance"]+plan["insurance_allowance"]+plan["fees_allowance"]+extras+sum(
         next((o["price"] or 0 for o in opts if o["id"]==selected.get(key)),0)
         for key,opts in groups.items())
     return render_template("playground.html",trip=trip,plans=plans,plan=plan,
-        groups=groups,selected=selected,baseline=total,extras=extras)
+        groups=groups,selected=selected,baseline=total,extras=extras,
+        fixed_allowances=plan["food_travelers"]*plan["food_days"]*plan["food_daily_rate"]+plan["ground_transport_allowance"]+plan["contingency_allowance"]+plan["insurance_allowance"]+plan["fees_allowance"])
 
 
 @app.route("/trip/<int:trip_id>/flights/add", methods=["POST"])
@@ -1249,7 +1250,6 @@ def workspace_settings(trip_id):
     sid=request.form.get("scenario_id",type=int)
     try:
         budget=float(request.form.get("budget_limit",""))
-        other=float(request.form.get("other_costs",""))
         food_travelers=int(request.form.get("food_travelers",""))
         food_days=int(request.form.get("food_days",""))
         food_daily_rate=float(request.form.get("food_daily_rate",""))
@@ -1258,12 +1258,12 @@ def workspace_settings(trip_id):
         insurance=float(request.form.get("insurance_allowance",""))
         fees=float(request.form.get("fees_allowance",""))
     except (ValueError, TypeError): abort(400,"Costs must be numbers")
-    if not all(__import__("math").isfinite(x) and 0<=x<=100000000 for x in [budget,other,food_daily_rate,ground,contingency,insurance,fees]): abort(400)
+    if not all(__import__("math").isfinite(x) and 0<=x<=100000000 for x in [budget,food_daily_rate,ground,contingency,insurance,fees]): abort(400)
     if not (1 <= food_travelers <= 100 and 1 <= food_days <= 365): abort(400)
     with get_db_connection() as db:
         row=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND id=?",(trip_id,sid)).fetchone()
         if not row: abort(404)
-        db.execute("UPDATE trip_scenarios SET budget_limit=?,other_costs=?,food_travelers=?,food_days=?,food_daily_rate=?,ground_transport_allowance=?,contingency_allowance=?,insurance_allowance=?,fees_allowance=? WHERE id=?",(budget,other,food_travelers,food_days,food_daily_rate,ground,contingency,insurance,fees,sid))
+        db.execute("UPDATE trip_scenarios SET budget_limit=?,food_travelers=?,food_days=?,food_daily_rate=?,ground_transport_allowance=?,contingency_allowance=?,insurance_allowance=?,fees_allowance=? WHERE id=?",(budget,food_travelers,food_days,food_daily_rate,ground,contingency,insurance,fees,sid))
     return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid))
 
 
@@ -1305,4 +1305,5 @@ init_db()
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
