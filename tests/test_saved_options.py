@@ -148,6 +148,41 @@ class SavedOptionsTests(unittest.TestCase):
             follow_redirects=True
         )
 
+    def test_flight_total_uses_chosen_flights_without_automatic_allowance(self):
+        from flask import template_rendered
+        captured=[]
+        def record(sender, template, context, **extra): captured.append(context)
+        template_rendered.connect(record, furlong.app)
+        try:
+            with furlong.get_db_connection() as db:
+                db.execute("INSERT INTO trip_scenarios(trip_id,name,other_costs,food_travelers,food_days,food_daily_rate) VALUES (?, 'S1',9999,4,14,80)",(self.trip_id,))
+                sid=db.execute("SELECT last_insert_rowid()").fetchone()[0]
+                db.execute("INSERT INTO saved_options(trip_id,city,name,category,price,scenario_tag) VALUES (?,'STL to Dublin','Chosen flight','flight',1200,'S1')",(self.trip_id,))
+                oid=db.execute("SELECT last_insert_rowid()").fetchone()[0]
+            def context(path):
+                response=self.client.get(path)
+                self.assertEqual(response.status_code,200)
+                return captured[-1],response
+            workspace=f"/trip/{self.trip_id}/workspace?scenario={sid}"
+            playground=f"/trip/{self.trip_id}/budget-playground?scenario={sid}"
+            ctx,page=context(workspace)
+            self.assertEqual(ctx['total'],4480)
+            self.assertNotIn(b'FLIGHT ALLOWANCE',page.data)
+            self.assertNotIn(b'name="other_costs"',page.data)
+            self.client.post(f"/trip/{self.trip_id}/workspace/choose",data={'scenario_id':sid,'option_id':oid,'city':'STL to Dublin','category':'flight'})
+            self.assertEqual(context(workspace)[0]['total'],5680)
+            ctx,page=context(playground)
+            self.assertEqual(ctx['baseline'],5680)
+            self.assertEqual(ctx['fixed_allowances'],4480)
+            self.assertIn(b'allowance=4480',page.data)
+            with furlong.get_db_connection() as db: db.execute("UPDATE saved_options SET price=NULL WHERE id=?",(oid,))
+            ctx,page=context(workspace)
+            self.assertIn('Chosen flight',ctx['missing'])
+            self.assertEqual(ctx['total'],4480)
+            payload={'scenario_id':sid,'budget_limit':20000,'food_travelers':4,'food_days':14,'food_daily_rate':80,'ground_transport_allowance':0,'contingency_allowance':0,'insurance_allowance':0,'fees_allowance':0}
+            self.assertEqual(self.client.post(f"/trip/{self.trip_id}/workspace/settings",data=payload).status_code,302)
+        finally: template_rendered.disconnect(record, furlong.app)
+
     def test_new_account_does_not_claim_unowned_trips_by_default(self):
         import os
         from unittest.mock import patch
@@ -248,7 +283,8 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertIn(b"$960",second.data)
         self.client.post(f"/trip/{self.trip_id}/workspace/settings",data={"scenario_id":plans[0]["id"],"budget_limit":"20000","other_costs":"15000"})
         updated=self.client.get(f"/trip/{self.trip_id}/workspace?scenario={plans[0]['id']}")
-        self.assertIn(b"$16006",updated.data)
+        self.assertNotIn(b"$16006",updated.data)
+        self.assertIn(b"$1006",updated.data)
 
     def test_option_edit_dates_and_validation(self):
         self.add("Eyre Square")
@@ -421,7 +457,7 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertEqual(self.client.post(url,data={"scenario_id":sid,"category":"food",
             "name":"Extra meal","amount":"50","included_in_allowance":"0"}).status_code,302)
         page=self.client.get(f"/trip/{trip}/workspace?scenario={sid}")
-        self.assertIn(b'$18989',page.data)
+        self.assertIn(b'$14164',page.data)
         self.assertIn(b'Tour tickets',page.data)
         self.assertIn(b'Extra meal',page.data)
 
@@ -493,11 +529,11 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertEqual(s1.status_code,200)
         self.assertIn(b'Budget playground',s1.data)
         self.assertIn(b'Quote needed',s1.data)
-        self.assertIn(b'$18,939',s1.data)
+        self.assertIn(b'$14,114',s1.data)
         self.assertIn(b'pg-option',s1.data)
         l1=self.client.get(f"/trip/{trip}/budget-playground?scenario={plans['L1']}")
         self.assertEqual(l1.status_code,200)
-        self.assertIn(b'$19,817',l1.data)
+        self.assertIn(b'$15,317',l1.data)
         self.assertEqual(self.client.get(f"/trip/{trip}/budget-playground?scenario=999999").status_code,404)
         with furlong.get_db_connection() as db:
             self.assertEqual(db.execute("SELECT COUNT(*) FROM scenario_choices").fetchone()[0],before)
@@ -660,3 +696,4 @@ class SavedOptionsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
