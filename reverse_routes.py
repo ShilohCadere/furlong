@@ -123,7 +123,8 @@ TRANSPORT = [
     ("Ireland regional flights", "Ryanair Edinburgh to Shannon — flight search", "flight", "https://www.ryanair.com/gb/en/flights/flights-from-edinburgh-to-shannon"),
     ("Scotland rail", "ScotRail Inverness to Edinburgh — official tickets", "transport", "https://www.buytickets.scotrail.co.uk/buytickets/login.aspx?TabName=deliveryoption.aspx"),
     ("Ireland rail", "Irish Rail Galway to Dublin — official fares and booking", "transport", "https://www.irishrail.ie/rail-fares-and-tickets/dublin-galway"),
-    ("Ireland transfers", "Irish Citylink — Galway / Shannon transfers (verify stops)", "transport", "https://www.citylink.ie/"),
+    ("Ireland transfers", "Bus Éireann Expressway 51 — Shannon Airport to Galway", "transport", "https://www.buseireann.ie/routes-and-timetables/51"),
+    ("Ireland coach", "Irish Citylink — Galway to Dublin (rail backup)", "transport", "https://www.citylink.ie/"),
 ]
 
 
