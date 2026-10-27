@@ -965,6 +965,8 @@ def trip_workspace(trip_id):
             add_europe_route_days(db,trip_id)
             from europe_seed import fill_europe_day_details
             fill_europe_day_details(db,trip_id)
+            from reverse_routes import ensure_reverse_europe_routes
+            ensure_reverse_europe_routes(db,trip_id)
         scenarios=db.execute("SELECT * FROM trip_scenarios WHERE trip_id=? ORDER BY id",(trip_id,)).fetchall()
         if not scenarios:
             db.execute("INSERT INTO trip_scenarios (trip_id,name) VALUES (?,?)",(trip_id,"Plan A"))
