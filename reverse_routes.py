@@ -141,9 +141,17 @@ def ensure_reverse_europe_routes(db, trip_id):
     for name, plan in PLANS.items():
         if name in existing:
             continue
-        original = db.execute(
-            "SELECT * FROM trip_scenarios WHERE trip_id=? AND name=?",
-            (trip_id, plan["source"])).fetchone()
+        # Live Europe 2027 scenarios are named 12 OTG and 14 OTG.
+        # Support historic S1/L1 names too, without renaming or modifying them.
+        source_names = (("12 OTG", "S1") if name == "Backwards 12 OTG"
+                        else ("14 OTG", "L1"))
+        original = None
+        for source_name in source_names:
+            original = db.execute(
+                "SELECT * FROM trip_scenarios WHERE trip_id=? AND name=?",
+                (trip_id, source_name)).fetchone()
+            if original is not None:
+                break
         if original is None:
             continue
 
