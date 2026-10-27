@@ -41,8 +41,59 @@ ROWS = [
  ("Backwards 14 OTG","Dublin → STL","2027-09-28","Air Canada via Toronto — schedule pending",None,"https://www.aircanada.com/","DUB","STL","","","YYZ — check layover ≥3h","Air Canada"),
 ]
 
+def _route_for_existing(row):
+    """Infer an actual segment from stored endpoints or recognizable labels."""
+    name = (row["name"] or "").lower()
+    origin = (row["origin"] or "").strip().upper()
+    destination = (row["destination"] or "").strip().upper()
+    if origin in ("STL", "LHR", "LGW", "LON", "DUB", "SNN", "EDI", "INV") and destination in ("STL", "LHR", "LGW", "LON", "DUB", "SNN", "EDI", "INV"):
+        cities = {"STL":"STL", "LHR":"London", "LGW":"London", "LON":"London",
+                  "DUB":"Dublin", "SNN":"Shannon", "EDI":"Edinburgh", "INV":"Inverness"}
+        return cities[origin] + " → " + cities[destination]
+    # Recognize both natural-language and airport-code names; do not guess
+    # direction for generic allowances or ambiguous user-created options.
+    labels = [
+        (("st. louis to london", "stl to london", "stl → london"),"STL → London"),
+        (("st. louis to dublin", "stl to dublin", "stl → dublin"),"STL → Dublin"),
+        (("london to st. louis", "london to stl", "london → stl"),"London → STL"),
+        (("dublin to st. louis", "dublin to stl", "dublin → stl"),"Dublin → STL"),
+        (("london to inverness", "london → inverness"),"London → Inverness"),
+        (("inverness to london", "inverness → london"),"Inverness → London"),
+        (("edinburgh to shannon", "edinburgh → shannon"),"Edinburgh → Shannon"),
+        (("shannon to edinburgh", "shannon → edinburgh"),"Shannon → Edinburgh"),
+    ]
+    for phrases, route in labels:
+        if any(phrase in name for phrase in phrases):
+            return route
+    return None
+
+
+def _consolidate_flight_routes(db, trip_id):
+    """Rekey old grouping labels and their selections without losing option IDs."""
+    rows = db.execute("""SELECT * FROM saved_options
+        WHERE trip_id=? AND category='flight'""", (trip_id,)).fetchall()
+    for row in rows:
+        route = _route_for_existing(row)
+        if not route or row["city"] == route:
+            continue
+        # A scenario can only select one flight in a given route group.
+        # Retain the old choice unchanged if there would be a conflict.
+        choices = db.execute("""SELECT scenario_id FROM scenario_choices
+            WHERE option_id=? AND category='flight'""", (row["id"],)).fetchall()
+        collision = any(db.execute("""SELECT 1 FROM scenario_choices
+            WHERE scenario_id=? AND city=? AND category='flight'""",
+            (choice["scenario_id"], route)).fetchone() for choice in choices)
+        if collision:
+            continue
+        db.execute("""UPDATE saved_options SET city=? WHERE id=?""",
+                   (route, row["id"]))
+        db.execute("""UPDATE scenario_choices SET city=?
+            WHERE option_id=? AND category='flight'""",(route,row["id"]))
+
+
 def add_europe_flight_research(db, trip_id):
     """Insert missing date-specific candidate rows only; never overwrite selections."""
+    _consolidate_flight_routes(db, trip_id)
     known = {r["name"] for r in db.execute(
         "SELECT name FROM trip_scenarios WHERE trip_id=?", (trip_id,)).fetchall()}
     aliases = {"12 OTG": "S1", "14 OTG": "L1"}
