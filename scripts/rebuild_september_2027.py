@@ -1,13 +1,16 @@
-"""Update existing S1 to September 14–28 and add research to an existing Furlong trip.
+"""Update an existing S1 or L1 itinerary to September 14–28, 2027.
 
 Run from repository root:
-  python scripts/rebuild_september_2027.py --username scadere
-Uses the existing database only. Backs it up before writing. Retimes S1 only, preserves its historical quotes and selections, and leaves L1 unchanged. No network calls.
+  python scripts/rebuild_september_2027.py --username scadere --scenario L1
+Uses the existing database only. Backs it up before writing. Retimes only the selected itinerary, preserving historical prices and selections.
+Cleans generated labels and annotations on both itineraries. No network calls.
 Source baseline: main 2ad42348 / feature 89e85eec, checked 2026-10-26.
 """
 import argparse
 import json
 import os
+import re
+import copy
 from pathlib import Path
 import sqlite3
 from datetime import datetime, date, timedelta
@@ -16,7 +19,61 @@ DATA = json.loads(r'''{"stays":[["Dublin","2027-09-15","2027-09-17",700,[["Keava
 ROUTE = "S1"
 CHECKED = "2026-10-26"
 
-def install(db, username):
+def reader_note(text):
+    replacements={
+        "do not silently claim it fits.": "A separate day is needed for Stirling.",
+        "Exact-date price UNKNOWN; not free.": "Price for these dates: not quoted.",
+        "Original candidate; verify two doubles rather than one family room.": "Two double rooms needed; a shared family room will not suit two couples.",
+        "Original baseline candidate in Pimlico; quote TWO rooms for FOUR nights, not old three-night total.": "Pimlico location. Two rooms needed for the full stay.",
+        "Research protected multi-city ticket;": "Protected multi-city ticket preferred;",
+        "Direct site describes breakfast, parking and central location.": "Breakfast, parking and central location.",
+        "Do not silently claim it fits.": "A separate day is needed for Stirling.",
+        "Extra London day is the difference from the old 12-night route. Can reallocate to Scotland to fit Stirling before obtaining quotes.": "Flexible day for London; could move to Scotland if Stirling takes priority.",
+    }
+    for old,new in replacements.items(): text=text.replace(old,new)
+    return text
+
+
+def clean_notes(db, tid):
+    # Clean only generated annotations, keeping personal notes and record IDs.
+    for row in db.execute("SELECT id,name,notes FROM saved_options WHERE trip_id=?",(tid,)).fetchall():
+        name=re.sub(r"\s*\[Sep research\]", "", row["name"], flags=re.I)
+        name=re.sub(r"\bSep Research\b", "", name, flags=re.I).strip()
+        notes=row["notes"] or ""
+        notes=re.sub(r"\[S1 retimed [^\]]*original dates ([^\]]*)\.\]", r"Previous quote dates: \1; new dates not quoted.", notes)
+        notes=re.sub(r"Research checked [0-9-]+\. (?:USD group BUDGET ALLOWANCE, not a provider quote\. |Exact-date price UNKNOWN; not free\. )", "Price for these dates: not quoted. ", notes)
+        notes=reader_note(notes.replace("[New-date research] ", ""))
+        db.execute("UPDATE saved_options SET name=?,notes=? WHERE id=?",(name,notes,row["id"]))
+    for row in db.execute("SELECT id,notes FROM scenario_itinerary WHERE trip_id=?",(tid,)).fetchall():
+        notes=reader_note((row["notes"] or "").replace("[New-date research] ", ""))
+        db.execute("UPDATE scenario_itinerary SET notes=? WHERE id=?",(notes,row["id"]))
+
+
+def install(db, username, route="S1"):
+    if route not in ("S1", "L1"): raise ValueError("Choose S1 or L1")
+    data = copy.deepcopy(DATA)
+    if route == "L1":
+        # Keep the longer Galway stay; trim one Dublin night to fit 13 nights.
+        def later(value):
+            if value and "2027-09-19" <= value <= "2027-09-26":
+                return (date.fromisoformat(value)+timedelta(days=1)).isoformat()
+            return value
+        for stay in data["stays"]:
+            stay[1],stay[2] = later(stay[1]),later(stay[2])
+        for item in data["activities"]+data["transport"]: item[1]=later(item[1])
+        for item in data["flights"]: item[1],item[2]=later(item[1]),later(item[2])
+        data["days"] = [r for r in data["days"] if r[0]!="2027-09-27"]
+        for item in data["days"]: item[0]=later(item[0])
+        data["days"].append(["2027-09-19","Galway","Flexible Galway", "A full day for Galway, Connemara or a weather backup for the Cliffs."])
+        data["days"].sort()
+        def fix_words(value):
+            if isinstance(value,list): return [fix_words(v) for v in value]
+            if isinstance(value,dict): return {k:fix_words(v) for k,v in value.items()}
+            if isinstance(value,str):
+                for old,new in (("Sep 26", "Sep 27"),("Sep 24", "Sep 25"),("Sep 23", "Sep 24"),("Sep 19", "Sep 20"),("June 30", "July 1"),("Sep 22", "Sep 23"),("Sunday", "Monday")):
+                    value=value.replace(old,new)
+            return value
+        data=fix_words(data)
     db.row_factory = sqlite3.Row
     owner = db.execute("SELECT id FROM users WHERE username=?", (username,)).fetchone()
     if not owner:
@@ -25,54 +82,63 @@ def install(db, username):
     if len(trips) != 1:
         raise ValueError("Expected exactly one owned Europe 2027 trip; no data changed.")
     tid = trips[0]["id"]
-    scenario = db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name='S1'", (tid,)).fetchone()
+    scenario = db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name=?", (tid,route)).fetchone()
     if not scenario:
-        raise ValueError("Existing S1 not found; no data changed.")
+        raise ValueError("Selected itinerary not found; no data changed.")
     sid = scenario["id"]
     db.execute("CREATE TABLE IF NOT EXISTS research_updates (trip_id INTEGER, scenario_id INTEGER, version TEXT, PRIMARY KEY(trip_id,scenario_id,version))")
-    version = "S1-september-14-28-2027-v1"
+    version = route+"-september-14-28-2027-v1"
     if db.execute("SELECT 1 FROM research_updates WHERE trip_id=? AND scenario_id=? AND version=?", (tid,sid,version)).fetchone():
         return tid,sid,False
     old_days = db.execute("SELECT * FROM scenario_itinerary WHERE scenario_id=? ORDER BY day_date", (sid,)).fetchall()
     if not old_days:
-        raise ValueError("S1 has no itinerary dates; cannot safely infer date shift.")
+        raise ValueError("Selected itinerary has no dates; cannot safely infer date shift.")
     old_start=date.fromisoformat(old_days[0]["day_date"])
     old_end=date.fromisoformat(old_days[-1]["day_date"])
     target=date(2027,9,14)
     delta=target-old_start
+    span=(old_end-old_start).days
     def move(value, final=False):
         if not value: return value
         d=date.fromisoformat(value)
         if final and d==old_end: return "2027-09-28"
-        return (d+delta).isoformat()
+        offset=(d-old_start).days
+        if route=="L1" and span==15 and offset>=3: offset-=1
+        return (target+timedelta(days=offset)).isoformat()
     # A 14-day old S1 gains one London day. If already retimed to the
     # target dates, retain it. Other trip lengths require explicit review.
-    if (old_end-old_start).days not in (13,14):
-        raise ValueError("S1 duration differs from the known route; no data changed.")
-    opts=db.execute("SELECT * FROM saved_options WHERE trip_id=? AND scenario_tag='S1'", (tid,)).fetchall()
+    if span not in ((14,15) if route=="L1" else (13,14)):
+        raise ValueError("Itinerary duration differs from the known route; no data changed.")
+    opts=db.execute("SELECT * FROM saved_options WHERE trip_id=? AND scenario_tag=?", (tid,route)).fetchall()
     for row in opts:
         start=move(row["start_date"], row["category"] in ("flight","transport"))
         end=move(row["end_date"], True)
-        note=("[S1 retimed 2026-10-26: previous price is historical, NOT verified for new dates; "
-              "original dates "+str(row["start_date"])+" to "+str(row["end_date"])+".]\n"+(row["notes"] or ""))
+        note=("Previous price: "+str(row["start_date"] or "undated")+" to "+str(row["end_date"] or "undated")+
+              "; not quoted for the new dates.\n"+(row["notes"] or ""))
         db.execute("UPDATE saved_options SET start_date=?,end_date=?,notes=? WHERE id=?", (start,end,note,row["id"]))
     # Temporary unique dates prevent collisions while preserving activity IDs.
     for row in old_days:
         db.execute("UPDATE scenario_itinerary SET day_date=? WHERE id=?", ("moving-"+str(row["id"]),row["id"]))
+    used={}
     for row in old_days:
         newday=move(row["day_date"],True)
-        db.execute("UPDATE scenario_itinerary SET day_date=? WHERE id=?", (newday,row["id"]))
+        if newday in used:
+            keep=used[newday]
+            db.execute("UPDATE day_activities SET itinerary_id=? WHERE itinerary_id=?", (keep,row["id"]))
+            db.execute("UPDATE scenario_itinerary SET notes=notes || ? WHERE id=?", ("\n"+row["title"]+"\n"+(row["notes"] or ""),keep))
+            db.execute("DELETE FROM scenario_itinerary WHERE id=?", (row["id"],))
+        else:
+            db.execute("UPDATE scenario_itinerary SET day_date=? WHERE id=?", (newday,row["id"]))
+            used[newday]=row["id"]
     db.execute("UPDATE trip_scenarios SET food_days=15 WHERE id=?", (sid,))
 
     def option(city, name, category, price, start, end, link, notes, select=False, **extra):
-        note = ("Research checked " + CHECKED + ". " +
-                ("USD group BUDGET ALLOWANCE, not a provider quote. " if price is not None else
-                 "Exact-date price UNKNOWN; not free. ") + notes)
+        note = "Price for these dates: not quoted. " + reader_note(notes)
         db.execute("""INSERT INTO saved_options
             (trip_id,city,name,category,price,start_date,end_date,link,notes,scenario_tag,
              origin,destination,carrier,layovers)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (tid,city,name+" [Sep research]",category,None,start,end,link,note,ROUTE,
+            (tid,city,name,category,None,start,end,link,note,route,
              extra.get("origin"),extra.get("destination"),extra.get("carrier"),
              extra.get("layovers")))
         oid = db.execute("SELECT last_insert_rowid()").fetchone()[0]
@@ -81,26 +147,26 @@ def install(db, username):
                        (sid,city,category,oid))
         return oid
 
-    for city, start, end, allowance, candidates in DATA["stays"]:
-        category = "castle" if start == "2027-09-21" else "hotel"
+    for city, start, end, allowance, candidates in data["stays"]:
+        category = "castle" if "Castle" in candidates[0][0] else "hotel"
         for index, (name, link, notes) in enumerate(candidates):
             option(city,name,category,allowance if index == 0 else None,start,end,link,
                    "TWO rooms / FOUR adults (two couples). Verify two double beds or two private double bedrooms; "
                    "taxes, breakfast, cancellation, prepayment and room location unknown. " + notes, index == 0)
-    for city, start, end, name, price, link, origin, destination, carrier, notes in DATA["flights"]:
+    for city, start, end, name, price, link, origin, destination, carrier, notes in data["flights"]:
         option(city,name,"flight",price,start,end,link,notes,price is not None,
                origin=origin,destination=destination,carrier=carrier,
                layovers="At least 3 hours for international connecting itineraries; exact schedules unverified")
-    for city, day, name, price, link, notes in DATA["transport"]:
+    for city, day, name, price, link, notes in data["transport"]:
         option(city,name,"transport",price,day,day,link,notes,True)
-    for city, day, name, price, link, notes in DATA["activities"]:
+    for city, day, name, price, link, notes in data["activities"]:
         option(city,name,"activity",price,day,day,link,notes)
-    for day, city, title, notes in DATA["days"]:
+    for day, city, title, notes in data["days"]:
         found=db.execute("SELECT id FROM scenario_itinerary WHERE scenario_id=? AND day_date=?", (sid,day)).fetchone()
         if not found:
             db.execute("INSERT INTO scenario_itinerary(trip_id,scenario_id,day_date,city,title,notes) VALUES (?,?,?,?,?,?)", (tid,sid,day,city,title,notes))
         else:
-            db.execute("UPDATE scenario_itinerary SET notes=notes || ? WHERE id=?", ("\n[New-date research] "+notes,found["id"]))
+            db.execute("UPDATE scenario_itinerary SET notes=notes || ? WHERE id=?", ("\n"+reader_note(notes),found["id"]))
     db.execute("INSERT INTO research_updates VALUES (?,?,?)", (tid,sid,version))
     return tid,sid,True
 
@@ -108,6 +174,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--username",required=True)
     parser.add_argument("--database",type=Path)
+    parser.add_argument("--scenario",choices=("S1","L1"),default="S1")
     args=parser.parse_args()
     root=Path(__file__).resolve().parents[1]
     path=args.database or Path(os.environ.get("FURLONG_DATA_DIR",str(root)))/"furlong.db"
@@ -123,14 +190,15 @@ def main():
     try:
         with db:
             db.execute("BEGIN IMMEDIATE")
-            tid,sid,created=install(db,args.username)
+            tid,sid,created=install(db,args.username,args.scenario)
+            clean_notes(db,tid)
     finally:
         db.close()
-    print("Existing S1 retimed and research saved." if created else "Update already applied; user edits preserved.")
+    print("Itinerary dates and options updated." if created else "Update already applied; user edits preserved.")
     print("Backup: "+str(backup))
     print("Open /trip/"+str(tid)+"/workspace?scenario="+str(sid))
     print("Open /trip/"+str(tid)+"/itinerary?scenario="+str(sid))
-    print("All priced items are budget allowances; no dated 2027 provider quotes verified.")
+    print("Existing prices retained; new dates still need quotes.")
 
 if __name__ == "__main__":
     main()
