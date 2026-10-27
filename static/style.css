@@ -1716,3 +1716,14 @@ dialog::backdrop{background:#00141bdb}
 .empty-state p{color:#d8e5eb!important}
 .empty-state .empty-symbol{color:#e5a17c!important}
 .empty-state .primary-btn{background:#f4be4f!important;color:#172a31!important;border-color:#f4be4f!important}
+
+/* Keep the over-budget metric legible within the approved dark jewel-tone theme. */
+.atlas-metrics > div.over-budget,
+.atlas-metrics .over-budget {
+  background: #702443 !important;
+  border-color: #b85c79 !important;
+  border-bottom-color: #e5a17c !important;
+  color: #fff3e8 !important;
+}
+.atlas-metrics .over-budget span { color: #f7d7dc !important; }
+.atlas-metrics .over-budget strong { color: #fff3e8 !important; }
