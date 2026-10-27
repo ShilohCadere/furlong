@@ -1115,6 +1115,9 @@ def add_flight_option(trip_id):
     layovers=request.form.get("layovers","").strip()
     scenario_tag=request.form.get("scenario_tag","").strip() or None
     price_str=request.form.get("price","").strip()
+    link=request.form.get("link","").strip()
+    notes=request.form.get("notes","").strip()
+    if len(link)>500 or (link and not link.startswith(("https://","http://"))) or len(notes)>1000: abort(400,"Invalid flight link or notes")
     if not name or not route or len(name)>160 or len(route)>100 or any(len(x)>300 for x in (origin,destination,carrier,departure,arrival,layovers)):
         abort(400,"Invalid flight information")
     if scenario_tag:
@@ -1128,6 +1131,7 @@ def add_flight_option(trip_id):
         (trip_id,city,name,category,price,scenario_tag,origin,destination,departure_time,arrival_time,layovers,carrier)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
         (trip_id,route,name,"flight",price,scenario_tag,origin,destination,departure,arrival,layovers,carrier))
+        db.execute("UPDATE saved_options SET link=?,notes=? WHERE id=last_insert_rowid()",(link,notes))
     return redirect(url_for("trip_workspace",trip_id=trip_id))
 
 
@@ -1187,20 +1191,22 @@ def delete_scenario_expense(trip_id,expense_id):
 @app.route("/trip/<int:trip_id>/flights/<int:option_id>/edit",methods=["POST"])
 def edit_flight_option(trip_id,option_id):
     get_trip(trip_id)
-    allowed=("name","origin","destination","carrier","departure_time","arrival_time","layovers")
+    allowed=("name","origin","destination","carrier","departure_time","arrival_time","layovers","link","notes","route")
     fields={key:request.form.get(key,"").strip() for key in allowed}
-    if not fields["name"] or len(fields["name"])>160 or any(len(fields[key])>300 for key in allowed if key!="name"):abort(400)
+    if not fields["name"] or not fields["route"] or len(fields["name"])>160 or len(fields["route"])>100 or len(fields["notes"])>1000 or len(fields["link"])>500 or (fields["link"] and not fields["link"].startswith(("https://","http://"))) or any(len(fields[key])>300 for key in ("origin","destination","carrier","departure_time","arrival_time","layovers")):abort(400)
     raw=request.form.get("price","").strip()
     try:price=float(raw) if raw else None
     except ValueError:abort(400)
     if price is not None and (not __import__("math").isfinite(price) or price<0 or price>10000000):abort(400)
     with get_db_connection() as db:
-        row=db.execute("SELECT id FROM saved_options WHERE id=? AND trip_id=? AND category='flight'",(option_id,trip_id)).fetchone()
+        row=db.execute("SELECT id,city FROM saved_options WHERE id=? AND trip_id=? AND category='flight'",(option_id,trip_id)).fetchone()
         if not row:abort(404)
         db.execute("""UPDATE saved_options SET name=?,origin=?,destination=?,carrier=?,
-            departure_time=?,arrival_time=?,layovers=?,price=? WHERE id=? AND trip_id=?""",
+            departure_time=?,arrival_time=?,layovers=?,price=?,link=?,notes=?,city=? WHERE id=? AND trip_id=?""",
             (fields["name"],fields["origin"],fields["destination"],fields["carrier"],
-             fields["departure_time"],fields["arrival_time"],fields["layovers"],price,option_id,trip_id))
+             fields["departure_time"],fields["arrival_time"],fields["layovers"],price,fields["link"],fields["notes"],fields["route"],option_id,trip_id))
+        if row["city"]!=fields["route"]:
+            db.execute("DELETE FROM scenario_choices WHERE option_id=?",(option_id,))
     sid=request.form.get("scenario_id",type=int)
     return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+"#flights")
 
