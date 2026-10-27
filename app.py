@@ -1035,7 +1035,20 @@ def trip_workspace(trip_id):
     groups=dict(sorted(groups.items(),key=lambda entry:city_sort(entry[0])))
     hotels={k:v for k,v in groups.items() if k[1]=="hotel"}
     castles={k:v for k,v in groups.items() if k[1]=="castle"}
-    flights={k:v for k,v in groups.items() if k[1]=="flight"}
+    # Display flight comparison groups in chronological itinerary order.
+    # Keep grouping keys and saved selections unchanged; route dates are attached
+    # to the researched options and the itinerary itself.
+    reverse_route = scenario["name"].startswith("Backwards")
+    route_sequence = (["STL → London", "London → Inverness", "Edinburgh → Shannon", "Dublin → STL"]
+                      if reverse_route else
+                      ["STL → Dublin", "Shannon → Edinburgh", "Inverness → London", "London → STL"])
+    def flight_sort(entry):
+        (route, _category), options_for_route = entry
+        if route in route_sequence:
+            return (0, route_sequence.index(route), route.casefold())
+        dated = [o["start_date"] for o in options_for_route if o["start_date"]]
+        return (1, min(dated) if dated else "9999-12-31", route.casefold())
+    flights=dict(sorted(((k,v) for k,v in groups.items() if k[1]=="flight"), key=flight_sort))
     excursions={k:v for k,v in groups.items() if k[1]=="activity"}
     transport={k:v for k,v in groups.items() if k[1]=="transport"}
     selected_flights=[p for p in picked if p["category"]=="flight"]
