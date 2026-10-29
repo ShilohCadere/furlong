@@ -209,3 +209,36 @@
 .scenario-rename button{min-height:44px}
 .scenario-rename input:focus-visible{outline:3px solid #f4be4f!important;outline-offset:3px}
 @media(max-width:550px){.scenario-rename label{width:100%}.scenario-rename input{max-width:none;flex:1 1 100%}}
+
+/* Compact flight comparisons — matching hotel shortlist density. */
+.flight-route-list{display:grid;gap:19px}
+.flight-route-group{background:#0b2e3c;border:1px solid #547588;border-radius:12px;padding:16px}
+.flight-route-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
+.flight-route-heading h3{font-size:22px;color:#d8e5eb;margin:0}
+.flight-route-heading>span{font-size:12px;color:#b5d9db}
+.flight-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,265px),1fr));gap:10px}
+.flight-option-card{background:#103847;border:1px solid #8296ab;border-radius:10px;padding:13px 15px;min-width:0;color:#d8e5eb}
+.flight-option-card.flight-is-selected{background:#113c43;border:2px solid #f4be4f;padding:12px 14px}
+.flight-card-top{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px;font-size:11px}
+.flight-card-number,.flight-alternative{color:#c4d4e2}
+.flight-selected{color:#b2ecd7}
+.flight-option-card h4{font-size:19px;line-height:1.25;margin:0 0 5px;color:#f4e7b8}
+.flight-card-route{font-size:14px;font-weight:700;color:#d8e5eb;margin:3px 0}
+.flight-card-price{font:500 21px var(--font-heading);color:#f4be4f;margin:6px 0}
+.flight-card-price small{font:500 11px var(--font-body);color:#d8e5eb}
+.flight-card-meta{display:grid;gap:3px;font-size:12px;color:#b5d9db;overflow-wrap:anywhere}
+.flight-card-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:start;margin-top:12px}
+.flight-card-actions form{margin:0}
+.flight-card-actions button{font-size:12px;padding:8px 11px}
+.flight-edit{background:#0a2d3c!important;border:1px solid #678b99!important;border-radius:8px;padding:7px 10px;min-width:0;flex:1 1 130px}
+.flight-edit summary{cursor:pointer;color:#f4be4f!important;font-size:12px;font-weight:600}
+.flight-edit[open]{flex-basis:100%}
+.flight-edit-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px 0 3px}
+.flight-edit-form label{display:flex;flex-direction:column;gap:5px;color:#d8e5eb;font-size:12px}
+.flight-edit-form input{width:100%;min-width:0;border:1px solid #8fa5b8;background:#0d3040;color:#f4e7b8;border-radius:7px;padding:9px}
+.flight-edit-form button{grid-column:1/-1}
+.flight-clear{margin-top:10px}
+.flight-clear button{font-size:12px}
+.flight-empty{color:#b5d9db}
+.flight-add{margin-top:17px}
+@media(max-width:650px){.flight-route-group{padding:12px}.flight-edit-form{grid-template-columns:1fr}}
