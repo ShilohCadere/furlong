@@ -779,7 +779,19 @@ def trip_workspace(trip_id):
     def city_sort(key):
         return (route_order.get(key[0],"9999-12-31"),key[0].casefold(),key[1])
     groups=dict(sorted(groups.items(),key=lambda entry:city_sort(entry[0])))
+    # A destination does not disappear just because its last hotel was removed.
+    # Include itinerary cities for this route, even with zero hotel candidates.
+    
+    with get_db_connection() as db:
+        db_cities=[row["city"] for row in db.execute(
+            """SELECT city FROM scenario_itinerary
+               WHERE trip_id=? AND scenario_id=? AND TRIM(city) <> ''
+               GROUP BY city ORDER BY MIN(day_date),city COLLATE NOCASE""",
+            (trip_id,scenario["id"])).fetchall()]
     hotels={k:v for k,v in groups.items() if k[1]=="hotel"}
+    for city in db_cities:
+        if city not in ("Transit","Departure"):
+            hotels.setdefault((city,"hotel"),[])
     castles={k:v for k,v in groups.items() if k[1]=="castle"}
     flights={k:v for k,v in groups.items() if k[1]=="flight"}
     excursions={k:v for k,v in groups.items() if k[1]=="activity"}
