@@ -1023,13 +1023,17 @@ def workspace_settings(trip_id):
     try:
         budget=float(request.form.get("budget_limit",""))
         other=float(request.form.get("other_costs",""))
-        food=float(request.form.get("food_budget",""))
+        food_raw=request.form.get("food_budget")
+        food=float(food_raw) if food_raw is not None else None
     except ValueError: abort(400,"Costs must be numbers")
-    if not all(__import__("math").isfinite(x) and 0<=x<=100000000 for x in [budget,other,food]): abort(400)
+    if not all(__import__("math").isfinite(x) and 0<=x<=100000000 for x in [budget,other] + ([food] if food is not None else [])): abort(400)
     with get_db_connection() as db:
         row=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND id=?",(trip_id,sid)).fetchone()
         if not row: abort(404)
-        db.execute("UPDATE trip_scenarios SET budget_limit=?,other_costs=?,food_budget=? WHERE id=?",(budget,other,food,sid))
+        if food is None:
+            db.execute("UPDATE trip_scenarios SET budget_limit=?,other_costs=? WHERE id=?",(budget,other,sid))
+        else:
+            db.execute("UPDATE trip_scenarios SET budget_limit=?,other_costs=?,food_budget=? WHERE id=?",(budget,other,food,sid))
     return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid))
 
 
