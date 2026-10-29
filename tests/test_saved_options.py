@@ -285,8 +285,8 @@ class SavedOptionsTests(unittest.TestCase):
                       ("INV","LHR","2027-09-24"),("LHR","STL","2027-09-27")],
             "14 OTG":[("STL","DUB","2027-09-13"),("SNN","EDI","2027-09-20"),
                       ("INV","LHR","2027-09-25"),("LHR","STL","2027-09-28")],
-            "12 OTG Backwards":[("STL","LHR","2027-09-15"),("LHR","INV","2027-09-19"),
-                                ("EDI","SNN","2027-09-24"),("DUB","STL","2027-09-28")],
+            "12 OTG Backwards":[("STL","LHR","2027-09-14"),("LHR","INV","2027-09-18"),
+                                ("EDI","SNN","2027-09-23"),("DUB","STL","2027-09-27")],
             "14 OTG Backwards":[("STL","LHR","2027-09-13"),("LHR","INV","2027-09-17"),
                                 ("EDI","SNN","2027-09-22"),("DUB","STL","2027-09-28")],
         }
@@ -299,7 +299,7 @@ class SavedOptionsTests(unittest.TestCase):
         cases=[
             ("12 OTG","STL","DUB","2027-09-14"),
             ("14 OTG","STL","DUB","2027-09-13"),
-            ("12 OTG Backwards","STL","LHR","2027-09-15"),
+            ("12 OTG Backwards","STL","LHR","2027-09-14"),
             ("14 OTG Backwards","STL","LHR","2027-09-13"),
         ]
         with furlong.get_db_connection() as db:
