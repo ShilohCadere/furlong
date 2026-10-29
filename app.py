@@ -114,6 +114,7 @@ def init_db():
                 name TEXT NOT NULL,
                 budget_limit REAL NOT NULL DEFAULT 20000,
                 other_costs REAL NOT NULL DEFAULT 0,
+                food_budget REAL NOT NULL DEFAULT 0,
                 UNIQUE(trip_id, name)
             )
         """)
@@ -152,6 +153,9 @@ def init_db():
             amount REAL NOT NULL,
             included_in_allowance INTEGER NOT NULL DEFAULT 1
         )""")
+        scenario_columns={row["name"] for row in connection.execute("PRAGMA table_info(trip_scenarios)")}
+        if "food_budget" not in scenario_columns:
+            connection.execute("ALTER TABLE trip_scenarios ADD COLUMN food_budget REAL NOT NULL DEFAULT 0")
         # Safe additive migration for existing local trip databases.
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(saved_options)")}
         for field in ("start_date", "end_date", "scenario_tag", "origin", "destination", "departure_time", "arrival_time", "layovers", "carrier"):
@@ -798,7 +802,7 @@ def trip_workspace(trip_id):
     transport={k:v for k,v in groups.items() if k[1]=="transport"}
     selected_flights=[p for p in picked if p["category"]=="flight"]
     extra_expenses=sum(row["amount"] for row in expenses if not row["included_in_allowance"])
-    total=subtotal+scenario["other_costs"]+extra_expenses
+    total=subtotal+scenario["other_costs"]+scenario["food_budget"]+extra_expenses
     return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,castles=castles,flights=flights,excursions=excursions,transport=transport,selected_flights=selected_flights,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total,expenses=expenses,extra_expenses=extra_expenses)
 
 
@@ -870,7 +874,7 @@ def budget_playground(trip_id):
         groups.setdefault((item["city"],item["category"]),[]).append(item)
     # Expenses outside allowances are already included in the active plan's estimate.
     extras=sum(e["amount"] for e in expenses if not e["included_in_allowance"])
-    total=plan["other_costs"]+extras+sum(
+    total=plan["other_costs"]+plan["food_budget"]+extras+sum(
         next((o["price"] or 0 for o in opts if o["id"]==selected.get(key)),0)
         for key,opts in groups.items())
     return render_template("playground.html",trip=trip,plans=plans,plan=plan,
@@ -1019,12 +1023,13 @@ def workspace_settings(trip_id):
     try:
         budget=float(request.form.get("budget_limit",""))
         other=float(request.form.get("other_costs",""))
+        food=float(request.form.get("food_budget",""))
     except ValueError: abort(400,"Costs must be numbers")
-    if not all(__import__("math").isfinite(x) and 0<=x<=100000000 for x in [budget,other]): abort(400)
+    if not all(__import__("math").isfinite(x) and 0<=x<=100000000 for x in [budget,other,food]): abort(400)
     with get_db_connection() as db:
         row=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND id=?",(trip_id,sid)).fetchone()
         if not row: abort(404)
-        db.execute("UPDATE trip_scenarios SET budget_limit=?,other_costs=? WHERE id=?",(budget,other,sid))
+        db.execute("UPDATE trip_scenarios SET budget_limit=?,other_costs=?,food_budget=? WHERE id=?",(budget,other,food,sid))
     return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid))
 
 
