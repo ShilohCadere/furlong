@@ -1,3 +1,4 @@
+{% import "_city_colors.html" as colors %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -177,7 +178,7 @@
                     {% if saved_ideas %}
                         <div class="overview-idea-list">
                             {% for idea in saved_ideas %}
-                                <div class="overview-idea-row">
+                                <div {{ colors.city(idea.city) }} class="overview-idea-row">
                                     <div class="overview-idea-information">
                                         <strong>{{ idea.name }}</strong>
                                         <small>{{ idea.city }}{% if idea.category %} · {{ idea.category|capitalize }}{% endif %}</small>

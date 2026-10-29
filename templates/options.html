@@ -1,3 +1,4 @@
+{% import "_city_colors.html" as colors %}
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Saved Options | {{ trip.name }} | Furlong</title>
@@ -27,8 +28,8 @@
 <button class="primary-btn" type="submit">+ Save option</button></form></section>
 {% if groups %}
 {% for city, options in groups.items() %}
-<section class="option-city"><div class="option-city-heading"><h2>{{ city }}</h2><span>{{ options|length }} options</span></div>
-<div class="option-grid">{% for item in options %}<article class="option-card {% if item.is_preferred %}is-preferred{% endif %}">
+<section {{ colors.city(city) }} class="option-city"><div class="option-city-heading"><h2>{{ city }}</h2><span>{{ options|length }} options</span></div>
+<div class="option-grid">{% for item in options %}<article {% if item.category in ("flight","transport") %}{{ colors.route(item.city,item.origin,item.destination,item.name) }}{% else %}{{ colors.city(item.city) }}{% endif %} class="option-card {% if item.is_preferred %}is-preferred{% endif %}">
 <div class="option-topline"><span class="option-category">{{ item.category|capitalize }}</span>{% if item.is_preferred %}<span class="preferred-chip">Preferred</span>{% endif %}</div>
 <h3>{{ item.name }}</h3>{% if item.start_date and item.end_date %}<p class="option-dates">{{ item.start_date }} → {{ item.end_date }}</p>{% endif %}{% if item.price is not none %}<p class="option-price">{{ "$%.2f"|format(item.price) }} <small>group estimate</small></p>{% else %}<p class="option-price missing">Price not added</p>{% endif %}
 {% if item.notes %}<p class="option-notes">{{ item.notes }}</p>{% endif %}

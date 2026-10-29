@@ -125,3 +125,44 @@ class WorkspaceReviewTests(unittest.TestCase):
         # All dialog controls have a valid, unique destination.
         ids=[node['id'] for node in doc.select('[id]')]
         self.assertEqual(len(ids),len(set(ids)))
+
+    def test_city_identity_follows_name_when_card_order_changes(self):
+        with furlong.get_db_connection() as db:
+            for city,day in [('Dublin','2027-09-15'),('Galway','2027-09-17'),('London','2027-09-25')]:
+                db.execute("INSERT INTO saved_options(trip_id,city,name,category,start_date,end_date) VALUES (?,?,?,'hotel',?,?)",(self.trip,city,city+' stay',day,'2027-09-29'))
+        before={a.select_one('strong').text:a['data-city-color'] for a in self.doc().select('.atlas-city-tile')}
+        with furlong.get_db_connection() as db:
+            db.execute("UPDATE saved_options SET start_date='2027-09-13' WHERE city='London'")
+        after={a.select_one('strong').text:a['data-city-color'] for a in self.doc().select('.atlas-city-tile')}
+        self.assertEqual(before,after)
+        self.assertEqual(after,{'Dublin':'dublin','Galway':'galway','London':'london','Edinburgh':'edinburgh'})
+        doc=self.doc()
+        self.assertEqual(doc.select_one('#hotel-edinburgh')['data-city-color'],'edinburgh')
+        self.assertEqual(doc.select_one('.sidebar-city-jumps a[href="#hotel-edinburgh"]')['data-city-color'],'edinburgh')
+        city=BeautifulSoup(self.client.get(self.url+f'/city/Edinburgh?scenario={self.sid}').data,'html.parser')
+        self.assertEqual(city.body['data-city-color'],'edinburgh')
+
+    def test_flight_and_ground_gradients_follow_endpoint_direction(self):
+        for sid,start,end in [(self.sid,'SNN','EDI'),(self.other,'EDI','SNN')]:
+            response=self.client.post(self.url+'/flights/add',data={'scenario_id':sid,'name':'Flight '+start,'route':start+' → '+end,'origin':start,'destination':end})
+            self.assertEqual(response.status_code,302)
+        with furlong.get_db_connection() as db:
+            db.execute("INSERT INTO saved_options(trip_id,city,name,category) VALUES (?,'Scotland rail','ScotRail Inverness to Edinburgh — official tickets','transport')",(self.trip,))
+        doc=self.doc()
+        cards=doc.select('.flight-option-card')
+        self.assertEqual({(c['data-route-from'],c['data-route-to']) for c in cards},{('galway','edinburgh'),('edinburgh','galway')})
+        rail=doc.select_one('#ground .atlas-choice')
+        self.assertEqual((rail['data-route-from'],rail['data-route-to']),('inverness','edinburgh'))
+        options=BeautifulSoup(self.client.get(self.url+'/options').data,'html.parser')
+        self.assertEqual(len(options.select('.option-card[data-route-from]')),3)
+        pg=BeautifulSoup(self.client.get(self.url+f'/budget-playground?scenario={self.sid}').data,'html.parser')
+        self.assertTrue(pg.select('.playground-option[data-route-from]'))
+
+    def test_excursion_and_itinerary_use_the_destination_identity(self):
+        self.add_experience('London experience')
+        with furlong.get_db_connection() as db:
+            db.execute("INSERT INTO scenario_itinerary(trip_id,scenario_id,day_date,city,title) VALUES (?,?,'2027-09-24','London','Explore London')",(self.trip,self.sid))
+        doc=self.doc()
+        self.assertEqual(doc.select_one('.experience-group')['data-city-color'],'london')
+        itinerary=BeautifulSoup(self.client.get(self.url+f'/itinerary?scenario={self.sid}').data,'html.parser')
+        self.assertEqual(itinerary.select_one('.itinerary-story-day')['data-city-color'],'london')
