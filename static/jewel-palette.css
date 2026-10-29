@@ -1,0 +1,114 @@
+/* Furlong shared jewel palette. Color only: no layout or data changes.
+   Imported as a layer; important palette rules outrank legacy unlayered overrides.
+   Keep city tiles as the approved visual reference. */
+:root {
+  --j-emerald-light:#087559; --j-emerald-dark:#073c40;
+  --j-sapphire-light:#234fb3; --j-sapphire-dark:#162555;
+  --j-amethyst-light:#7d319e; --j-amethyst-dark:#381857;
+  --j-ruby-light:#ae3159; --j-ruby-dark:#5d1739;
+  --j-garnet-light:#8e2947; --j-garnet-dark:#45152d;
+  --m-silver:#c4d4e2; --m-copper:#e5a17c; --m-bronze:#c69a60;
+  --m-platinum:#e4e9ef; --m-gold:#f4be4f;
+  --bg:#101320!important; --panel:#192039!important;
+  --text:#f3eef7!important; --soft:#eeeaf4!important;
+  --j-top:var(--j-sapphire-light); --j-base:var(--j-sapphire-dark);
+  --j-metal:var(--m-silver);
+  --ink-gold:#ffe6ac;--ink-copper:#ffe2ce;
+  color-scheme:dark;
+}
+body,.workspace-view,.main-content,.atlas-page,.city-page,.itinerary-modern {
+  background:#101320!important;color:var(--text)!important;
+}
+.sidebar{background:linear-gradient(180deg,#1d2340,#271b36 55%,#162b2b)!important;border-color:var(--m-bronze)!important}
+h1,h2,h3,h4,.overview-header h1,.hotel-comparison-card h4,.flight-option-card h4{color:var(--text)!important}
+.page-subtitle,.muted,.breadcrumbs,.sidebar-footer{color:var(--soft)!important}
+/* Navigation uses the same breadth of color as destination cards. */
+.nav-link,.sidebar-city-jumps a,.atlas-jump a,.scenario-tabs a{
+  background:linear-gradient(135deg,var(--j-top),var(--j-base))!important;
+  color:var(--text)!important;border-color:var(--j-metal)!important;
+}
+.nav-link.active,.scenario-active,.city-nav-active{
+  box-shadow:inset 3px 0 0 var(--m-gold)!important;
+  border-color:var(--ink-gold)!important;color:var(--ink-gold)!important;
+}
+.atlas-jump{background:#101320f5!important;border-color:var(--m-bronze)!important}
+/* Large surfaces carry visible jewel color, not only a thin accent stripe. */
+.overview-banner,.atlas-hero,.city-page-hero{
+  background:radial-gradient(ellipse at 90% 5%,#7d319eaa,transparent 55%),linear-gradient(120deg,#087559,#162555 58%,#5d1739)!important;
+  border-color:var(--ink-copper)!important;color:var(--text)!important;
+}
+.atlas-route-bar{background:linear-gradient(115deg,#381857,#162555)!important;border-color:var(--m-platinum)!important}
+.atlas-route-identity{background:#162555!important;border-color:var(--m-silver)!important}
+.trip-card:nth-of-type(5n+1),.overview-preview:nth-of-type(5n+1),.overview-idea-row:nth-of-type(5n+1),.option-city:nth-of-type(5n+1),.option-card:nth-of-type(5n+1),.atlas-metrics>div:nth-of-type(5n+1),.atlas-section:nth-of-type(5n+1),.hotel-city-section:nth-of-type(5n+1),.hotel-castle-panel:nth-of-type(5n+1),.hotel-comparison-card:nth-of-type(5n+1),.flight-option-card:nth-of-type(5n+1),.experience-group:nth-of-type(5n+1),.atlas-choice:nth-of-type(5n+1),.ledger-item:nth-of-type(5n+1),.playground-summary>div:nth-of-type(5n+1),.playground-panel:nth-of-type(5n+1),.playground-option:nth-of-type(5n+1),.pg-extra:nth-of-type(5n+1),.city-hub-panel:nth-of-type(5n+1),.city-days:nth-of-type(5n+1),.city-hotel-row:nth-of-type(5n+1),.city-idea:nth-of-type(5n+1),.city-day:nth-of-type(5n+1),.city-day-activity:nth-of-type(5n+1),.itinerary-story-day:nth-of-type(5n+1),.itinerary-activity:nth-of-type(5n+1),.auth-card:nth-of-type(5n+1),.nav-link:nth-of-type(5n+1),.sidebar-city-jumps a:nth-of-type(5n+1),.atlas-jump a:nth-of-type(5n+1),.scenario-tabs a:nth-of-type(5n+1){ --j-top:var(--j-sapphire-light)!important;--j-base:var(--j-sapphire-dark)!important;--j-metal:var(--m-silver)!important; }
+.trip-card:nth-of-type(5n+2),.overview-preview:nth-of-type(5n+2),.overview-idea-row:nth-of-type(5n+2),.option-city:nth-of-type(5n+2),.option-card:nth-of-type(5n+2),.atlas-metrics>div:nth-of-type(5n+2),.atlas-section:nth-of-type(5n+2),.hotel-city-section:nth-of-type(5n+2),.hotel-castle-panel:nth-of-type(5n+2),.hotel-comparison-card:nth-of-type(5n+2),.flight-option-card:nth-of-type(5n+2),.experience-group:nth-of-type(5n+2),.atlas-choice:nth-of-type(5n+2),.ledger-item:nth-of-type(5n+2),.playground-summary>div:nth-of-type(5n+2),.playground-panel:nth-of-type(5n+2),.playground-option:nth-of-type(5n+2),.pg-extra:nth-of-type(5n+2),.city-hub-panel:nth-of-type(5n+2),.city-days:nth-of-type(5n+2),.city-hotel-row:nth-of-type(5n+2),.city-idea:nth-of-type(5n+2),.city-day:nth-of-type(5n+2),.city-day-activity:nth-of-type(5n+2),.itinerary-story-day:nth-of-type(5n+2),.itinerary-activity:nth-of-type(5n+2),.auth-card:nth-of-type(5n+2),.nav-link:nth-of-type(5n+2),.sidebar-city-jumps a:nth-of-type(5n+2),.atlas-jump a:nth-of-type(5n+2),.scenario-tabs a:nth-of-type(5n+2){ --j-top:var(--j-emerald-light)!important;--j-base:var(--j-emerald-dark)!important;--j-metal:var(--m-copper)!important; }
+.trip-card:nth-of-type(5n+3),.overview-preview:nth-of-type(5n+3),.overview-idea-row:nth-of-type(5n+3),.option-city:nth-of-type(5n+3),.option-card:nth-of-type(5n+3),.atlas-metrics>div:nth-of-type(5n+3),.atlas-section:nth-of-type(5n+3),.hotel-city-section:nth-of-type(5n+3),.hotel-castle-panel:nth-of-type(5n+3),.hotel-comparison-card:nth-of-type(5n+3),.flight-option-card:nth-of-type(5n+3),.experience-group:nth-of-type(5n+3),.atlas-choice:nth-of-type(5n+3),.ledger-item:nth-of-type(5n+3),.playground-summary>div:nth-of-type(5n+3),.playground-panel:nth-of-type(5n+3),.playground-option:nth-of-type(5n+3),.pg-extra:nth-of-type(5n+3),.city-hub-panel:nth-of-type(5n+3),.city-days:nth-of-type(5n+3),.city-hotel-row:nth-of-type(5n+3),.city-idea:nth-of-type(5n+3),.city-day:nth-of-type(5n+3),.city-day-activity:nth-of-type(5n+3),.itinerary-story-day:nth-of-type(5n+3),.itinerary-activity:nth-of-type(5n+3),.auth-card:nth-of-type(5n+3),.nav-link:nth-of-type(5n+3),.sidebar-city-jumps a:nth-of-type(5n+3),.atlas-jump a:nth-of-type(5n+3),.scenario-tabs a:nth-of-type(5n+3){ --j-top:var(--j-amethyst-light)!important;--j-base:var(--j-amethyst-dark)!important;--j-metal:var(--m-platinum)!important; }
+.trip-card:nth-of-type(5n+4),.overview-preview:nth-of-type(5n+4),.overview-idea-row:nth-of-type(5n+4),.option-city:nth-of-type(5n+4),.option-card:nth-of-type(5n+4),.atlas-metrics>div:nth-of-type(5n+4),.atlas-section:nth-of-type(5n+4),.hotel-city-section:nth-of-type(5n+4),.hotel-castle-panel:nth-of-type(5n+4),.hotel-comparison-card:nth-of-type(5n+4),.flight-option-card:nth-of-type(5n+4),.experience-group:nth-of-type(5n+4),.atlas-choice:nth-of-type(5n+4),.ledger-item:nth-of-type(5n+4),.playground-summary>div:nth-of-type(5n+4),.playground-panel:nth-of-type(5n+4),.playground-option:nth-of-type(5n+4),.pg-extra:nth-of-type(5n+4),.city-hub-panel:nth-of-type(5n+4),.city-days:nth-of-type(5n+4),.city-hotel-row:nth-of-type(5n+4),.city-idea:nth-of-type(5n+4),.city-day:nth-of-type(5n+4),.city-day-activity:nth-of-type(5n+4),.itinerary-story-day:nth-of-type(5n+4),.itinerary-activity:nth-of-type(5n+4),.auth-card:nth-of-type(5n+4),.nav-link:nth-of-type(5n+4),.sidebar-city-jumps a:nth-of-type(5n+4),.atlas-jump a:nth-of-type(5n+4),.scenario-tabs a:nth-of-type(5n+4){ --j-top:var(--j-ruby-light)!important;--j-base:var(--j-ruby-dark)!important;--j-metal:var(--m-bronze)!important; }
+.trip-card:nth-of-type(5n+5),.overview-preview:nth-of-type(5n+5),.overview-idea-row:nth-of-type(5n+5),.option-city:nth-of-type(5n+5),.option-card:nth-of-type(5n+5),.atlas-metrics>div:nth-of-type(5n+5),.atlas-section:nth-of-type(5n+5),.hotel-city-section:nth-of-type(5n+5),.hotel-castle-panel:nth-of-type(5n+5),.hotel-comparison-card:nth-of-type(5n+5),.flight-option-card:nth-of-type(5n+5),.experience-group:nth-of-type(5n+5),.atlas-choice:nth-of-type(5n+5),.ledger-item:nth-of-type(5n+5),.playground-summary>div:nth-of-type(5n+5),.playground-panel:nth-of-type(5n+5),.playground-option:nth-of-type(5n+5),.pg-extra:nth-of-type(5n+5),.city-hub-panel:nth-of-type(5n+5),.city-days:nth-of-type(5n+5),.city-hotel-row:nth-of-type(5n+5),.city-idea:nth-of-type(5n+5),.city-day:nth-of-type(5n+5),.city-day-activity:nth-of-type(5n+5),.itinerary-story-day:nth-of-type(5n+5),.itinerary-activity:nth-of-type(5n+5),.auth-card:nth-of-type(5n+5),.nav-link:nth-of-type(5n+5),.sidebar-city-jumps a:nth-of-type(5n+5),.atlas-jump a:nth-of-type(5n+5),.scenario-tabs a:nth-of-type(5n+5){ --j-top:var(--j-garnet-light)!important;--j-base:var(--j-garnet-dark)!important;--j-metal:var(--m-gold)!important; }
+.trip-card,.trip-cover,.overview-preview,.overview-idea-row,.option-city,.option-card,.atlas-metrics>div,.atlas-section,.hotel-city-section,.hotel-castle-panel,.hotel-comparison-card,.flight-option-card,.experience-group,.atlas-choice,.ledger-item,.playground-summary>div,.playground-panel,.playground-option,.pg-extra,.city-hub-panel,.city-days,.city-hotel-row,.city-idea,.city-day,.city-day-activity,.itinerary-story-day,.itinerary-activity,.auth-card{
+  background:linear-gradient(135deg,var(--j-top),var(--j-base))!important;
+  color:var(--text)!important;border-color:var(--j-metal)!important;
+  box-shadow:inset 0 1px 0 #ffffff24!important;
+}
+/* Text remains consistent against all five backgrounds. */
+.atlas-metrics span,.hotel-card-notes,.hotel-dates,.hotel-card-candidate,
+.flight-card-meta,.flight-card-date,.city-hub-panel p,.city-days p,
+.city-hotel-description small,.city-idea span,.itinerary-activity small,
+.itinerary-story-body>p:not(.eyebrow),.overview-idea-information small{
+  color:#eae8f3!important;
+}
+.atlas-metrics strong,.hotel-price,.flight-card-price,.hotel-price-missing,
+.overview-idea-price,.preview-action,.city-selected-stay p:last-child{color:var(--ink-gold)!important}
+.eyebrow,.atlas-kicker,.atlas-number,.atlas-mark,.atlas-overline,
+.atlas-route-bar small,.sidebar-jumps-title,.itinerary-story-body>.eyebrow{
+  color:var(--ink-copper)!important;
+}
+.trip-details,.itinerary-story-body{
+  background:linear-gradient(130deg,var(--j-top),var(--j-base))!important;color:var(--text)!important;
+}
+.itinerary-story-date{
+  background:var(--j-base)!important;color:var(--text)!important;border-color:var(--j-metal)!important;
+}
+.itinerary-story-date *,.itinerary-story-body h2,.city-day h3,
+.city-hotel-description strong,.overview-idea-information strong{color:var(--text)!important}
+/* Forms and drawers inherit their surrounding card's hue. */
+dialog,.trip-dialog,.hotel-editor-drawer,.hotel-editor-header,
+.option-add,.hotel-add-stay,.atlas-add,.itinerary-add-day,.itinerary-edit-day,
+.itinerary-edit-activity,.overview-day-link,.city-selected-stay{
+  background:linear-gradient(140deg,var(--j-base),#161728)!important;
+  border-color:var(--j-metal)!important;color:var(--text)!important;
+}
+.hotel-editor-header h3,label,summary,.hotel-editor-hint,.hotel-editor-close{color:var(--text)!important}
+input,select,textarea{background:#141725!important;color:var(--text)!important;border-color:var(--m-silver)!important}
+input::placeholder,textarea::placeholder{color:#bbc3d6!important}
+.primary-btn,button.primary-btn,a.primary-btn{
+  background:var(--m-gold)!important;color:#231a15!important;border-color:var(--ink-gold)!important;
+}
+.secondary-btn,button.secondary-btn,a.secondary-btn{
+  background:var(--j-base)!important;color:var(--m-platinum)!important;border-color:var(--j-metal)!important;
+}
+.scenario-tabs .scenario-active{background:linear-gradient(135deg,var(--j-top),var(--j-base))!important;color:var(--ink-gold)!important}
+.hotel-is-selected,.flight-is-selected,.city-hotel-current,.city-hotel-row.city-hotel-current{
+  border-color:var(--ink-gold)!important;box-shadow:inset 0 0 0 2px var(--m-gold)!important;
+}
+.hotel-card-chosen,.flight-selected{color:var(--ink-gold)!important}
+/* Selection and warning states remain separate from decorative hue. */
+.workspace-warning,.auth-error,.pg-warning:not(:empty),.atlas-metrics .over-budget{
+  background:#5d1739!important;border-color:#ffb6c4!important;color:#ffe4ea!important;
+}
+.atlas-metrics .over-budget strong,.atlas-metrics .over-budget span,.pg-over{color:#ffe4ea!important}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:3px solid var(--m-platinum)!important;outline-offset:3px!important;
+}
+.primary-btn:hover{background:#ffda8a!important}
+.secondary-btn:hover,.nav-link:hover,.atlas-jump a:hover,.sidebar-city-jumps a:hover{border-color:var(--ink-gold)!important}
+/* Preserve the city tiles' established distinct colors. */
+.atlas-city-tile:nth-child(4n+1){background:linear-gradient(145deg,#234fb3,#162555)!important;border-color:var(--m-silver)!important}
+.atlas-city-tile:nth-child(4n+2){background:linear-gradient(145deg,#087559,#073c40)!important;border-color:var(--ink-copper)!important}
+.atlas-city-tile:nth-child(4n+3){background:linear-gradient(145deg,#7d319e,#381857)!important;border-color:var(--m-platinum)!important}
+.atlas-city-tile:nth-child(4n){background:linear-gradient(145deg,#ae3159,#5d1739)!important;border-color:var(--m-bronze)!important}
+
+.auth-shell{background:radial-gradient(ellipse at 10% 15%,#073c40,transparent 55%),radial-gradient(ellipse at 95% 85%,#5d1739,transparent 55%),#101320!important}
+
+.options-total{background:linear-gradient(135deg,#7d319e,#381857)!important;border-color:var(--m-platinum)!important;color:var(--text)!important}
+.preview-heading-icon,.empty-icon-wrap{background:var(--j-base)!important;border-color:var(--j-metal)!important;color:var(--ink-copper)!important}
+.preferred-chip,.trip-status{background:#162555!important;border-color:var(--m-gold)!important;color:var(--ink-gold)!important}
