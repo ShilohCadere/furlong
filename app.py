@@ -18,7 +18,11 @@ from flask import (
 
 app = Flask(__name__)
 
-DATABASE = Path(__file__).resolve().parent / "furlong.db"
+# Set FURLONG_DATA_DIR to a persistent, writable volume in production.
+# Existing local installations retain their original database location.
+DATA_DIR = Path(os.environ.get("FURLONG_DATA_DIR", str(Path(__file__).resolve().parent))).expanduser().resolve()
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+DATABASE = DATA_DIR / "furlong.db"
 # Local development sessions remain valid when Flask restarts.
 _secret_path = Path(__file__).resolve().parent / ".furlong_session_secret"
 if os.environ.get("FURLONG_SECRET_KEY"):
@@ -30,7 +34,8 @@ else:
             with os.fdopen(fd,"w") as stream:stream.write(secrets.token_hex(32))
         except FileExistsError:pass
     app.secret_key=_secret_path.read_text().strip()
-app.config.update(SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE="Lax")
+app.config.update(SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE="Lax",
+                  SESSION_COOKIE_SECURE=os.environ.get("FURLONG_HTTPS", "0") == "1")
 
 
 
@@ -167,6 +172,25 @@ def get_trip(trip_id):
     return trip
 
 
+def csrf_token():
+    """Return a session-bound token for HTML POST forms."""
+    if "_csrf_token" not in session:
+        session["_csrf_token"] = secrets.token_urlsafe(32)
+    return session["_csrf_token"]
+
+
+app.jinja_env.globals["csrf_token"] = csrf_token
+
+
+@app.before_request
+def validate_csrf_token():
+    if request.method in ("POST", "PUT", "PATCH", "DELETE") and not app.config.get("TESTING", False):
+        submitted = request.form.get("_csrf_token") or request.headers.get("X-CSRF-Token")
+        expected = session.get("_csrf_token")
+        if not expected or not submitted or not secrets.compare_digest(expected, submitted):
+            abort(400, description="Invalid or missing CSRF token")
+
+
 @app.before_request
 def require_login():
     if request.endpoint in ("login","register","static") or request.endpoint is None:
@@ -204,7 +228,8 @@ def register():
         uid=db.execute("SELECT last_insert_rowid()").fetchone()[0]
         # First local account inherits this installation's existing guest trips.
         # Future accounts never inherit other users' trips.
-        if not had_users:db.execute("UPDATE trips SET user_id=? WHERE user_id IS NULL",(uid,))
+        if not had_users and os.environ.get("FURLONG_CLAIM_LEGACY_TRIPS") == "1":
+            db.execute("UPDATE trips SET user_id=? WHERE user_id IS NULL",(uid,))
     session.clear()
     session.update(user_id=uid,username=username)
     return redirect(url_for("home"))
@@ -234,6 +259,8 @@ def home():
     if request.method == "POST":
         trip_name = request.form.get("trip-name", "").strip()
         destination = request.form.get("destination", "").strip()
+        first_route = request.form.get("first-route-name", "Main route").strip()
+        if not first_route or len(first_route) > 50: abort(400, "Enter a route name up to 50 characters.")
 
         if trip_name and len(trip_name) <= 120:
             with get_db_connection() as connection:
@@ -244,6 +271,8 @@ def home():
                     """,
                     (trip_name, destination,session["user_id"])
                 )
+                trip_id=connection.execute("SELECT last_insert_rowid()").fetchone()[0]
+                connection.execute("INSERT INTO trip_scenarios (trip_id,name) VALUES (?,?)",(trip_id,first_route))
 
         return redirect(url_for("home"))
 
@@ -750,7 +779,19 @@ def trip_workspace(trip_id):
     def city_sort(key):
         return (route_order.get(key[0],"9999-12-31"),key[0].casefold(),key[1])
     groups=dict(sorted(groups.items(),key=lambda entry:city_sort(entry[0])))
+    # A destination does not disappear just because its last hotel was removed.
+    # Include itinerary cities for this route, even with zero hotel candidates.
+    
+    with get_db_connection() as db:
+        db_cities=[row["city"] for row in db.execute(
+            """SELECT city FROM scenario_itinerary
+               WHERE trip_id=? AND scenario_id=? AND TRIM(city) <> ''
+               GROUP BY city ORDER BY MIN(day_date),city COLLATE NOCASE""",
+            (trip_id,scenario["id"])).fetchall()]
     hotels={k:v for k,v in groups.items() if k[1]=="hotel"}
+    for city in db_cities:
+        if city not in ("Transit","Departure"):
+            hotels.setdefault((city,"hotel"),[])
     castles={k:v for k,v in groups.items() if k[1]=="castle"}
     flights={k:v for k,v in groups.items() if k[1]=="flight"}
     excursions={k:v for k,v in groups.items() if k[1]=="activity"}
@@ -775,6 +816,11 @@ def city_view(trip_id,city):
               AND TRIM(city) <> '' AND (scenario_tag IS NULL OR scenario_tag=?)
             GROUP BY city ORDER BY MIN(COALESCE(start_date,'9999-12-31')),city COLLATE NOCASE""",
             (trip_id,plan["name"])).fetchall()]
+        itinerary_names=[row["city"] for row in db.execute(
+            """SELECT DISTINCT city FROM scenario_itinerary
+               WHERE trip_id=? AND scenario_id=? AND TRIM(city) <> ''""",
+            (trip_id,sid)).fetchall() if row["city"] not in ("Transit","Departure")]
+        names=list(dict.fromkeys(names+itinerary_names))
         if city not in names:abort(404)
         days=db.execute("""SELECT * FROM scenario_itinerary WHERE trip_id=? AND scenario_id=? AND city=?
             ORDER BY day_date""",(trip_id,sid,city)).fetchall()
@@ -946,6 +992,23 @@ def add_trip_scenario(trip_id):
         except sqlite3.IntegrityError:
             abort(400,"Scenario name already used")
         sid=db.execute("SELECT last_insert_rowid()").fetchone()[0]
+    return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid))
+
+
+@app.route("/trip/<int:trip_id>/workspace/scenarios/rename",methods=["POST"])
+def rename_trip_scenario(trip_id):
+    get_trip(trip_id)
+    sid=request.form.get("scenario_id",type=int)
+    name=request.form.get("name","").strip()
+    if not name or len(name)>50:abort(400,"Enter a route name up to 50 characters.")
+    with get_db_connection() as db:
+        row=db.execute("SELECT name FROM trip_scenarios WHERE id=? AND trip_id=?",(sid,trip_id)).fetchone()
+        if row is None:abort(404)
+        if row["name"]!=name:
+            taken=db.execute("SELECT 1 FROM trip_scenarios WHERE trip_id=? AND name=?",(trip_id,name)).fetchone()
+            if taken:abort(400,"Route name already used.")
+            db.execute("UPDATE trip_scenarios SET name=? WHERE id=? AND trip_id=?",(name,sid,trip_id))
+            db.execute("UPDATE saved_options SET scenario_tag=? WHERE trip_id=? AND scenario_tag=?",(name,trip_id,row["name"]))
     return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid))
 
 

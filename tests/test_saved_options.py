@@ -10,6 +10,8 @@ class SavedOptionsTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.old_database = furlong.DATABASE
+        self.old_testing = furlong.app.config.get("TESTING", False)
+        furlong.app.config["TESTING"] = True
         self.old_import_setting = furlong.app.config.get("ENABLE_EUROPE_IMPORT", False)
         furlong.app.config["ENABLE_EUROPE_IMPORT"] = True
         furlong.DATABASE = Path(self.tmp.name) / "test.db"
@@ -25,6 +27,7 @@ class SavedOptionsTests(unittest.TestCase):
     def tearDown(self):
         furlong.app.config["ENABLE_EUROPE_IMPORT"] = self.old_import_setting
         furlong.DATABASE = self.old_database
+        furlong.app.config["TESTING"] = self.old_testing
         self.tmp.cleanup()
 
     def add(self, name, city="Galway", price="400", category="hotel"):
@@ -33,6 +36,53 @@ class SavedOptionsTests(unittest.TestCase):
             data={"city":city,"name":name,"price":price,"category":category},
             follow_redirects=True
         )
+
+    def test_new_account_does_not_claim_unowned_trips_by_default(self):
+        import os
+        from unittest.mock import patch
+        old_database = furlong.DATABASE
+        try:
+            with tempfile.TemporaryDirectory() as temp:
+                furlong.DATABASE = Path(temp) / "fresh.db"
+                furlong.init_db()
+                with furlong.get_db_connection() as db:
+                    db.execute("INSERT INTO trips(name,destination) VALUES (?,?)",
+                               ("Legacy private trip", "Unknown"))
+                with patch.dict(os.environ, {"FURLONG_CLAIM_LEGACY_TRIPS": "0"}):
+                    client = furlong.app.test_client()
+                    response = client.post("/register", data={
+                        "username": "freshuser", "password": "strong-password-123"
+                    })
+                    self.assertEqual(response.status_code, 302)
+                    self.assertNotIn(b"Legacy private trip", client.get("/").data)
+                with furlong.get_db_connection() as db:
+                    owner = db.execute("SELECT user_id FROM trips WHERE name=?",
+                                       ("Legacy private trip",)).fetchone()[0]
+                    self.assertIsNone(owner)
+        finally:
+            furlong.DATABASE = old_database
+
+    def test_csrf_rejects_missing_and_invalid_tokens(self):
+        # Existing functional tests run with their historical direct POST setup;
+        # this test explicitly checks production CSRF enforcement.
+        old_testing = furlong.app.config.get("TESTING", False)
+        furlong.app.config["TESTING"] = False
+        try:
+            self.assertEqual(self.client.post("/", data={"trip-name": "Forged"}).status_code, 400)
+            self.assertEqual(self.client.post("/", data={
+                "trip-name": "Forged", "_csrf_token": "wrong"
+            }).status_code, 400)
+            page = self.client.get("/")
+            import re
+            token = re.search(rb'name="_csrf_token" value="([^"]+)"', page.data)
+            self.assertIsNotNone(token)
+            response = self.client.post("/", data={
+                "trip-name": "Protected", "first-route-name": "Main route",
+                "_csrf_token": token.group(1).decode()
+            })
+            self.assertEqual(response.status_code, 302)
+        finally:
+            furlong.app.config["TESTING"] = old_testing
 
     def test_accounts_keep_trips_private_and_login_restores_them(self):
         trip=self.trip_id
