@@ -281,8 +281,8 @@ class SavedOptionsTests(unittest.TestCase):
 
     def test_all_four_itinerary_flight_leg_dates(self):
         legs={
-            "12 OTG":[("STL","DUB","2027-09-15"),("SNN","EDI","2027-09-20"),
-                      ("INV","LHR","2027-09-25"),("LHR","STL","2027-09-28")],
+            "12 OTG":[("STL","DUB","2027-09-14"),("SNN","EDI","2027-09-19"),
+                      ("INV","LHR","2027-09-24"),("LHR","STL","2027-09-27")],
             "14 OTG":[("STL","DUB","2027-09-13"),("SNN","EDI","2027-09-20"),
                       ("INV","LHR","2027-09-25"),("LHR","STL","2027-09-28")],
             "12 OTG Backwards":[("STL","LHR","2027-09-15"),("LHR","INV","2027-09-19"),
@@ -297,7 +297,7 @@ class SavedOptionsTests(unittest.TestCase):
 
     def test_four_itineraries_have_separate_dated_flights_and_can_delete(self):
         cases=[
-            ("12 OTG","STL","DUB","2027-09-15"),
+            ("12 OTG","STL","DUB","2027-09-14"),
             ("14 OTG","STL","DUB","2027-09-13"),
             ("12 OTG Backwards","STL","LHR","2027-09-15"),
             ("14 OTG Backwards","STL","LHR","2027-09-13"),
