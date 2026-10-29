@@ -242,3 +242,8 @@
 .flight-empty{color:#b5d9db}
 .flight-add{margin-top:17px}
 @media(max-width:650px){.flight-route-group{padding:12px}.flight-edit-form{grid-template-columns:1fr}}
+
+.flight-card-date{margin:4px 0;color:#d8e5eb;font-size:13px;font-weight:600}
+.flight-delete{margin-top:10px;border-top:1px solid #547588;padding-top:8px}
+.flight-delete summary{color:#f5c9aa!important;font-size:12px}
+.flight-delete form{margin-top:9px}
