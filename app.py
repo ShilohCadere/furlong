@@ -16,7 +16,10 @@ from flask import (
     abort, session, g
 )
 
+from city_colors import city_color, route_colors
+
 app = Flask(__name__)
+app.jinja_env.globals.update(city_color=city_color, route_colors=route_colors)
 
 # Set FURLONG_DATA_DIR to a persistent, writable volume in production.
 # Existing local installations retain their original database location.

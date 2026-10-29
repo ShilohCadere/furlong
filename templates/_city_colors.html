@@ -1,0 +1,6 @@
+{# Color attributes use allowlisted identities, never inline user-supplied CSS. #}
+{% macro city(value) -%}data-city-color="{{ city_color(value) }}"{%- endmacro %}
+{% macro route(label='', origin='', destination='', fallback='') -%}
+{%- set endpoints = route_colors(label, origin, destination, fallback) -%}
+data-route-from="{{ endpoints[0] }}" data-route-to="{{ endpoints[1] }}"
+{%- endmacro %}
