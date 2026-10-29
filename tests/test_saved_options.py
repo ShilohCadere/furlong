@@ -252,6 +252,22 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertEqual(excursion.status_code,200)
         self.assertIn(b'Cliffs tour',excursion.data)
 
+    def test_all_four_itinerary_flight_leg_dates(self):
+        legs={
+            "12 OTG":[("STL","DUB","2027-09-15"),("SNN","EDI","2027-09-20"),
+                      ("INV","LHR","2027-09-25"),("LHR","STL","2027-09-28")],
+            "14 OTG":[("STL","DUB","2027-09-13"),("SNN","EDI","2027-09-20"),
+                      ("INV","LHR","2027-09-25"),("LHR","STL","2027-09-28")],
+            "12 OTG Backwards":[("STL","LHR","2027-09-15"),("LHR","INV","2027-09-19"),
+                                ("EDI","SNN","2027-09-24"),("DUB","STL","2027-09-28")],
+            "14 OTG Backwards":[("STL","LHR","2027-09-13"),("LHR","INV","2027-09-17"),
+                                ("EDI","SNN","2027-09-22"),("DUB","STL","2027-09-28")],
+        }
+        for route_name,flights in legs.items():
+            for origin,destination,expected in flights:
+                flight={"origin":origin,"destination":destination,"city":origin+" to "+destination}
+                self.assertEqual(furlong.confirmed_four_route_date(flight,route_name),expected)
+
     def test_four_itineraries_have_separate_dated_flights_and_can_delete(self):
         cases=[
             ("12 OTG","STL","DUB","2027-09-15"),
