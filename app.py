@@ -1003,9 +1003,13 @@ def add_flight_option(trip_id):
         (trip_id,route,name,"flight",price,scenario_tag,origin,destination,departure,arrival,layovers,carrier))
         oid=db.execute("SELECT last_insert_rowid()").fetchone()[0]
         if flight_date:
-            plan=db.execute("SELECT name FROM trip_scenarios WHERE trip_id=? AND id=?",(trip_id,sid)).fetchone()
-            if not plan or (scenario_tag is not None and scenario_tag!=plan["name"]):abort(400)
-            db.execute("INSERT INTO flight_option_dates(option_id,scenario_id,departure_date) VALUES(?,?,?)",(oid,sid,flight_date))
+            if scenario_tag:
+                plan=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name=?",(trip_id,scenario_tag)).fetchone()
+            else:
+                plan=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND id=?",(trip_id,sid)).fetchone()
+            if not plan:abort(400)
+            db.execute("INSERT INTO flight_option_dates(option_id,scenario_id,departure_date) VALUES(?,?,?)",
+                       (oid,plan["id"],flight_date))
     return redirect(url_for("trip_workspace",trip_id=trip_id))
 
 
