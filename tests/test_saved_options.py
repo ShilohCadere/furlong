@@ -213,7 +213,8 @@ class SavedOptionsTests(unittest.TestCase):
         for plan in plans:
             page=self.client.get(f"/trip/{trip}/workspace?scenario={plan['id']}")
             self.assertEqual(page.status_code,200)
-            self.assertIn(b"choices",page.data)
+            self.assertIn(b"flight-route-group",page.data)
+            self.assertIn(b"flight-option-card",page.data)
         with furlong.get_db_connection() as db:
             for plan in plans:
                 for city in ("Dublin","Galway","Edinburgh","Inverness","London"):
