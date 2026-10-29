@@ -156,6 +156,12 @@ def init_db():
         scenario_columns={row["name"] for row in connection.execute("PRAGMA table_info(trip_scenarios)")}
         if "food_budget" not in scenario_columns:
             connection.execute("ALTER TABLE trip_scenarios ADD COLUMN food_budget REAL NOT NULL DEFAULT 0")
+        connection.execute("""CREATE TABLE IF NOT EXISTS flight_option_dates (
+            option_id INTEGER NOT NULL REFERENCES saved_options(id) ON DELETE CASCADE,
+            scenario_id INTEGER NOT NULL REFERENCES trip_scenarios(id) ON DELETE CASCADE,
+            departure_date TEXT NOT NULL,
+            PRIMARY KEY(option_id,scenario_id)
+        )""")
         # Safe additive migration for existing local trip databases.
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(saved_options)")}
         for field in ("start_date", "end_date", "scenario_tag", "origin", "destination", "departure_time", "arrival_time", "layovers", "carrier"):
@@ -715,6 +721,34 @@ def edit_saved_option(trip_id,option_id):
     return redirect(url_for("saved_options",trip_id=trip_id))
 
 
+
+def flight_date_from_itinerary(flight, days):
+    """Only infer a flight date from an identifiable travel day, never a generic stay."""
+    aliases={"STL":("st. louis","st louis"),"DUB":("dublin",),
+             "EDI":("edinburgh",),"INV":("inverness",),
+             "LHR":("london",),"LGW":("london",),"STN":("london",),
+             "LCY":("london",),"LTN":("london",),"SNN":("shannon",),
+             "BFS":("belfast",),"BHD":("belfast",),"GLA":("glasgow",)}
+    dest=(flight["destination"] or "").strip().upper()
+    targets=aliases.get(dest,(dest.lower(),)) if dest else ()
+    if not targets:
+        route=(flight["city"] or "").lower()
+        targets=tuple(x for x in ("dublin","edinburgh","inverness","london","st. louis","shannon","glasgow","belfast")
+                      if x in route.split(" to ")[-1] or x in route.split(" → ")[-1])
+    matches=[]
+    for day in days:
+        title=(day["title"] or "").lower()
+        city=(day["city"] or "").lower()
+        if not any(word in title for word in ("flight","fly","return"," to ","depart")):
+            continue
+        if any(target and (target in title or (target in city and "flight" in title))
+               for target in targets):
+            matches.append(day["day_date"])
+        elif dest=="STL" and any(x in title for x in ("flight home","return home")):
+            matches.append(day["day_date"])
+    return matches[0] if len(set(matches))==1 else ""
+
+
 @app.route("/trip/<int:trip_id>/workspace")
 def trip_workspace(trip_id):
     trip=get_trip(trip_id)
@@ -757,6 +791,21 @@ def trip_workspace(trip_id):
         choices=db.execute("""SELECT sc.city, sc.category, sc.option_id FROM scenario_choices sc
             JOIN saved_options o ON o.id=sc.option_id AND o.trip_id=?
             WHERE sc.scenario_id=?""",(trip_id,scenario["id"])).fetchall()
+    # Dates belong to a route version, not a shared flight record.
+    with get_db_connection() as db:
+        days=db.execute("SELECT day_date,city,title FROM scenario_itinerary WHERE trip_id=? AND scenario_id=? ORDER BY day_date",(trip_id,scenario["id"])).fetchall()
+        for opt in options:
+            if opt["category"]!="flight" or (opt["scenario_tag"] not in (None,scenario["name"])):
+                continue
+            existing=db.execute("SELECT departure_date FROM flight_option_dates WHERE option_id=? AND scenario_id=?",(opt["id"],scenario["id"])).fetchone()
+            if existing is None:
+                inferred=flight_date_from_itinerary(opt,days)
+                if inferred:
+                    db.execute("INSERT OR IGNORE INTO flight_option_dates(option_id,scenario_id,departure_date) VALUES(?,?,?)",(opt["id"],scenario["id"],inferred))
+        flight_dates={row["option_id"]:row["departure_date"] for row in db.execute(
+            """SELECT fd.option_id,fd.departure_date FROM flight_option_dates fd
+               JOIN saved_options o ON o.id=fd.option_id
+               WHERE o.trip_id=? AND fd.scenario_id=?""",(trip_id,scenario["id"])).fetchall()}
     selected={(r["city"],r["category"]):r["option_id"] for r in choices}
     groups={}
     for opt in options:
@@ -798,12 +847,15 @@ def trip_workspace(trip_id):
             hotels.setdefault((city,"hotel"),[])
     castles={k:v for k,v in groups.items() if k[1]=="castle"}
     flights={k:v for k,v in groups.items() if k[1]=="flight"}
+    flights=dict(sorted(flights.items(),key=lambda entry:(
+        min((flight_dates.get(o["id"],"9999-12-31") for o in entry[1]),default="9999-12-31"),
+        entry[0][0].casefold())))
     excursions={k:v for k,v in groups.items() if k[1]=="activity"}
     transport={k:v for k,v in groups.items() if k[1]=="transport"}
     selected_flights=[p for p in picked if p["category"]=="flight"]
     extra_expenses=sum(row["amount"] for row in expenses if not row["included_in_allowance"])
     total=subtotal+scenario["other_costs"]+scenario["food_budget"]+extra_expenses
-    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,castles=castles,flights=flights,excursions=excursions,transport=transport,selected_flights=selected_flights,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total,expenses=expenses,extra_expenses=extra_expenses)
+    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,castles=castles,flights=flights,excursions=excursions,transport=transport,selected_flights=selected_flights,flight_dates=flight_dates,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total,expenses=expenses,extra_expenses=extra_expenses)
 
 
 @app.route("/trip/<int:trip_id>/city/<city>")
@@ -969,6 +1021,10 @@ def edit_flight_option(trip_id,option_id):
     allowed=("name","origin","destination","carrier","departure_time","arrival_time","layovers")
     fields={key:request.form.get(key,"").strip() for key in allowed}
     if not fields["name"] or len(fields["name"])>160 or any(len(fields[key])>300 for key in allowed if key!="name"):abort(400)
+    date_value=request.form.get("flight_date","").strip()
+    if date_value:
+        try:date.fromisoformat(date_value)
+        except ValueError:abort(400,"Invalid departure date")
     raw=request.form.get("price","").strip()
     try:price=float(raw) if raw else None
     except ValueError:abort(400)
@@ -976,6 +1032,12 @@ def edit_flight_option(trip_id,option_id):
     with get_db_connection() as db:
         row=db.execute("SELECT id FROM saved_options WHERE id=? AND trip_id=? AND category='flight'",(option_id,trip_id)).fetchone()
         if not row:abort(404)
+        sid=request.form.get("scenario_id",type=int)
+        valid=db.execute("SELECT 1 FROM trip_scenarios WHERE id=? AND trip_id=?",(sid,trip_id)).fetchone()
+        if not valid:abort(404)
+        db.execute("""INSERT INTO flight_option_dates(option_id,scenario_id,departure_date)
+            VALUES (?,?,?) ON CONFLICT(option_id,scenario_id) DO UPDATE SET departure_date=excluded.departure_date""",
+            (option_id,sid,date_value))
         db.execute("""UPDATE saved_options SET name=?,origin=?,destination=?,carrier=?,
             departure_time=?,arrival_time=?,layovers=?,price=? WHERE id=? AND trip_id=?""",
             (fields["name"],fields["origin"],fields["destination"],fields["carrier"],
