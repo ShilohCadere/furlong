@@ -252,6 +252,84 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertEqual(excursion.status_code,200)
         self.assertIn(b'Cliffs tour',excursion.data)
 
+    def test_corrected_12_otg_forward_dates_and_safe_reconciliation(self):
+        legs=[("STL","DUB","2027-09-14"),("SNN","EDI","2027-09-19"),
+              ("INV","LHR","2027-09-24"),("LHR","STL","2027-09-27")]
+        for origin,destination,expected in legs:
+            flight={"origin":origin,"destination":destination,"city":origin+" to "+destination}
+            self.assertEqual(furlong.confirmed_four_route_date(flight,"12 OTG"),expected)
+        with furlong.get_db_connection() as db:
+            db.execute("INSERT INTO trip_scenarios(trip_id,name) VALUES (?,?)",(self.trip_id,"12 OTG"))
+            sid=db.execute("SELECT last_insert_rowid()").fetchone()[0]
+            db.execute("""INSERT INTO scenario_itinerary(trip_id,scenario_id,day_date,city,title)
+                VALUES (?,?,?,?,?)""",(self.trip_id,sid,"2027-09-16","Dublin","Arrival in Dublin"))
+            db.execute("""INSERT INTO scenario_itinerary(trip_id,scenario_id,day_date,city,title)
+                VALUES (?,?,?,?,?)""",(self.trip_id,sid,"2027-09-28","Departure","Fly home"))
+            db.execute("""INSERT INTO saved_options(trip_id,city,name,category,scenario_tag,start_date,end_date)
+                VALUES (?,?,?,?,?,?,?)""",
+                (self.trip_id,"Dublin","Outdated stay","hotel","12 OTG","2027-09-16","2027-09-18"))
+            db.execute("""INSERT INTO saved_options(trip_id,city,name,category,scenario_tag,start_date,end_date)
+                VALUES (?,?,?,?,?,?,?)""",
+                (self.trip_id,"Dublin","Already quoted stay","hotel","12 OTG","2027-09-15","2027-09-17"))
+            furlong.reconcile_12_otg_forward(db,self.trip_id,sid)
+            furlong.reconcile_12_otg_forward(db,self.trip_id,sid)
+            days=[x[0] for x in db.execute("SELECT day_date FROM scenario_itinerary WHERE scenario_id=? ORDER BY day_date",(sid,))]
+            self.assertEqual(days,["2027-09-15","2027-09-27"])
+            rows=[tuple(x) for x in db.execute("SELECT name,start_date,end_date FROM saved_options WHERE trip_id=? ORDER BY id",(self.trip_id,))]
+            self.assertIn(("Outdated stay","2027-09-15","2027-09-17"),rows)
+            self.assertIn(("Already quoted stay","2027-09-15","2027-09-17"),rows)
+
+    def test_all_four_itinerary_flight_leg_dates(self):
+        legs={
+            "12 OTG":[("STL","DUB","2027-09-14"),("SNN","EDI","2027-09-19"),
+                      ("INV","LHR","2027-09-24"),("LHR","STL","2027-09-27")],
+            "14 OTG":[("STL","DUB","2027-09-13"),("SNN","EDI","2027-09-20"),
+                      ("INV","LHR","2027-09-25"),("LHR","STL","2027-09-28")],
+            "12 OTG Backwards":[("STL","LHR","2027-09-14"),("LHR","INV","2027-09-18"),
+                                ("EDI","SNN","2027-09-23"),("DUB","STL","2027-09-27")],
+            "14 OTG Backwards":[("STL","LHR","2027-09-13"),("LHR","INV","2027-09-17"),
+                                ("EDI","SNN","2027-09-22"),("DUB","STL","2027-09-28")],
+        }
+        for route_name,flights in legs.items():
+            for origin,destination,expected in flights:
+                flight={"origin":origin,"destination":destination,"city":origin+" to "+destination}
+                self.assertEqual(furlong.confirmed_four_route_date(flight,route_name),expected)
+
+    def test_four_itineraries_have_separate_dated_flights_and_can_delete(self):
+        cases=[
+            ("12 OTG","STL","DUB","2027-09-14"),
+            ("14 OTG","STL","DUB","2027-09-13"),
+            ("12 OTG Backwards","STL","LHR","2027-09-14"),
+            ("14 OTG Backwards","STL","LHR","2027-09-13"),
+        ]
+        with furlong.get_db_connection() as db:
+            for name,_,_,_ in cases:
+                db.execute("INSERT INTO trip_scenarios(trip_id,name) VALUES (?,?)",(self.trip_id,name))
+            db.execute("""INSERT INTO saved_options(trip_id,city,name,category,origin,destination)
+                VALUES (?,?,?,?,?,?)""",(self.trip_id,"STL to Dublin","Dublin outbound","flight","STL","DUB"))
+            shared=db.execute("SELECT last_insert_rowid()").fetchone()[0]
+            db.execute("""INSERT INTO saved_options(trip_id,city,name,category,origin,destination)
+                VALUES (?,?,?,?,?,?)""",(self.trip_id,"STL to London","London outbound","flight","STL","LHR"))
+            backwards=db.execute("SELECT last_insert_rowid()").fetchone()[0]
+        for name,origin,dest,expected in cases:
+            with furlong.get_db_connection() as db:
+                sid=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name=?",(self.trip_id,name)).fetchone()[0]
+            page=self.client.get(f"/trip/{self.trip_id}/workspace?scenario={sid}")
+            self.assertEqual(page.status_code,200)
+            flight_id=shared if dest=="DUB" else backwards
+            with furlong.get_db_connection() as db:
+                stored=db.execute("SELECT departure_date FROM flight_option_dates WHERE option_id=? AND scenario_id=?",(flight_id,sid)).fetchone()
+                self.assertEqual(stored["departure_date"],expected)
+            self.assertIn(expected.encode(),page.data)
+        with furlong.get_db_connection() as db:
+            sid=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name='12 OTG'",(self.trip_id,)).fetchone()[0]
+        response=self.client.post(f"/trip/{self.trip_id}/options/{shared}/remove",
+                                  data={"return_workspace":"1","scenario_id":sid})
+        self.assertEqual(response.status_code,302)
+        self.assertIn("#flights",response.headers["Location"])
+        with furlong.get_db_connection() as db:
+            self.assertIsNone(db.execute("SELECT id FROM saved_options WHERE id=?",(shared,)).fetchone())
+
     def test_editorial_workspace_has_route_switcher_and_city_gallery(self):
         self.client.post("/trips/import-europe-2027")
         with furlong.get_db_connection() as db:

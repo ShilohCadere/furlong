@@ -156,6 +156,12 @@ def init_db():
         scenario_columns={row["name"] for row in connection.execute("PRAGMA table_info(trip_scenarios)")}
         if "food_budget" not in scenario_columns:
             connection.execute("ALTER TABLE trip_scenarios ADD COLUMN food_budget REAL NOT NULL DEFAULT 0")
+        connection.execute("""CREATE TABLE IF NOT EXISTS flight_option_dates (
+            option_id INTEGER NOT NULL REFERENCES saved_options(id) ON DELETE CASCADE,
+            scenario_id INTEGER NOT NULL REFERENCES trip_scenarios(id) ON DELETE CASCADE,
+            departure_date TEXT NOT NULL,
+            PRIMARY KEY(option_id,scenario_id)
+        )""")
         # Safe additive migration for existing local trip databases.
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(saved_options)")}
         for field in ("start_date", "end_date", "scenario_tag", "origin", "destination", "departure_time", "arrival_time", "layovers", "carrier"):
@@ -615,7 +621,7 @@ def remove_saved_option(trip_id, option_id):
         sid=request.form.get("scenario_id",type=int)
         with get_db_connection() as db:
             valid=db.execute("SELECT 1 FROM trip_scenarios WHERE trip_id=? AND id=?",(trip_id,sid)).fetchone()
-        if valid:return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+"#stays")
+        if valid:return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+("#flights" if item["category"]=="flight" else "#stays"))
     return redirect(url_for("saved_options", trip_id=trip_id))
 
 
@@ -715,6 +721,152 @@ def edit_saved_option(trip_id,option_id):
     return redirect(url_for("saved_options",trip_id=trip_id))
 
 
+
+def reconcile_12_otg_forward(db, trip_id, scenario_id):
+    """One-time correction from the shifted Sep 15–28 schedule to Sep 14–27.
+
+    Dates already entered correctly are left alone; other routes are untouched.
+    """
+    db.execute("""CREATE TABLE IF NOT EXISTS route_date_corrections (
+        scenario_id INTEGER PRIMARY KEY, correction TEXT NOT NULL
+    )""")
+    if db.execute("SELECT 1 FROM route_date_corrections WHERE scenario_id=?",(scenario_id,)).fetchone():
+        return
+    # Only shift the itinerary if it actually follows the erroneous Sep 16–28 pattern.
+    days=db.execute("""SELECT id,day_date FROM scenario_itinerary
+        WHERE trip_id=? AND scenario_id=? ORDER BY day_date""",(trip_id,scenario_id)).fetchall()
+    dates={row["day_date"] for row in days}
+    if "2027-09-16" in dates and "2027-09-28" in dates and "2027-09-15" not in dates:
+        # Update in-place from earliest to latest to avoid date uniqueness conflicts.
+        from datetime import timedelta
+        for row in days:
+            shifted=(date.fromisoformat(row["day_date"])-timedelta(days=1)).isoformat()
+            db.execute("UPDATE scenario_itinerary SET day_date=? WHERE id=?",(shifted,row["id"]))
+    # Correct only matching legacy stay dates, scoped to this route.
+    lodging={
+        "Dublin":("2027-09-16","2027-09-18","2027-09-15","2027-09-17"),
+        "Galway":("2027-09-18","2027-09-20","2027-09-17","2027-09-19"),
+        "Edinburgh":("2027-09-20","2027-09-22","2027-09-19","2027-09-21"),
+        "Inverness":("2027-09-23","2027-09-25","2027-09-22","2027-09-24"),
+        "London":("2027-09-25","2027-09-28","2027-09-24","2027-09-27"),
+    }
+    for city,(old_start,old_end,new_start,new_end) in lodging.items():
+        db.execute("""UPDATE saved_options SET start_date=?,end_date=?
+            WHERE trip_id=? AND city=? AND category='hotel'
+              AND scenario_tag='12 OTG' AND start_date=? AND end_date=?""",
+            (new_start,new_end,trip_id,city,old_start,old_end))
+    db.execute("""UPDATE saved_options SET start_date='2027-09-21',end_date='2027-09-22'
+        WHERE trip_id=? AND city='Edinburgh' AND category='castle'
+          AND scenario_tag='12 OTG'
+          AND start_date='2027-09-22' AND end_date='2027-09-23'""",(trip_id,))
+    for old,new in (("2027-09-15","2027-09-14"),("2027-09-20","2027-09-19"),
+                    ("2027-09-25","2027-09-24"),("2027-09-28","2027-09-27")):
+        db.execute("""UPDATE flight_option_dates SET departure_date=?
+            WHERE scenario_id=? AND departure_date=?""",(new,scenario_id,old))
+    db.execute("INSERT INTO route_date_corrections(scenario_id,correction) VALUES(?,?)",
+               (scenario_id,"12 OTG Forward Sep 14–27"))
+
+
+def reconcile_12_otg_backwards(db,trip_id,scenario_id):
+    """One-time date correction for the 12-night reverse itinerary."""
+    db.execute("""CREATE TABLE IF NOT EXISTS route_date_corrections (
+        scenario_id INTEGER PRIMARY KEY, correction TEXT NOT NULL
+    )""")
+    if db.execute("SELECT 1 FROM route_date_corrections WHERE scenario_id=?",(scenario_id,)).fetchone():
+        return
+    days=db.execute("""SELECT id,day_date FROM scenario_itinerary
+        WHERE trip_id=? AND scenario_id=? ORDER BY day_date""",(trip_id,scenario_id)).fetchall()
+    dates={row["day_date"] for row in days}
+    if "2027-09-16" in dates and "2027-09-28" in dates and "2027-09-15" not in dates:
+        from datetime import timedelta
+        for row in days:
+            shifted=(date.fromisoformat(row["day_date"])-timedelta(days=1)).isoformat()
+            db.execute("UPDATE scenario_itinerary SET day_date=? WHERE id=?",(shifted,row["id"]))
+    lodging={
+        "London":("2027-09-16","2027-09-19","2027-09-15","2027-09-18"),
+        "Inverness":("2027-09-19","2027-09-21","2027-09-18","2027-09-20"),
+        "Edinburgh":("2027-09-21","2027-09-23","2027-09-20","2027-09-22"),
+        "Galway":("2027-09-24","2027-09-26","2027-09-23","2027-09-25"),
+        "Dublin":("2027-09-26","2027-09-28","2027-09-25","2027-09-27"),
+    }
+    for city,(a,b,c,d) in lodging.items():
+        db.execute("""UPDATE saved_options SET start_date=?,end_date=?
+           WHERE trip_id=? AND city=? AND category='hotel'
+           AND scenario_tag='12 OTG Backwards' AND start_date=? AND end_date=?""",
+           (c,d,trip_id,city,a,b))
+    db.execute("""UPDATE saved_options SET start_date='2027-09-22',end_date='2027-09-23'
+        WHERE trip_id=? AND city='Edinburgh' AND category='castle'
+        AND scenario_tag='12 OTG Backwards'
+        AND start_date='2027-09-23' AND end_date='2027-09-24'""",(trip_id,))
+    for old,new in (("2027-09-15","2027-09-14"),("2027-09-19","2027-09-18"),
+                    ("2027-09-24","2027-09-23"),("2027-09-28","2027-09-27")):
+        db.execute("UPDATE flight_option_dates SET departure_date=? WHERE scenario_id=? AND departure_date=?",
+                   (new,scenario_id,old))
+    db.execute("INSERT INTO route_date_corrections(scenario_id,correction) VALUES(?,?)",
+               (scenario_id,"12 OTG Backwards Sep 14–27"))
+
+
+def confirmed_four_route_date(flight, route_name):
+    """September 2027 flight legs for the four approved Europe itineraries."""
+    schedules={
+        "12 OTG":{("stl","dub"):"2027-09-14",("snn","edi"):"2027-09-19",
+                  ("inv","lon"):"2027-09-24",("lon","stl"):"2027-09-27"},
+        "14 OTG":{("stl","dub"):"2027-09-13",("snn","edi"):"2027-09-20",
+                  ("inv","lon"):"2027-09-25",("lon","stl"):"2027-09-28"},
+        "12 OTG Backwards":{("stl","lon"):"2027-09-14",("lon","inv"):"2027-09-18",
+                             ("edi","snn"):"2027-09-23",("dub","stl"):"2027-09-27"},
+        "14 OTG Backwards":{("stl","lon"):"2027-09-13",("lon","inv"):"2027-09-17",
+                             ("edi","snn"):"2027-09-22",("dub","stl"):"2027-09-28"},
+    }
+    if route_name not in schedules:return ""
+    names={"STL":"stl","St Louis":"stl","St. Louis":"stl",
+           "DUB":"dub","Dublin":"dub","SNN":"snn","Shannon":"snn",
+           "EDI":"edi","Edinburgh":"edi","INV":"inv","Inverness":"inv",
+           "LON":"lon","London":"lon","LHR":"lon","LGW":"lon",
+           "LCY":"lon","LTN":"lon","STN":"lon"}
+    def canonical(value):
+        v=(value or "").lower().strip()
+        for label,code in sorted(names.items(),key=lambda entry:-len(entry[0])):
+            if v==label.lower():return code
+        return ""
+    origin=canonical(flight["origin"])
+    dest=canonical(flight["destination"])
+    if not origin or not dest:
+        label=(flight["city"] or "").replace("→"," to ").replace("–"," to ")
+        segments=label.lower().split(" to ")
+        if len(segments)==2:
+            origin=origin or canonical(segments[0])
+            dest=dest or canonical(segments[1])
+    return schedules[route_name].get((origin,dest),"")
+
+
+def flight_date_from_itinerary(flight, days):
+    """Only infer a flight date from an identifiable travel day, never a generic stay."""
+    aliases={"STL":("st. louis","st louis"),"DUB":("dublin",),
+             "EDI":("edinburgh",),"INV":("inverness",),
+             "LHR":("london",),"LGW":("london",),"STN":("london",),
+             "LCY":("london",),"LTN":("london",),"SNN":("shannon",),
+             "BFS":("belfast",),"BHD":("belfast",),"GLA":("glasgow",)}
+    dest=(flight["destination"] or "").strip().upper()
+    targets=aliases.get(dest,(dest.lower(),)) if dest else ()
+    if not targets:
+        route=(flight["city"] or "").lower()
+        targets=tuple(x for x in ("dublin","edinburgh","inverness","london","st. louis","shannon","glasgow","belfast")
+                      if x in route.split(" to ")[-1] or x in route.split(" → ")[-1])
+    matches=[]
+    for day in days:
+        title=(day["title"] or "").lower()
+        city=(day["city"] or "").lower()
+        if not any(word in title for word in ("flight","fly","return"," to ","depart")):
+            continue
+        if any(target and (target in title or (target in city and "flight" in title))
+               for target in targets):
+            matches.append(day["day_date"])
+        elif dest=="STL" and any(x in title for x in ("flight home","return home")):
+            matches.append(day["day_date"])
+    return matches[0] if len(set(matches))==1 else ""
+
+
 @app.route("/trip/<int:trip_id>/workspace")
 def trip_workspace(trip_id):
     trip=get_trip(trip_id)
@@ -732,6 +884,11 @@ def trip_workspace(trip_id):
         if not scenarios:
             db.execute("INSERT INTO trip_scenarios (trip_id,name) VALUES (?,?)",(trip_id,"Plan A"))
             scenarios=db.execute("SELECT * FROM trip_scenarios WHERE trip_id=?",(trip_id,)).fetchall()
+        for route in scenarios:
+            if route["name"]=="12 OTG":
+                reconcile_12_otg_forward(db,trip_id,route["id"])
+            elif route["name"]=="12 OTG Backwards":
+                reconcile_12_otg_backwards(db,trip_id,route["id"])
         selected_id=request.args.get("scenario",type=int) or scenarios[0]["id"]
         scenario=next((s for s in scenarios if s["id"]==selected_id),None)
         if scenario is None: abort(404)
@@ -757,6 +914,21 @@ def trip_workspace(trip_id):
         choices=db.execute("""SELECT sc.city, sc.category, sc.option_id FROM scenario_choices sc
             JOIN saved_options o ON o.id=sc.option_id AND o.trip_id=?
             WHERE sc.scenario_id=?""",(trip_id,scenario["id"])).fetchall()
+    # Dates belong to a route version, not a shared flight record.
+    with get_db_connection() as db:
+        days=db.execute("SELECT day_date,city,title FROM scenario_itinerary WHERE trip_id=? AND scenario_id=? ORDER BY day_date",(trip_id,scenario["id"])).fetchall()
+        for opt in options:
+            if opt["category"]!="flight" or (opt["scenario_tag"] not in (None,scenario["name"])):
+                continue
+            existing=db.execute("SELECT departure_date FROM flight_option_dates WHERE option_id=? AND scenario_id=?",(opt["id"],scenario["id"])).fetchone()
+            if existing is None:
+                inferred=confirmed_four_route_date(opt,scenario["name"]) or (flight_date_from_itinerary(opt,days) if scenario["name"] not in ("12 OTG","14 OTG","12 OTG Backwards","14 OTG Backwards") else "")
+                if inferred:
+                    db.execute("INSERT OR IGNORE INTO flight_option_dates(option_id,scenario_id,departure_date) VALUES(?,?,?)",(opt["id"],scenario["id"],inferred))
+        flight_dates={row["option_id"]:row["departure_date"] for row in db.execute(
+            """SELECT fd.option_id,fd.departure_date FROM flight_option_dates fd
+               JOIN saved_options o ON o.id=fd.option_id
+               WHERE o.trip_id=? AND fd.scenario_id=?""",(trip_id,scenario["id"])).fetchall()}
     selected={(r["city"],r["category"]):r["option_id"] for r in choices}
     groups={}
     for opt in options:
@@ -798,12 +970,18 @@ def trip_workspace(trip_id):
             hotels.setdefault((city,"hotel"),[])
     castles={k:v for k,v in groups.items() if k[1]=="castle"}
     flights={k:v for k,v in groups.items() if k[1]=="flight"}
+    flight_group_dates={
+        key:min((flight_dates[o["id"]] for o in items if flight_dates.get(o["id"])),default="")
+        for key,items in flights.items()}
+    flights=dict(sorted(flights.items(),key=lambda entry:(
+        min((flight_dates.get(o["id"],"9999-12-31") for o in entry[1]),default="9999-12-31"),
+        entry[0][0].casefold())))
     excursions={k:v for k,v in groups.items() if k[1]=="activity"}
     transport={k:v for k,v in groups.items() if k[1]=="transport"}
     selected_flights=[p for p in picked if p["category"]=="flight"]
     extra_expenses=sum(row["amount"] for row in expenses if not row["included_in_allowance"])
     total=subtotal+scenario["other_costs"]+scenario["food_budget"]+extra_expenses
-    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,castles=castles,flights=flights,excursions=excursions,transport=transport,selected_flights=selected_flights,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total,expenses=expenses,extra_expenses=extra_expenses)
+    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,castles=castles,flights=flights,excursions=excursions,transport=transport,selected_flights=selected_flights,flight_dates=flight_dates,flight_group_dates=flight_group_dates,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total,expenses=expenses,extra_expenses=extra_expenses)
 
 
 @app.route("/trip/<int:trip_id>/city/<city>")
@@ -893,6 +1071,11 @@ def add_flight_option(trip_id):
     arrival=request.form.get("arrival_time","").strip()
     layovers=request.form.get("layovers","").strip()
     scenario_tag=request.form.get("scenario_tag","").strip() or None
+    sid=request.form.get("scenario_id",type=int)
+    flight_date=request.form.get("flight_date","").strip()
+    if flight_date:
+        try:date.fromisoformat(flight_date)
+        except ValueError:abort(400,"Invalid departure date")
     price_str=request.form.get("price","").strip()
     if not name or not route or len(name)>160 or len(route)>100 or any(len(x)>300 for x in (origin,destination,carrier,departure,arrival,layovers)):
         abort(400,"Invalid flight information")
@@ -907,6 +1090,15 @@ def add_flight_option(trip_id):
         (trip_id,city,name,category,price,scenario_tag,origin,destination,departure_time,arrival_time,layovers,carrier)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
         (trip_id,route,name,"flight",price,scenario_tag,origin,destination,departure,arrival,layovers,carrier))
+        oid=db.execute("SELECT last_insert_rowid()").fetchone()[0]
+        if flight_date:
+            if scenario_tag:
+                plan=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name=?",(trip_id,scenario_tag)).fetchone()
+            else:
+                plan=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND id=?",(trip_id,sid)).fetchone()
+            if not plan:abort(400)
+            db.execute("INSERT INTO flight_option_dates(option_id,scenario_id,departure_date) VALUES(?,?,?)",
+                       (oid,plan["id"],flight_date))
     return redirect(url_for("trip_workspace",trip_id=trip_id))
 
 
@@ -969,6 +1161,10 @@ def edit_flight_option(trip_id,option_id):
     allowed=("name","origin","destination","carrier","departure_time","arrival_time","layovers")
     fields={key:request.form.get(key,"").strip() for key in allowed}
     if not fields["name"] or len(fields["name"])>160 or any(len(fields[key])>300 for key in allowed if key!="name"):abort(400)
+    date_value=request.form.get("flight_date","").strip()
+    if date_value:
+        try:date.fromisoformat(date_value)
+        except ValueError:abort(400,"Invalid departure date")
     raw=request.form.get("price","").strip()
     try:price=float(raw) if raw else None
     except ValueError:abort(400)
@@ -976,6 +1172,12 @@ def edit_flight_option(trip_id,option_id):
     with get_db_connection() as db:
         row=db.execute("SELECT id FROM saved_options WHERE id=? AND trip_id=? AND category='flight'",(option_id,trip_id)).fetchone()
         if not row:abort(404)
+        sid=request.form.get("scenario_id",type=int)
+        valid=db.execute("SELECT 1 FROM trip_scenarios WHERE id=? AND trip_id=?",(sid,trip_id)).fetchone()
+        if not valid:abort(404)
+        db.execute("""INSERT INTO flight_option_dates(option_id,scenario_id,departure_date)
+            VALUES (?,?,?) ON CONFLICT(option_id,scenario_id) DO UPDATE SET departure_date=excluded.departure_date""",
+            (option_id,sid,date_value))
         db.execute("""UPDATE saved_options SET name=?,origin=?,destination=?,carrier=?,
             departure_time=?,arrival_time=?,layovers=?,price=? WHERE id=? AND trip_id=?""",
             (fields["name"],fields["origin"],fields["destination"],fields["carrier"],
