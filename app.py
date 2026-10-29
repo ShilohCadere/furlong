@@ -621,7 +621,7 @@ def remove_saved_option(trip_id, option_id):
         sid=request.form.get("scenario_id",type=int)
         with get_db_connection() as db:
             valid=db.execute("SELECT 1 FROM trip_scenarios WHERE trip_id=? AND id=?",(trip_id,sid)).fetchone()
-        if valid:return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+"#stays")
+        if valid:return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+("#flights" if item["category"]=="flight" else "#stays"))
     return redirect(url_for("saved_options", trip_id=trip_id))
 
 
