@@ -247,3 +247,33 @@
 .flight-delete{margin-top:10px;border-top:1px solid #547588;padding-top:8px}
 .flight-delete summary{color:#f5c9aa!important;font-size:12px}
 .flight-delete form{margin-top:9px}
+
+/* Workspace review: sapphire and amethyst surfaces, emerald as an accent. */
+.workspace-view{--bg:#101725;--surface:#1b2437;--text:#e7eaf0;background:#101725;color:#e7eaf0}
+.workspace-view .sidebar{background:#141b2b;border-color:#43495d}
+.workspace-view .atlas-page{background:#101725;color:#e7eaf0}
+.workspace-view .atlas-hero{background:radial-gradient(ellipse at 85% 10%,#45406a 0,transparent 55%),linear-gradient(120deg,#1c3151,#29233e)!important}
+.workspace-view .atlas-route-bar,.workspace-view .atlas-metrics>div{background:#1b2437!important}
+.workspace-view .atlas-route-identity{background:#161e32}
+.workspace-view .atlas-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+.workspace-view .atlas-jump{background:#101725f5;border-color:#484c65}
+.workspace-view .atlas-jump a{background:#202940;border-color:#626b82}
+.workspace-view .hotel-comparison-card,.workspace-view .flight-option-card{background:#1c263a!important;border-color:#626b82!important;display:flex;flex-direction:column;min-width:0}
+.workspace-view .hotel-is-selected{background:#1b3438!important;border-color:#91c4b6!important}
+.workspace-view .hotel-add-stay,.workspace-view .atlas-add{background:#1d2639!important;border-color:#71637e!important}
+.workspace-view .hotel-quote-form input,.workspace-view .hotel-quote-form textarea,.workspace-view .atlas-add-grid input,.workspace-view .atlas-add-grid select{background:#111a2b!important;color:#e7eaf0!important}
+.workspace-view .hotel-card-notes,.workspace-view .hotel-dates,.workspace-view .flight-card-meta,.workspace-view .flight-card-date{color:#c2c9d7}
+.workspace-view .flight-option-card h4{color:#e7eaf0}
+.workspace-view .hotel-card-actions{margin-top:auto!important;padding-top:12px}
+.workspace-view .hotel-editor-drawer{background:#182237!important;color:#e7eaf0}
+.workspace-view .hotel-editor-header{background:#25283f!important}
+.workspace-view .atlas-metrics .over-budget strong{color:#ffb5bd!important}
+.workspace-view .experience-group{margin-bottom:30px}
+.workspace-view .hotel-city-section,.workspace-view .atlas-section{scroll-margin-top:90px}
+.workspace-view .hotel-city-section:target{outline:2px solid #b8a6ce;outline-offset:8px;border-radius:8px}
+@media(max-width:850px){.workspace-view .atlas-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:no-preference){html:has(.workspace-view){scroll-behavior:smooth}}
+.workspace-view .hotel-city-section,.workspace-view .hotel-castle-panel{background:#151e30!important;border-color:#4b536b!important}
+.workspace-view .hotel-comparison-card h4{color:#e7eaf0}
+.workspace-view .atlas-metrics .over-budget{background:#432b3c!important}
+.workspace-view .atlas-metrics .over-budget span{color:#f4ccd4!important}

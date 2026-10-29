@@ -137,7 +137,8 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertIn(b"$960",second.data)
         self.client.post(f"/trip/{self.trip_id}/workspace/settings",data={"scenario_id":plans[0]["id"],"budget_limit":"20000","other_costs":"15000"})
         updated=self.client.get(f"/trip/{self.trip_id}/workspace?scenario={plans[0]['id']}")
-        self.assertIn(b"$16006",updated.data)
+        self.assertIn(b"$1006",updated.data)
+        self.assertNotIn(b"$16006",updated.data)
 
     def test_option_edit_dates_and_validation(self):
         self.add("Eyre Square")
@@ -389,7 +390,7 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertEqual(self.client.post(url,data={"scenario_id":sid,"category":"food",
             "name":"Extra meal","amount":"50","included_in_allowance":"0"}).status_code,302)
         page=self.client.get(f"/trip/{trip}/workspace?scenario={sid}")
-        self.assertIn(b'$18989',page.data)
+        self.assertIn(b'$14164',page.data)  # selected options + $50 extra; legacy flight allowance excluded
         self.assertIn(b'Tour tickets',page.data)
         self.assertIn(b'Extra meal',page.data)
 
@@ -461,11 +462,11 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertEqual(s1.status_code,200)
         self.assertIn(b'Budget playground',s1.data)
         self.assertIn(b'Quote needed',s1.data)
-        self.assertIn(b'$18,939',s1.data)
+        self.assertIn(b'$14,114',s1.data)
         self.assertIn(b'pg-option',s1.data)
         l1=self.client.get(f"/trip/{trip}/budget-playground?scenario={plans['L1']}")
         self.assertEqual(l1.status_code,200)
-        self.assertIn(b'$19,817',l1.data)
+        self.assertIn(b'$15,317',l1.data)
         self.assertEqual(self.client.get(f"/trip/{trip}/budget-playground?scenario=999999").status_code,404)
         with furlong.get_db_connection() as db:
             self.assertEqual(db.execute("SELECT COUNT(*) FROM scenario_choices").fetchone()[0],before)

@@ -164,9 +164,30 @@ def init_db():
         )""")
         # Safe additive migration for existing local trip databases.
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(saved_options)")}
-        for field in ("start_date", "end_date", "scenario_tag", "origin", "destination", "departure_time", "arrival_time", "layovers", "carrier"):
+        for field in ("start_date", "end_date", "scenario_tag", "origin", "destination", "departure_time", "arrival_time", "layovers", "carrier", "activity_group"):
             if field not in columns:
                 connection.execute(f"ALTER TABLE saved_options ADD COLUMN {field} TEXT")
+
+        connection.execute("""CREATE TABLE IF NOT EXISTS activity_option_dates (
+            option_id INTEGER NOT NULL REFERENCES saved_options(id) ON DELETE CASCADE,
+            scenario_id INTEGER NOT NULL REFERENCES trip_scenarios(id) ON DELETE CASCADE,
+            activity_date TEXT NOT NULL,
+            PRIMARY KEY(option_id,scenario_id)
+        )""")
+
+
+def workspace_option_key(option):
+    # Each experience has its own alternatives; cities can contain many experiences.
+    city=option["city"]
+    if option["category"]=="activity":
+        city += " · " + (option["activity_group"] or option["name"])
+    return city,option["category"]
+
+
+def workspace_selected(options, choices):
+    by_id={o["id"]:o for o in options}
+    return {workspace_option_key(by_id[r["option_id"]]):r["option_id"]
+            for r in choices if r["option_id"] in by_id}
 
 
 def get_trip(trip_id):
@@ -621,7 +642,7 @@ def remove_saved_option(trip_id, option_id):
         sid=request.form.get("scenario_id",type=int)
         with get_db_connection() as db:
             valid=db.execute("SELECT 1 FROM trip_scenarios WHERE trip_id=? AND id=?",(trip_id,sid)).fetchone()
-        if valid:return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+("#flights" if item["category"]=="flight" else "#stays"))
+        if valid:return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+("#flights" if item["category"]=="flight" else "#excursions" if item["category"]=="activity" else "#stays"))
     return redirect(url_for("saved_options", trip_id=trip_id))
 
 
@@ -929,11 +950,11 @@ def trip_workspace(trip_id):
             """SELECT fd.option_id,fd.departure_date FROM flight_option_dates fd
                JOIN saved_options o ON o.id=fd.option_id
                WHERE o.trip_id=? AND fd.scenario_id=?""",(trip_id,scenario["id"])).fetchall()}
-    selected={(r["city"],r["category"]):r["option_id"] for r in choices}
+    selected=workspace_selected(options,choices)
     groups={}
     for opt in options:
         if opt["scenario_tag"] is None or opt["scenario_tag"] == scenario["name"]:
-            groups.setdefault((opt["city"],opt["category"]),[]).append(opt)
+            groups.setdefault(workspace_option_key(opt),[]).append(opt)
     picked=[next((o for o in choiceset if o["id"]==selected.get(key)),None) for key,choiceset in groups.items()]
     picked=[p for p in picked if p is not None]
     subtotal=sum(o["price"] or 0 for o in picked)
@@ -978,10 +999,15 @@ def trip_workspace(trip_id):
         entry[0][0].casefold())))
     excursions={k:v for k,v in groups.items() if k[1]=="activity"}
     transport={k:v for k,v in groups.items() if k[1]=="transport"}
+    with get_db_connection() as db:
+        overrides={r["option_id"]:r["activity_date"] for r in db.execute(
+            "SELECT option_id,activity_date FROM activity_option_dates WHERE scenario_id=?",(scenario["id"],))}
+    activity_dates={o["id"]:overrides.get(o["id"],o["start_date"] or "")
+                    for o in options if o["category"]=="activity"}
     selected_flights=[p for p in picked if p["category"]=="flight"]
     extra_expenses=sum(row["amount"] for row in expenses if not row["included_in_allowance"])
-    total=subtotal+scenario["other_costs"]+scenario["food_budget"]+extra_expenses
-    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,castles=castles,flights=flights,excursions=excursions,transport=transport,selected_flights=selected_flights,flight_dates=flight_dates,flight_group_dates=flight_group_dates,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total,expenses=expenses,extra_expenses=extra_expenses)
+    total=subtotal+scenario["food_budget"]+extra_expenses
+    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,castles=castles,flights=flights,excursions=excursions,transport=transport,activity_dates=activity_dates,selected_flights=selected_flights,flight_dates=flight_dates,flight_group_dates=flight_group_dates,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total,expenses=expenses,extra_expenses=extra_expenses)
 
 
 @app.route("/trip/<int:trip_id>/city/<city>")
@@ -1041,7 +1067,7 @@ def budget_playground(trip_id):
             (trip_id,plan["name"])).fetchall()
         rows=db.execute("""SELECT city,category,option_id FROM scenario_choices WHERE scenario_id=?""",(sid,)).fetchall()
         expenses=db.execute("SELECT * FROM scenario_expenses WHERE scenario_id=?",(sid,)).fetchall()
-    selected={(row["city"],row["category"]):row["option_id"] for row in rows}
+    selected=workspace_selected(options,rows)
     groups={}
     for item in options:
         # Superseded Edinburgh hotel+castle bundles remain archived in the DB,
@@ -1049,10 +1075,10 @@ def budget_playground(trip_id):
         if (item["city"]=="Edinburgh" and item["category"]=="hotel"
                 and " + " in item["name"] and "Castle" in item["name"]):
             continue
-        groups.setdefault((item["city"],item["category"]),[]).append(item)
+        groups.setdefault(workspace_option_key(item),[]).append(item)
     # Expenses outside allowances are already included in the active plan's estimate.
     extras=sum(e["amount"] for e in expenses if not e["included_in_allowance"])
-    total=plan["other_costs"]+plan["food_budget"]+extras+sum(
+    total=plan["food_budget"]+extras+sum(
         next((o["price"] or 0 for o in opts if o["id"]==selected.get(key)),0)
         for key,opts in groups.items())
     return render_template("playground.html",trip=trip,plans=plans,plan=plan,
@@ -1099,7 +1125,7 @@ def add_flight_option(trip_id):
             if not plan:abort(400)
             db.execute("INSERT INTO flight_option_dates(option_id,scenario_id,departure_date) VALUES(?,?,?)",
                        (oid,plan["id"],flight_date))
-    return redirect(url_for("trip_workspace",trip_id=trip_id))
+    return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+"#flights")
 
 
 @app.route("/trip/<int:trip_id>/excursions/add", methods=["POST"])
@@ -1116,11 +1142,46 @@ def add_excursion_option(trip_id):
     try:price=float(raw) if raw else None
     except ValueError:abort(400)
     if price is not None and (not __import__("math").isfinite(price) or price<0 or price>10000000):abort(400)
+    group=request.form.get("activity_group","").strip()
+    link=request.form.get("link","").strip()
+    notes=request.form.get("notes","").strip()
+    if len(group)>160 or len(notes)>1000 or len(link)>500 or (link and not link.startswith(("https://","http://"))):abort(400)
+    sid=request.form.get("scenario_id",type=int)
     with get_db_connection() as db:
-        db.execute("""INSERT INTO saved_options(trip_id,city,name,category,price,start_date,notes)
-            VALUES (?,?,?,'activity',?,?,?)""",
-            (trip_id,city,name,price,day or None,request.form.get("notes","")[:1000]))
-    return redirect(url_for("trip_workspace",trip_id=trip_id))
+        plan=db.execute("SELECT * FROM trip_scenarios WHERE trip_id=? AND id=?",(trip_id,sid)).fetchone()
+        if sid is not None and not plan:abort(404)
+        db.execute("""INSERT INTO saved_options(trip_id,city,name,category,price,start_date,notes,activity_group,link,scenario_tag)
+            VALUES (?,?,?,'activity',?,?,?,?,?,?)""",
+            (trip_id,city,name,price,day or None,notes,group or name,link,plan["name"] if plan else None))
+    return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+"#excursions")
+
+
+@app.route("/trip/<int:trip_id>/excursions/<int:option_id>/edit",methods=["POST"])
+def edit_excursion_option(trip_id,option_id):
+    get_trip(trip_id)
+    sid=request.form.get("scenario_id",type=int)
+    name=request.form.get("name","").strip()
+    link=request.form.get("link","").strip()
+    notes=request.form.get("notes","").strip()
+    day=request.form.get("start_date","").strip()
+    if not name or len(name)>160 or len(notes)>1000 or len(link)>500 or (link and not link.startswith(("https://","http://"))):abort(400)
+    if day:
+        try:date.fromisoformat(day)
+        except ValueError:abort(400)
+    raw=request.form.get("price","").strip()
+    try:price=float(raw) if raw else None
+    except ValueError:abort(400)
+    if price is not None and (not __import__("math").isfinite(price) or price<0 or price>10000000):abort(400)
+    with get_db_connection() as db:
+        plan=db.execute("SELECT * FROM trip_scenarios WHERE id=? AND trip_id=?",(sid,trip_id)).fetchone()
+        opt=db.execute("SELECT * FROM saved_options WHERE id=? AND trip_id=? AND category='activity'",(option_id,trip_id)).fetchone()
+        if not plan or not opt:abort(404)
+        if opt["scenario_tag"] not in (None,plan["name"]):abort(400)
+        db.execute("""UPDATE saved_options SET name=?,price=?,link=?,notes=?,activity_group=? WHERE id=?""",
+                   (name,price,link,notes,opt["activity_group"] or opt["name"],option_id))
+        db.execute("""INSERT INTO activity_option_dates(option_id,scenario_id,activity_date) VALUES (?,?,?)
+            ON CONFLICT(option_id,scenario_id) DO UPDATE SET activity_date=excluded.activity_date""",(option_id,sid,day))
+    return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+"#excursions")
 
 
 @app.route("/trip/<int:trip_id>/workspace/expense",methods=["POST"])
@@ -1170,11 +1231,12 @@ def edit_flight_option(trip_id,option_id):
     except ValueError:abort(400)
     if price is not None and (not __import__("math").isfinite(price) or price<0 or price>10000000):abort(400)
     with get_db_connection() as db:
-        row=db.execute("SELECT id FROM saved_options WHERE id=? AND trip_id=? AND category='flight'",(option_id,trip_id)).fetchone()
+        row=db.execute("SELECT * FROM saved_options WHERE id=? AND trip_id=? AND category='flight'",(option_id,trip_id)).fetchone()
         if not row:abort(404)
         sid=request.form.get("scenario_id",type=int)
-        valid=db.execute("SELECT 1 FROM trip_scenarios WHERE id=? AND trip_id=?",(sid,trip_id)).fetchone()
+        valid=db.execute("SELECT name FROM trip_scenarios WHERE id=? AND trip_id=?",(sid,trip_id)).fetchone()
         if not valid:abort(404)
+        if row["scenario_tag"] not in (None,valid["name"]):abort(400)
         db.execute("""INSERT INTO flight_option_dates(option_id,scenario_id,departure_date)
             VALUES (?,?,?) ON CONFLICT(option_id,scenario_id) DO UPDATE SET departure_date=excluded.departure_date""",
             (option_id,sid,date_value))
@@ -1224,7 +1286,7 @@ def workspace_settings(trip_id):
     sid=request.form.get("scenario_id",type=int)
     try:
         budget=float(request.form.get("budget_limit",""))
-        other=float(request.form.get("other_costs",""))
+        other=float(request.form.get("other_costs","0"))
         food_raw=request.form.get("food_budget")
         food=float(food_raw) if food_raw is not None else None
     except ValueError: abort(400,"Costs must be numbers")
@@ -1251,14 +1313,30 @@ def choose_scenario_option(trip_id):
         if not plan:abort(404)
         if oid:
             opt=db.execute("SELECT * FROM saved_options WHERE id=? AND trip_id=?",(oid,trip_id)).fetchone()
-            if not opt or opt["city"]!=city or opt["category"]!=category or (opt["scenario_tag"] is not None and opt["scenario_tag"] != plan["name"]):abort(400,"Option belongs to another scenario")
+            if not opt or opt["category"]!=category or city not in (opt["city"],workspace_option_key(opt)[0]) or (opt["scenario_tag"] is not None and opt["scenario_tag"] != plan["name"]):abort(400,"Option belongs to another scenario")
+            city=workspace_option_key(opt)[0]
+            # Replace this experience's alternative, including legacy city-only choices.
+            if category=="activity":
+                prior=db.execute("""SELECT o.* FROM scenario_choices sc JOIN saved_options o ON o.id=sc.option_id
+                    WHERE sc.scenario_id=? AND sc.category='activity'""",(sid,)).fetchall()
+                for item in prior:
+                    if workspace_option_key(item)[0]==city:
+                        db.execute("DELETE FROM scenario_choices WHERE scenario_id=? AND option_id=?",(sid,item["id"]))
             db.execute("""INSERT INTO scenario_choices (scenario_id,city,category,option_id) VALUES (?,?,?,?)
                 ON CONFLICT(scenario_id,city,category) DO UPDATE SET option_id=excluded.option_id""",(sid,city,category,oid))
         else:
-            db.execute("DELETE FROM scenario_choices WHERE scenario_id=? AND city=? AND category=?",(sid,city,category))
+            if category=="activity":
+                prior=db.execute("""SELECT o.* FROM scenario_choices sc JOIN saved_options o ON o.id=sc.option_id
+                    WHERE sc.scenario_id=? AND sc.category='activity'""",(sid,)).fetchall()
+                for item in prior:
+                    if workspace_option_key(item)[0]==city:
+                        db.execute("DELETE FROM scenario_choices WHERE scenario_id=? AND option_id=?",(sid,item["id"]))
+            else:
+                db.execute("DELETE FROM scenario_choices WHERE scenario_id=? AND city=? AND category=?",(sid,city,category))
     if request.form.get("return_city")=="1" and category=="hotel":
         return redirect(url_for("city_view",trip_id=trip_id,city=city,scenario=sid))
-    return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid))
+    anchor="#flights" if category=="flight" else "#excursions" if category=="activity" else "#hotel-"+city.lower().replace(" ","-") if category in ("hotel","castle") else "#ground"
+    return redirect(url_for("trip_workspace",trip_id=trip_id,scenario=sid)+anchor)
 
 
 
