@@ -45,13 +45,13 @@
 <div class="flight-route-list">
 {% for key,items in flights.items() %}
 <div class="flight-route-group">
-<div class="flight-route-heading"><h3>{{ key[0] }}</h3><span>{{ items|length }} options</span></div>
+<div class="flight-route-heading"><h3>{{ key[0] }}</h3><span>{% set first_date = flight_dates.get(items[0].id) if items else None %}{{ first_date or "Date needed" }} · {{ items|length }} options</span></div>
 <div class="flight-card-grid">
 {% for opt in items %}
 <article class="flight-option-card {% if selected.get(key)==opt.id %}flight-is-selected{% endif %}">
 <div class="flight-card-top"><span class="flight-card-number">{{ '%02d'|format(loop.index) }}</span>{% if selected.get(key)==opt.id %}<strong class="flight-selected">✓ Selected for {{ scenario.name }}</strong>{% else %}<span class="flight-alternative">Saved alternative</span>{% endif %}</div>
 <h4>{{ opt.name }}</h4>
-<p class="flight-card-route">{{ opt.origin or "Origin TBD" }} → {{ opt.destination or "Destination TBD" }}</p>
+<p class="flight-card-route">{{ opt.origin or "Origin TBD" }} → {{ opt.destination or "Destination TBD" }}</p><p class="flight-card-date">Departure: {{ flight_dates.get(opt.id) or "Date needed" }}</p>
 <p class="flight-card-price">{% if opt.price is not none %}{{ "$%.0f"|format(opt.price) }} <small>USD · group estimate</small>{% else %}Quote needed{% endif %}</p>
 <div class="flight-card-meta">{% if opt.carrier %}<span>{{ opt.carrier }}</span>{% endif %}{% if opt.departure_time or opt.arrival_time %}<span>Depart {{ opt.departure_time or "TBD" }} · Arrive {{ opt.arrival_time or "TBD" }}</span>{% endif %}{% if opt.layovers %}<span>Via {{ opt.layovers }}</span>{% endif %}</div>
 <div class="flight-card-actions">
@@ -62,7 +62,7 @@
 <details class="flight-edit"><summary>Edit details</summary>
 <form class="flight-edit-form" method="post" action="{{ url_for('edit_flight_option',trip_id=trip.id,option_id=opt.id) }}">
 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="scenario_id" value="{{ scenario.id }}">
-<label>Flight name<input required name="name" maxlength="160" value="{{ opt.name }}"></label>
+<label>Flight name<input required name="name" maxlength="160" value="{{ opt.name }}"></label><label>Departure date for {{ scenario.name }}<input type="date" name="flight_date" value="{{ flight_dates.get(opt.id, '') }}"></label>
 <label>Origin<input name="origin" value="{{ opt.origin or '' }}"></label>
 <label>Destination<input name="destination" value="{{ opt.destination or '' }}"></label>
 <label>Airline<input name="carrier" value="{{ opt.carrier or '' }}"></label>
@@ -71,7 +71,7 @@
 <label>Connections and layovers<input name="layovers" value="{{ opt.layovers or '' }}"></label>
 <label>Group total USD<input type="number" min="0" step=".01" name="price" value="{{ opt.price if opt.price is not none else '' }}"></label>
 <button type="submit" class="primary-btn">Save flight details</button>
-</form></details>
+</form><details class="flight-delete"><summary>Remove flight option</summary><form method="post" action="{{ url_for('remove_saved_option',trip_id=trip.id,option_id=opt.id) }}" onsubmit="return confirm('Delete this flight option?')"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="return_workspace" value="1"><input type="hidden" name="scenario_id" value="{{ scenario.id }}"><button type="submit" class="hotel-delete-btn">Delete flight</button></form></details></details>
 </div></article>
 {% endfor %}
 </div>
@@ -82,7 +82,7 @@
 {% endfor %}
 </div>
 <details class="atlas-add flight-add"><summary>+ Add flight option</summary><form method="post" action="{{ url_for('add_flight_option',trip_id=trip.id) }}" class="atlas-add-grid">
-<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><label>Route group<input name="route" placeholder="St Louis → Dublin" required></label><label>Flight / airline description<input name="name" required placeholder="United via Chicago"></label><label>From airport<input name="origin" placeholder="STL"></label><label>To airport<input name="destination" placeholder="DUB"></label><label>Airline<input name="carrier" placeholder="United"></label><label>Layover(s)<input name="layovers" placeholder="ORD · 1h 45m"></label><label>Departure (local time)<input name="departure_time" placeholder="Aug 31 · 3:15 PM"></label><label>Arrival (local time)<input name="arrival_time" placeholder="Sep 1 · 9:20 AM"></label><label>Group price USD<input name="price" type="number" min="0" step=".01"></label><label>Route version<select name="scenario_tag"><option value="">Shared</option>{% for s in scenarios %}<option value="{{ s.name }}" {% if s.id==scenario.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select></label><button type="submit" class="primary-btn">Save flight option</button></form></details>
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><label>Route group<input name="route" placeholder="St Louis → Dublin" required></label><label>Flight / airline description<input name="name" required placeholder="United via Chicago"></label><label>Departure date<input name="flight_date" type="date"></label><label>From airport<input name="origin" placeholder="STL"></label><label>To airport<input name="destination" placeholder="DUB"></label><label>Airline<input name="carrier" placeholder="United"></label><label>Layover(s)<input name="layovers" placeholder="ORD · 1h 45m"></label><label>Departure (local time)<input name="departure_time" placeholder="Aug 31 · 3:15 PM"></label><label>Arrival (local time)<input name="arrival_time" placeholder="Sep 1 · 9:20 AM"></label><label>Group price USD<input name="price" type="number" min="0" step=".01"></label><label>Route version<select name="scenario_tag"><option value="">Shared</option>{% for s in scenarios %}<option value="{{ s.name }}" {% if s.id==scenario.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select></label><button type="submit" class="primary-btn">Save flight option</button></form></details>
 </section>
 <section id="excursions" class="atlas-section atlas-excursions"><div class="atlas-section-head"><span class="atlas-number">03</span><div><p class="eyebrow">THE GOOD STUFF</p><h2>Excursions & experiences</h2><p>Keep possible adventures visible without mixing them into accommodation decisions.</p></div><div class="atlas-mark">✦</div></div><div class="atlas-choice-list">{% for key,items in excursions.items() %}<form class="atlas-choice" method="post" action="{{ url_for('choose_scenario_option',trip_id=trip.id) }}">
 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><div class="atlas-choice-label"><strong>{{ key[0] }}</strong><small>{{ items|length }} possibilities</small></div><input type="hidden" name="scenario_id" value="{{ scenario.id }}"><input type="hidden" name="city" value="{{ key[0] }}"><input type="hidden" name="category" value="activity"><label class="atlas-choice-field-label">{{ key[0] }} — Excursion choice<select name="option_id"><option value="">Not chosen yet</option>{% for opt in items %}<option value="{{ opt.id }}" {% if selected.get(key)==opt.id %}selected{% endif %}>{{ opt.name }} · {{ "$%.0f"|format(opt.price) if opt.price is not none else "Quote needed" }}{% if opt.start_date %} · {{ opt.start_date }}{% endif %}</option>{% endfor %}</select></label><button class="secondary-btn">Choose</button></form>{% endfor %}</div><details class="atlas-add"><summary>+ Add excursion</summary><form method="post" action="{{ url_for('add_excursion_option',trip_id=trip.id) }}" class="atlas-add-grid">
