@@ -767,6 +767,45 @@ def reconcile_12_otg_forward(db, trip_id, scenario_id):
                (scenario_id,"12 OTG Forward Sep 14–27"))
 
 
+def reconcile_12_otg_backwards(db,trip_id,scenario_id):
+    """One-time date correction for the 12-night reverse itinerary."""
+    db.execute("""CREATE TABLE IF NOT EXISTS route_date_corrections (
+        scenario_id INTEGER PRIMARY KEY, correction TEXT NOT NULL
+    )""")
+    if db.execute("SELECT 1 FROM route_date_corrections WHERE scenario_id=?",(scenario_id,)).fetchone():
+        return
+    days=db.execute("""SELECT id,day_date FROM scenario_itinerary
+        WHERE trip_id=? AND scenario_id=? ORDER BY day_date""",(trip_id,scenario_id)).fetchall()
+    dates={row["day_date"] for row in days}
+    if "2027-09-16" in dates and "2027-09-28" in dates and "2027-09-15" not in dates:
+        from datetime import timedelta
+        for row in days:
+            shifted=(date.fromisoformat(row["day_date"])-timedelta(days=1)).isoformat()
+            db.execute("UPDATE scenario_itinerary SET day_date=? WHERE id=?",(shifted,row["id"]))
+    lodging={
+        "London":("2027-09-16","2027-09-19","2027-09-15","2027-09-18"),
+        "Inverness":("2027-09-19","2027-09-21","2027-09-18","2027-09-20"),
+        "Edinburgh":("2027-09-21","2027-09-23","2027-09-20","2027-09-22"),
+        "Galway":("2027-09-24","2027-09-26","2027-09-23","2027-09-25"),
+        "Dublin":("2027-09-26","2027-09-28","2027-09-25","2027-09-27"),
+    }
+    for city,(a,b,c,d) in lodging.items():
+        db.execute("""UPDATE saved_options SET start_date=?,end_date=?
+           WHERE trip_id=? AND city=? AND category='hotel'
+           AND scenario_tag='12 OTG Backwards' AND start_date=? AND end_date=?""",
+           (c,d,trip_id,city,a,b))
+    db.execute("""UPDATE saved_options SET start_date='2027-09-22',end_date='2027-09-23'
+        WHERE trip_id=? AND city='Edinburgh' AND category='castle'
+        AND scenario_tag='12 OTG Backwards'
+        AND start_date='2027-09-23' AND end_date='2027-09-24'""",(trip_id,))
+    for old,new in (("2027-09-15","2027-09-14"),("2027-09-19","2027-09-18"),
+                    ("2027-09-24","2027-09-23"),("2027-09-28","2027-09-27")):
+        db.execute("UPDATE flight_option_dates SET departure_date=? WHERE scenario_id=? AND departure_date=?",
+                   (new,scenario_id,old))
+    db.execute("INSERT INTO route_date_corrections(scenario_id,correction) VALUES(?,?)",
+               (scenario_id,"12 OTG Backwards Sep 14–27"))
+
+
 def confirmed_four_route_date(flight, route_name):
     """September 2027 flight legs for the four approved Europe itineraries."""
     schedules={
@@ -774,8 +813,8 @@ def confirmed_four_route_date(flight, route_name):
                   ("inv","lon"):"2027-09-24",("lon","stl"):"2027-09-27"},
         "14 OTG":{("stl","dub"):"2027-09-13",("snn","edi"):"2027-09-20",
                   ("inv","lon"):"2027-09-25",("lon","stl"):"2027-09-28"},
-        "12 OTG Backwards":{("stl","lon"):"2027-09-15",("lon","inv"):"2027-09-19",
-                             ("edi","snn"):"2027-09-24",("dub","stl"):"2027-09-28"},
+        "12 OTG Backwards":{("stl","lon"):"2027-09-14",("lon","inv"):"2027-09-18",
+                             ("edi","snn"):"2027-09-23",("dub","stl"):"2027-09-27"},
         "14 OTG Backwards":{("stl","lon"):"2027-09-13",("lon","inv"):"2027-09-17",
                              ("edi","snn"):"2027-09-22",("dub","stl"):"2027-09-28"},
     }
@@ -848,6 +887,8 @@ def trip_workspace(trip_id):
         for route in scenarios:
             if route["name"]=="12 OTG":
                 reconcile_12_otg_forward(db,trip_id,route["id"])
+            elif route["name"]=="12 OTG Backwards":
+                reconcile_12_otg_backwards(db,trip_id,route["id"])
         selected_id=request.args.get("scenario",type=int) or scenarios[0]["id"]
         scenario=next((s for s in scenarios if s["id"]==selected_id),None)
         if scenario is None: abort(404)
