@@ -945,6 +945,11 @@ def add_flight_option(trip_id):
     arrival=request.form.get("arrival_time","").strip()
     layovers=request.form.get("layovers","").strip()
     scenario_tag=request.form.get("scenario_tag","").strip() or None
+    sid=request.form.get("scenario_id",type=int)
+    flight_date=request.form.get("flight_date","").strip()
+    if flight_date:
+        try:date.fromisoformat(flight_date)
+        except ValueError:abort(400,"Invalid departure date")
     price_str=request.form.get("price","").strip()
     if not name or not route or len(name)>160 or len(route)>100 or any(len(x)>300 for x in (origin,destination,carrier,departure,arrival,layovers)):
         abort(400,"Invalid flight information")
@@ -959,6 +964,11 @@ def add_flight_option(trip_id):
         (trip_id,city,name,category,price,scenario_tag,origin,destination,departure_time,arrival_time,layovers,carrier)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
         (trip_id,route,name,"flight",price,scenario_tag,origin,destination,departure,arrival,layovers,carrier))
+        oid=db.execute("SELECT last_insert_rowid()").fetchone()[0]
+        if flight_date:
+            plan=db.execute("SELECT name FROM trip_scenarios WHERE trip_id=? AND id=?",(trip_id,sid)).fetchone()
+            if not plan or (scenario_tag is not None and scenario_tag!=plan["name"]):abort(400)
+            db.execute("INSERT INTO flight_option_dates(option_id,scenario_id,departure_date) VALUES(?,?,?)",(oid,sid,flight_date))
     return redirect(url_for("trip_workspace",trip_id=trip_id))
 
 
