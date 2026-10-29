@@ -722,6 +722,40 @@ def edit_saved_option(trip_id,option_id):
 
 
 
+def confirmed_four_route_date(flight, route_name):
+    """September 2027 flight legs for the four approved Europe itineraries."""
+    schedules={
+        "12 OTG":{("stl","dub"):"2027-09-15",("snn","edi"):"2027-09-20",
+                  ("inv","lon"):"2027-09-25",("lon","stl"):"2027-09-28"},
+        "14 OTG":{("stl","dub"):"2027-09-13",("snn","edi"):"2027-09-20",
+                  ("inv","lon"):"2027-09-25",("lon","stl"):"2027-09-28"},
+        "12 OTG Backwards":{("stl","lon"):"2027-09-15",("lon","inv"):"2027-09-19",
+                             ("edi","snn"):"2027-09-24",("dub","stl"):"2027-09-28"},
+        "14 OTG Backwards":{("stl","lon"):"2027-09-13",("lon","inv"):"2027-09-17",
+                             ("edi","snn"):"2027-09-22",("dub","stl"):"2027-09-28"},
+    }
+    if route_name not in schedules:return ""
+    names={"STL":"stl","St Louis":"stl","St. Louis":"stl",
+           "DUB":"dub","Dublin":"dub","SNN":"snn","Shannon":"snn",
+           "EDI":"edi","Edinburgh":"edi","INV":"inv","Inverness":"inv",
+           "LON":"lon","London":"lon","LHR":"lon","LGW":"lon",
+           "LCY":"lon","LTN":"lon","STN":"lon"}
+    def canonical(value):
+        v=(value or "").lower().strip()
+        for label,code in sorted(names.items(),key=lambda entry:-len(entry[0])):
+            if v==label.lower():return code
+        return ""
+    origin=canonical(flight["origin"])
+    dest=canonical(flight["destination"])
+    if not origin or not dest:
+        label=(flight["city"] or "").replace("→"," to ").replace("–"," to ")
+        segments=label.lower().split(" to ")
+        if len(segments)==2:
+            origin=origin or canonical(segments[0])
+            dest=dest or canonical(segments[1])
+    return schedules[route_name].get((origin,dest),"")
+
+
 def flight_date_from_itinerary(flight, days):
     """Only infer a flight date from an identifiable travel day, never a generic stay."""
     aliases={"STL":("st. louis","st louis"),"DUB":("dublin",),
@@ -799,7 +833,7 @@ def trip_workspace(trip_id):
                 continue
             existing=db.execute("SELECT departure_date FROM flight_option_dates WHERE option_id=? AND scenario_id=?",(opt["id"],scenario["id"])).fetchone()
             if existing is None:
-                inferred=flight_date_from_itinerary(opt,days)
+                inferred=confirmed_four_route_date(opt,scenario["name"]) or (flight_date_from_itinerary(opt,days) if scenario["name"] not in ("12 OTG","14 OTG","12 OTG Backwards","14 OTG Backwards") else "")
                 if inferred:
                     db.execute("INSERT OR IGNORE INTO flight_option_dates(option_id,scenario_id,departure_date) VALUES(?,?,?)",(opt["id"],scenario["id"],inferred))
         flight_dates={row["option_id"]:row["departure_date"] for row in db.execute(
@@ -847,6 +881,9 @@ def trip_workspace(trip_id):
             hotels.setdefault((city,"hotel"),[])
     castles={k:v for k,v in groups.items() if k[1]=="castle"}
     flights={k:v for k,v in groups.items() if k[1]=="flight"}
+    flight_group_dates={
+        key:min((flight_dates[o["id"]] for o in items if flight_dates.get(o["id"])),default="")
+        for key,items in flights.items()}
     flights=dict(sorted(flights.items(),key=lambda entry:(
         min((flight_dates.get(o["id"],"9999-12-31") for o in entry[1]),default="9999-12-31"),
         entry[0][0].casefold())))
@@ -855,7 +892,7 @@ def trip_workspace(trip_id):
     selected_flights=[p for p in picked if p["category"]=="flight"]
     extra_expenses=sum(row["amount"] for row in expenses if not row["included_in_allowance"])
     total=subtotal+scenario["other_costs"]+scenario["food_budget"]+extra_expenses
-    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,castles=castles,flights=flights,excursions=excursions,transport=transport,selected_flights=selected_flights,flight_dates=flight_dates,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total,expenses=expenses,extra_expenses=extra_expenses)
+    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,castles=castles,flights=flights,excursions=excursions,transport=transport,selected_flights=selected_flights,flight_dates=flight_dates,flight_group_dates=flight_group_dates,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total,expenses=expenses,extra_expenses=extra_expenses)
 
 
 @app.route("/trip/<int:trip_id>/city/<city>")
