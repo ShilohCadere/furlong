@@ -252,6 +252,41 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertEqual(excursion.status_code,200)
         self.assertIn(b'Cliffs tour',excursion.data)
 
+    def test_four_itineraries_have_separate_dated_flights_and_can_delete(self):
+        cases=[
+            ("12 OTG","STL","DUB","2027-09-15"),
+            ("14 OTG","STL","DUB","2027-09-13"),
+            ("12 OTG Backwards","STL","LHR","2027-09-15"),
+            ("14 OTG Backwards","STL","LHR","2027-09-13"),
+        ]
+        with furlong.get_db_connection() as db:
+            for name,_,_,_ in cases:
+                db.execute("INSERT INTO trip_scenarios(trip_id,name) VALUES (?,?)",(self.trip_id,name))
+            db.execute("""INSERT INTO saved_options(trip_id,city,name,category,origin,destination)
+                VALUES (?,?,?,?,?,?)""",(self.trip_id,"STL to Dublin","Dublin outbound","flight","STL","DUB"))
+            shared=db.execute("SELECT last_insert_rowid()").fetchone()[0]
+            db.execute("""INSERT INTO saved_options(trip_id,city,name,category,origin,destination)
+                VALUES (?,?,?,?,?,?)""",(self.trip_id,"STL to London","London outbound","flight","STL","LHR"))
+            backwards=db.execute("SELECT last_insert_rowid()").fetchone()[0]
+        for name,origin,dest,expected in cases:
+            with furlong.get_db_connection() as db:
+                sid=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name=?",(self.trip_id,name)).fetchone()[0]
+            page=self.client.get(f"/trip/{self.trip_id}/workspace?scenario={sid}")
+            self.assertEqual(page.status_code,200)
+            flight_id=shared if dest=="DUB" else backwards
+            with furlong.get_db_connection() as db:
+                stored=db.execute("SELECT departure_date FROM flight_option_dates WHERE option_id=? AND scenario_id=?",(flight_id,sid)).fetchone()
+                self.assertEqual(stored["departure_date"],expected)
+            self.assertIn(expected.encode(),page.data)
+        with furlong.get_db_connection() as db:
+            sid=db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name='12 OTG'",(self.trip_id,)).fetchone()[0]
+        response=self.client.post(f"/trip/{self.trip_id}/options/{shared}/remove",
+                                  data={"return_workspace":"1","scenario_id":sid})
+        self.assertEqual(response.status_code,302)
+        self.assertIn("#flights",response.headers["Location"])
+        with furlong.get_db_connection() as db:
+            self.assertIsNone(db.execute("SELECT id FROM saved_options WHERE id=?",(shared,)).fetchone())
+
     def test_editorial_workspace_has_route_switcher_and_city_gallery(self):
         self.client.post("/trips/import-europe-2027")
         with furlong.get_db_connection() as db:
