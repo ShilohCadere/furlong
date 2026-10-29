@@ -816,6 +816,11 @@ def city_view(trip_id,city):
               AND TRIM(city) <> '' AND (scenario_tag IS NULL OR scenario_tag=?)
             GROUP BY city ORDER BY MIN(COALESCE(start_date,'9999-12-31')),city COLLATE NOCASE""",
             (trip_id,plan["name"])).fetchall()]
+        itinerary_names=[row["city"] for row in db.execute(
+            """SELECT DISTINCT city FROM scenario_itinerary
+               WHERE trip_id=? AND scenario_id=? AND TRIM(city) <> ''""",
+            (trip_id,sid)).fetchall() if row["city"] not in ("Transit","Departure")]
+        names=list(dict.fromkeys(names+itinerary_names))
         if city not in names:abort(404)
         days=db.execute("""SELECT * FROM scenario_itinerary WHERE trip_id=? AND scenario_id=? AND city=?
             ORDER BY day_date""",(trip_id,sid,city)).fetchall()
