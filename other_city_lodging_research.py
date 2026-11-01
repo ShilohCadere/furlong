@@ -87,3 +87,78 @@ def seed_remaining_city_lodging(db,trip_id):
                  (trip_id,city,name,category,price,link,notes,start_date,end_date,scenario_tag)
                  VALUES (?,?,?,'hotel',?,?,'',?,?,?)""",
                  (trip_id,city,title,price,url,checkin,checkout,scenario))
+    seed_matching_forward_lodging(db, trip_id)
+
+
+def _lodging_name(name):
+    """Compare property names independently of old pricing/layout labels."""
+    for suffix in (" — rental, verify 2 bedrooms", " — 2-room planning estimate",
+                   " — 2-room estimate", " (two-room estimate)"):
+        name = name.replace(suffix, "")
+    return " ".join(name.casefold().split())
+
+
+def seed_matching_forward_lodging(db, trip_id):
+    """Add forward-route matches with reverse dates and no carried-over prices.
+
+    Existing quotes, links, selections and excluded properties remain intact.
+    Only add candidates when the saved itinerary still matches the route's
+    complete city span, including Edinburgh's separately booked castle night.
+    """
+    import re
+    from urllib.parse import urlencode
+    from forward_city_lodging_research import SHARED, BY_PLAN
+    from reverse_routes import PLANS
+
+    # These guesthouses are also established forward-route candidates.
+    guesthouses = [
+        ("Inverness", "", "", "hotel", "Aye Stay", None, "36969201"),
+        ("Inverness", "", "", "hotel", "Ballifeary Guest House", None, "4468662"),
+    ]
+    for scenario, plan in PLANS.items():
+        saved = db.execute("SELECT id FROM trip_scenarios WHERE trip_id=? AND name=?",
+                           (trip_id, scenario)).fetchone()
+        if saved is None:
+            continue
+        public = "12 OTG" if scenario == "Backwards 12 OTG" else "14 OTG"
+        for city, start, end, kind, name, _price, hid in SHARED + BY_PLAN[public] + guesthouses:
+            start, end = next((begin, finish) for place, begin, finish in plan["stays"]
+                              if place == city)
+            expected = [when for when, place, _title, _activities in plan["days"]
+                        if place == city]
+            actual = [r["day_date"] for r in db.execute(
+                "SELECT day_date FROM scenario_itinerary WHERE trip_id=? AND scenario_id=? "
+                "AND city=? ORDER BY day_date", (trip_id, saved["id"], city))]
+            if actual != expected:
+                continue
+
+            existing = db.execute("""SELECT name,link FROM saved_options WHERE trip_id=?
+                AND city=? AND category='hotel' AND (scenario_tag=? OR scenario_tag IS NULL)""",
+                (trip_id, city, scenario)).fetchall()
+            # Compare listing IDs too: some prior names have different suffixes.
+            if any(_lodging_name(r["name"]) == _lodging_name(name) or
+                   re.search(r"\.h" + re.escape(hid) + r"\.Hotel-Information", r["link"] or "")
+                   for r in existing):
+                continue
+            excluded = db.execute("""SELECT name FROM excluded_seed_options WHERE trip_id=?
+                AND city=? AND category='hotel' AND scenario_tag IN (?, '')""",
+                (trip_id, city, scenario)).fetchall()
+            if any(_lodging_name(r["name"]) == _lodging_name(name) for r in excluded):
+                continue
+
+            base = name.replace(" (two-room estimate)", "")
+            title = base + (" — rental, verify 2 bedrooms" if kind == "rental" else " — 2-room estimate")
+            params = {"chkin": start, "chkout": end, "rm1": "a4" if kind == "rental" else "a2"}
+            if kind == "hotel":
+                params["rm2"] = "a2"
+            link = f"https://www.expedia.com/.h{hid}.Hotel-Information?" + urlencode(params)
+            notes = ("Quote needed for this backward-route stay; total to be verified by traveler. "
+                     + ("Four adults; verify two private bedrooms and actual unit layout."
+                        if kind == "rental" else "Four adults in two rooms, two adults per room."))
+            if "outside" in name or "check location" in name:
+                notes += " Check location and transport before choosing."
+            db.execute("""INSERT INTO saved_options
+                (trip_id,city,name,category,price,link,notes,start_date,end_date,scenario_tag)
+                VALUES (?,?,?,'hotel',NULL,?,?,?,?,?)""",
+                (trip_id, city, title, link, notes, start, end, scenario))
+
