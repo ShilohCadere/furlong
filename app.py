@@ -913,6 +913,9 @@ def trip_workspace(trip_id):
                 reconcile_12_otg_forward(db,trip_id,route["id"])
             elif route["name"]=="12 OTG Backwards":
                 reconcile_12_otg_backwards(db,trip_id,route["id"])
+        if trip["name"] == "Europe 2027":
+            from backward_lodging import add_backward_lodging
+            add_backward_lodging(db, trip_id)
         selected_id=request.args.get("scenario",type=int) or scenarios[0]["id"]
         scenario=next((s for s in scenarios if s["id"]==selected_id),None)
         if scenario is None: abort(404)
