@@ -81,15 +81,14 @@ const order=[...route,'Transfers','Regional research','Unassigned'];
 const keys=[...new Set(all.map(normalize))].sort((a,b)=>{const x=order.findIndex(k=>k.toLowerCase()===a.toLowerCase()),y=order.findIndex(k=>k.toLowerCase()===b.toLowerCase());return (x<0?999:x)-(y<0?999:y)||a.localeCompare(b);});
 const filtered=all.filter(i=>(!ideaFavorites||i.favorite)&&(!ideaType||i.type===ideaType)&&(!ideaCity||normalize(i)===ideaCity)&&[i.name,i.location,i.notes,i.website].join(' ').toLowerCase().includes(ideaSearch.toLowerCase())).sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
 const unique=new Map();let duplicateCount=0;
+const tidy=v=>String(v||'').normalize('NFKC').trim().toLowerCase().replace(/\s+/g,' ');
+const quality=i=>(i.website?2:0)+(i.notes?1:0)+(i.image?1:0)+(i.favorite?1:0);
 for(const idea of filtered){
- const tidy=v=>String(v||'').trim().toLowerCase().replace(/\s+/g,' ');
- const key=[normalize(idea),idea.type,tidy(idea.name),tidy(idea.website)].join('|');
+ // Same city + type + property name identifies one research idea, regardless of imported URL or notes.
+ const key=[tidy(normalize(idea)),tidy(idea.type),tidy(idea.name)].join('|');
  if(!unique.has(key)){unique.set(key,idea);continue;}
- const prior=unique.get(key);
- if(tidy(prior.notes)===tidy(idea.notes)&&JSON.stringify(prior.image||null)===JSON.stringify(idea.image||null)){
-   duplicateCount++;
-   if(idea.favorite&&!prior.favorite)unique.set(key,idea);
- }else unique.set(key+'|'+idea.id,idea);
+ duplicateCount++;
+ if(quality(idea)>quality(unique.get(key)))unique.set(key,idea);
 }
 const ideas=[...unique.values()];
 const grouped=new Map();for(const idea of ideas){const city=normalize(idea),type=U.templates[idea.type]?.name||idea.type||'Other';if(!grouped.has(city))grouped.set(city,new Map());const categories=grouped.get(city);if(!categories.has(type))categories.set(type,[]);categories.get(type).push(idea);}
