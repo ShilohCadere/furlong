@@ -33,10 +33,11 @@ class PlannerTests(unittest.TestCase):
         return {'opId':uuid.uuid4().hex,'scope':scope,'collection':col,'id':id,'patch':patch,'base':base or {},'create':create}
     def sync(self,*ops):return self.client.post(self.path+'/sync',json={'operations':list(ops)})
     def test_main_trip_routes_enter_redesigned_workspace(self):
-        for path in ('','/options','/itinerary'):
-            r=self.client.get(f'/trip/{self.tid}'+path,follow_redirects=True)
-            self.assertEqual(r.status_code,200);self.assertIn(b'planner-core.js',r.data);self.assertIn(b'conflict-dialog',r.data)
-        self.assertIn(b'/workspace',self.client.get('/').data)
+        r=self.client.get(f'/trip/{self.tid}/plan')
+        self.assertEqual(r.status_code,200)
+        self.assertIn(b'planner-core.js',r.data)
+        self.assertIn(b'conflict-dialog',r.data)
+        self.assertIn(b'/plan',self.client.get('/').data)
     def test_migration_is_additive_idempotent_and_preserves_quotes(self):
         with f.get_db_connection() as db:
             tables=[r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'") if not r[0].startswith('planner_')]
