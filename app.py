@@ -319,7 +319,7 @@ def home():
     return render_template("index.html", trips=trips)
 
 
-@app.route("/trip/<int:trip_id>/legacy")
+@app.route("/trip/<int:trip_id>")
 def trip_overview(trip_id):
     trip = get_trip(trip_id)
 
@@ -410,7 +410,7 @@ def edit_trip(trip_id):
     return redirect(url_for("trip_overview", trip_id=trip_id))
 
 
-@app.route("/trip/<int:trip_id>/itinerary/legacy")
+@app.route("/trip/<int:trip_id>/itinerary")
 def itinerary(trip_id):
     trip=get_trip(trip_id)
     with get_db_connection() as db:
@@ -550,7 +550,7 @@ def add_itinerary_day(trip_id):
 
 
 
-@app.route("/trip/<int:trip_id>/options/legacy")
+@app.route("/trip/<int:trip_id>/options")
 def saved_options(trip_id):
     trip = get_trip(trip_id)
     with get_db_connection() as connection:
@@ -891,7 +891,7 @@ def flight_date_from_itinerary(flight, days):
     return matches[0] if len(set(matches))==1 else ""
 
 
-@app.route("/trip/<int:trip_id>/workspace/legacy")
+@app.route("/trip/<int:trip_id>/workspace")
 def trip_workspace(trip_id):
     trip=get_trip(trip_id)
     with get_db_connection() as db:
