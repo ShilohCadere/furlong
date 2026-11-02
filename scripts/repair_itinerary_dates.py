@@ -19,7 +19,7 @@ trip=con.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()
 if not trip:raise SystemExit("Europe 2027 missing")
 row=con.execute("SELECT * FROM planner_trip_documents WHERE trip_id=?",(trip["id"],)).fetchone()
 if not row:raise SystemExit("Planner document missing")
-state=json.loads(row["body"]);changes=[];warnings=[]
+state=json.loads(row["body"]);changes=[];warnings=[];blockers=[]
 for sc in state["scenarios"].values():
  if sc["name"] not in SCHEDULES:continue
  sid=sc["id"];stops=[s for s in state["stops"].values() if s.get("scenarioId")==sid and not s.get("archived")]
@@ -32,7 +32,7 @@ for sc in state["scenarios"].values():
   city_stops=[s for s in stops if (s.get("location") or s.get("name") or "").casefold()==city.casefold()]
   city_days=sorted([d for d in days if d.get("stopId") in {s["id"] for s in city_stops}],key=lambda d:(d.get("date") or "",d.get("position",0)))
   if not city_stops:
-   warnings.append(f"{sc['name']}: missing stop {city}");continue
+   blockers.append(f"{sc['name']}: missing stop {city}");continue
   expected=[(date.fromisoformat(start)+timedelta(days=j)).isoformat() for j in range(nights)]
   # Prefer existing correctly dated days, then the oldest dated days without activity, then dated days with activity.
   remaining=list(city_days);keep=[]
@@ -44,7 +44,7 @@ for sc in state["scenarios"].values():
   for index,(d,target) in enumerate(keep):
    if d is not None:continue
    if not remaining:
-    warnings.append(f"{sc['name']} {city}: no day to assign to {target}");continue
+    blockers.append(f"{sc['name']} {city}: no day to assign to {target}");continue
    candidate=min(remaining,key=lambda d:(len(acts[d["id"]])>0,abs((date.fromisoformat(d["date"])-date.fromisoformat(target)).days) if d.get("date") else 9999))
    remaining.remove(candidate);keep[index]=(candidate,target)
   for index,(d,target) in enumerate(keep):
@@ -53,7 +53,7 @@ for sc in state["scenarios"].values():
    if d.get("position")!=index:changes.append(("position",d,d.get("position"),index))
   for extra in remaining:
    if acts[extra["id"]]:
-    warnings.append(f"{sc['name']} {city}: extra {extra.get('date')} has {len(acts[extra['id']])} activities; manual reconciliation needed")
+    blockers.append(f"{sc['name']} {city}: extra {extra.get('date')} has {len(acts[extra['id']])} activities; manual reconciliation needed")
    else:changes.append(("archive",extra,False,True))
   # Stop ranges can be normalized only when there is a single stop for the city.
   if len(city_stops)==1:
@@ -69,9 +69,10 @@ for sc in state["scenarios"].values():
 print(f"\nProposed changes: {len(changes)}")
 from collections import Counter
 print("By operation:",dict(Counter(c[0] for c in changes)))
-for w in warnings:print("REVIEW:",w)
+for w in warnings:print("PRESERVED:",w)
+for w in blockers:print("BLOCKER:",w)
 if not args.apply:print("DRY RUN: no database changed.")
-elif warnings:raise SystemExit("NOT APPLIED: unresolved records need review; no database changed.")
+elif blockers:raise SystemExit("NOT APPLIED: unsafe records need review; no database changed.")
 else:
  backup=path.with_name("furlong-before-dates-repair-"+datetime.now().strftime("%Y%m%d-%H%M%S")+".db")
  dest=sqlite3.connect(backup);con.backup(dest);dest.close();print("Backup:",backup)
