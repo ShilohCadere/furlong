@@ -68,7 +68,8 @@ const transferPattern=/\\b(flight|airline|airport|train|rail|coach|bus|ferry|tra
 const normalize=i=>{
  const raw=(i.location||'').trim(),label=[raw,i.name].join(' ');
  const type=(U.templates[i.type]?.name||i.type||'').toLowerCase();
- const matches=known.filter(city=>new RegExp('\\\\b'+city.replace(/[.*+?^\x24{}()|[\\]\\]/g,'\\\\$&')+'\\\\b','i').test(raw));
+ const words=raw.toLowerCase().split(/[^a-z]+/).filter(Boolean);
+ const matches=known.filter(city=>words.join(' ').includes(city.toLowerCase()));
  const routePair=matches.length>1||/\\b(to|→|\\-|–)\\b/i.test(raw)&&matches.length>0;
  const isTransfer=transferPattern.test(type)||routePair||transferPattern.test(raw)||(/\\b(to|→)\\b/i.test(label)&&transferPattern.test(label));
  if(isTransfer)return 'Transfers';
