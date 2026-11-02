@@ -45,7 +45,7 @@ class WorkspaceReviewTests(unittest.TestCase):
     def test_navigation_and_castle_dates(self):
         doc=self.doc()
         self.assertEqual(doc.select_one('.sidebar-city-jumps a')['href'],'#hotel-edinburgh')
-        self.assertEqual(doc.select_one('.atlas-city-tile')['href'],self.url+f'/city/Edinburgh?scenario={self.sid}')
+        self.assertEqual(doc.select_one('.atlas-city-tile')['href'],'#hotel-edinburgh')
         self.assertIsNotNone(doc.select_one('#hotel-edinburgh'))
         self.assertNotIn('Sep 7–8',doc.get_text())
         self.assertFalse(doc.select('input[value="2027-09-07"], input[value="2027-09-08"]'))
@@ -166,3 +166,24 @@ class WorkspaceReviewTests(unittest.TestCase):
         self.assertEqual(doc.select_one('.experience-group')['data-city-color'],'london')
         itinerary=BeautifulSoup(self.client.get(self.url+f'/itinerary?scenario={self.sid}').data,'html.parser')
         self.assertEqual(itinerary.select_one('.itinerary-story-day')['data-city-color'],'london')
+
+    def test_attention_targets_selected_items_and_preserves_budget(self):
+        with furlong.get_db_connection() as db:
+            db.execute("INSERT INTO scenario_choices VALUES (?,'Edinburgh','hotel',?)",(self.sid,self.hotel))
+            db.execute("UPDATE saved_options SET start_date='2027-09-20',end_date='2027-09-22' WHERE id=?",(self.hotel,))
+            oid=db.execute("INSERT INTO saved_options(trip_id,city,name,category,price,start_date,end_date) VALUES (?,'London','London stay','hotel',400,'2027-09-23','2027-09-25')",(self.trip,)).lastrowid
+            db.execute("INSERT INTO scenario_choices VALUES (?,'London','hotel',?)",(self.sid,oid))
+        doc=self.doc()
+        tiles=doc.select('.attention-tile')
+        self.assertEqual(len(tiles),2)
+        for tile in tiles:
+            self.assertIsNotNone(doc.select_one(tile['href']))
+        self.assertIn('Gap between stays',tiles[0].get_text())
+        self.assertIn('Quote needed',tiles[1].get_text())
+        self.assertEqual(doc.select('.atlas-metrics strong')[2].text,'$1100')
+        self.assertIsNotNone(doc.select_one('#workspace-preferences .scenario-rename'))
+        self.assertIsNone(doc.select_one('.atlas-route-bar .scenario-rename'))
+        self.assertEqual(len(doc.select('[data-density-choice]')),2)
+        with furlong.get_db_connection() as db:
+            self.assertEqual(db.execute('SELECT price FROM saved_options WHERE id=?',(self.hotel,)).fetchone()[0],None)
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM scenario_choices WHERE scenario_id=?',(self.sid,)).fetchone()[0],2)

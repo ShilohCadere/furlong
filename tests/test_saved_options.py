@@ -337,7 +337,8 @@ class SavedOptionsTests(unittest.TestCase):
             trip=db.execute("SELECT id FROM trips WHERE name='Europe 2027'").fetchone()["id"]
         res=self.client.get(f"/trip/{trip}/workspace")
         self.assertEqual(res.status_code,200)
-        self.assertIn(b'atlas-route-identity',res.data)
+        self.assertIn(b'scenario-active',res.data)
+        self.assertIn(b'workspace-preferences',res.data)
         self.assertIn(b'atlas-city-gallery',res.data)
         self.assertIn(b'furlong-bear.svg',res.data)
         self.assertNotIn(b'atlas-stamp',res.data)

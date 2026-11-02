@@ -1013,7 +1013,32 @@ def trip_workspace(trip_id):
     selected_flights=[p for p in picked if p["category"]=="flight"]
     extra_expenses=sum(row["amount"] for row in expenses if not row["included_in_allowance"])
     total=subtotal+scenario["food_budget"]+extra_expenses
-    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,groups=groups,hotels=hotels,castles=castles,flights=flights,excursions=excursions,transport=transport,activity_dates=activity_dates,selected_flights=selected_flights,flight_dates=flight_dates,flight_group_dates=flight_group_dates,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total,expenses=expenses,extra_expenses=extra_expenses)
+    # Presentation-only attention notices: never change selections or trip data.
+    attention=[]
+    def option_target(option):
+        if option["category"] in ("hotel","castle"):
+            return "hotel-"+option["city"].lower().replace(" ","-")
+        return "option-"+str(option["id"])
+    for a,b in zip(stays,stays[1:]):
+        if a["end_date"] != b["start_date"]:
+            overlap=a["end_date"] > b["start_date"]
+            attention.append({"title":b["city"]+" · "+("Overlapping stays" if overlap else "Gap between stays"),
+                "detail":a["name"]+" ends "+a["end_date"]+"; "+b["name"]+" starts "+b["start_date"]+".",
+                "target":option_target(b)})
+    for option in picked:
+        if option["price"] is None:
+            attention.append({"title":option["city"]+" · Quote needed",
+                "detail":option["name"]+" has no price. The working total is incomplete.","target":option_target(option)})
+        if option["category"] in ("hotel","castle") and (not option["start_date"] or not option["end_date"]):
+            attention.append({"title":option["city"]+" · Stay dates needed",
+                "detail":"Add check-in and check-out dates for "+option["name"]+".","target":option_target(option)})
+    stop_summaries={}
+    for key,items in hotels.items():
+        city_days=[day for day in days if day["city"]==key[0]]
+        stop_summaries[key[0]]={"days":city_days,
+            "start":city_days[0]["day_date"] if city_days else "",
+            "end":city_days[-1]["day_date"] if city_days else ""}
+    return render_template("workspace.html",trip=trip,scenarios=scenarios,scenario=scenario,attention=attention,stop_summaries=stop_summaries,groups=groups,hotels=hotels,castles=castles,flights=flights,excursions=excursions,transport=transport,activity_dates=activity_dates,selected_flights=selected_flights,flight_dates=flight_dates,flight_group_dates=flight_group_dates,selected=selected,stays=stays,warnings=warnings,undated=undated,missing=missing,subtotal=subtotal,total=total,remaining=scenario["budget_limit"]-total,expenses=expenses,extra_expenses=extra_expenses)
 
 
 @app.route("/trip/<int:trip_id>/city/<city>")

@@ -1,279 +1,205 @@
-/* Design Atlas workspace pass — original Furlong functionality preserved.
-   Deep jewel surfaces, mixed-metal borders, compact hotel comparisons. */
-.atlas-page{background:var(--bg,#071f2b);color:var(--text,#f4e7b8)}
-.atlas-hero{background:radial-gradient(ellipse at 85% 10%,#19718b 0,transparent 48%),linear-gradient(120deg,#07543f,#123777)!important;border:1px solid var(--copper,#e5a17c)!important;box-shadow:inset 0 1px 0 #f5c4a977}
-.atlas-route-identity{background:#082b3bce;border:1px solid var(--silver,#c4d4e2);color:var(--platinum,#d8e5eb)}
-.atlas-route-identity strong{color:var(--gold,#f4be4f)}
-.atlas-route-bar{background:#103847;border:1px solid #8296ab;border-radius:12px;padding:14px 18px;margin:16px 0;gap:12px}
-.atlas-route-bar small,.sidebar-jumps-title{color:var(--copper,#e5a17c)}
-.atlas-metrics{gap:12px}
-.atlas-metrics>div{background:#103847!important;border:1px solid #8296ab!important;box-shadow:inset 0 1px 0 #d8e5eb44}
-.atlas-metrics>div:nth-child(1){border-color:#c4d4e2!important}
-.atlas-metrics>div:nth-child(2){border-color:#e5a17c!important}
-.atlas-metrics>div:nth-child(3){border-color:#c69a60!important}
-.atlas-metrics>div:nth-child(4){border-color:#d8e5eb!important}
-.atlas-metrics>div span{color:#b5d9db;letter-spacing:.06em}
-.atlas-metrics>div strong{color:#f4e7b8}
-.atlas-jump{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:9;padding:9px 0;background:#071f2bf5;border-bottom:1px solid #416a79}
-.atlas-jump a{background:#103847;border:1px solid #67879a;border-radius:7px;padding:9px 12px;color:#d8e5eb}
-.atlas-jump a:hover{background:#164e5c;border-color:#e5a17c;color:#f4be4f}
-.atlas-section{background:transparent!important;border-color:#416a79!important;padding-top:18px}
-.atlas-section-head{margin-bottom:15px}
-.atlas-section-head h2{color:#f4e7b8}
-.atlas-section-head .eyebrow{color:#e5a17c}
-.atlas-city-gallery{gap:12px}
-.atlas-city-tile{min-height:135px!important;border:1px solid #c4d4e2!important;border-radius:10px}
-.atlas-city-tile:nth-child(4n+1){background:linear-gradient(145deg,#234fb3,#162555)!important;border-color:#c4d4e2!important}
-.atlas-city-tile:nth-child(4n+2){background:linear-gradient(145deg,#087559,#073c40)!important;border-color:#e5a17c!important}
-.atlas-city-tile:nth-child(4n+3){background:linear-gradient(145deg,#7d319e,#381857)!important;border-color:#d8e5eb!important}
-.atlas-city-tile:nth-child(4n){background:linear-gradient(145deg,#ae3159,#5d1739)!important;border-color:#c69a60!important}
-.atlas-city-tile strong,.atlas-city-tile small,.atlas-city-tile span{color:#f3e9d6!important}
-.hotel-city-sections{display:grid;gap:18px}
-.hotel-city-section,.hotel-castle-panel{background:#0b2e3c!important;border:1px solid #547588!important;border-radius:12px;padding:16px!important}
-.hotel-city-heading{gap:10px;margin-bottom:11px}
-.hotel-city-heading h3{color:#d8e5eb}
-.hotel-city-heading>span{color:#b5d9db}
-.hotel-comparison-grid{gap:10px!important;align-items:start}
-.hotel-comparison-card{padding:13px 15px!important;min-width:0;min-height:0!important;background:#103847!important;border:1px solid #8296ab!important;color:#f4e7b8!important;box-shadow:inset 0 1px 0 #d8e5eb22}
-.hotel-comparison-card.hotel-is-selected{border-color:#f4be4f!important;background:#113c43!important}
-.hotel-comparison-card h4{margin:4px 0 5px!important;font-size:19px!important;line-height:1.25;color:#f4e7b8}
-.hotel-comparison-card .hotel-card-top{margin-bottom:5px!important}
-.hotel-comparison-card .hotel-price{margin:3px 0!important;font-size:20px!important;color:#f4be4f}
-.hotel-comparison-card .hotel-dates{margin:3px 0 7px!important;font-size:12px!important;color:#b5d9db}
-.hotel-comparison-card .hotel-card-notes{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:12px;margin:4px 0 8px!important;color:#b5d9db}
-.hotel-card-number,.hotel-card-candidate{color:#c4d4e2}
-.hotel-card-chosen{color:#b2ecd7}
-.compact-hotel-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:10px!important}
-.compact-hotel-actions .primary-btn,.compact-hotel-actions .secondary-btn{padding:8px 12px!important;font-size:12px}
-.compact-hotel-actions a{font-size:12px;color:#f4be4f}
-.hotel-add-stay{background:#123a4b!important;border:1px solid #9c785a!important}
-.hotel-quote-form input,.hotel-quote-form textarea,.hotel-quick-quote input,.atlas-add-grid input,.atlas-add-grid select{background:#0d3040!important;color:#f4e7b8!important;border:1px solid #8fa5b8!important}
-.hotel-editor-drawer{position:fixed;inset:0 0 0 auto;margin:0;width:min(480px,100vw);max-width:100vw;height:100dvh;max-height:100dvh;padding:0;border:0;border-left:1px solid #e5a17c;border-radius:14px 0 0 14px;background:#092936!important;color:#f4e7b8!important;box-shadow:-16px 0 50px #00141bcc;overflow-y:auto}
-.hotel-editor-drawer::backdrop{background:#00141bdd}
-.hotel-editor-header{display:flex;justify-content:space-between;gap:20px;align-items:start;padding:26px 27px 16px;border-bottom:1px solid #8296ab;background:#103847!important;position:sticky;top:0;z-index:1}
-.hotel-editor-header h3{font-size:25px;margin:4px 0;color:#f4e7b8}
-.hotel-editor-close{background:transparent;border:0;font-size:30px;color:#c4d4e2;line-height:1;cursor:pointer}
-.hotel-editor-body{padding:21px 27px 40px}
-.hotel-editor-hint{font-size:13px;color:#b5d9db}
-.hotel-drawer-form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.hotel-drawer-form label{color:#d8e5eb;font-size:12px}
-.hotel-drawer-form input,.hotel-drawer-form textarea{background:#0d3040!important;border:1px solid #8fa5b8!important;color:#f4e7b8!important}
-.hotel-drawer-form label:first-of-type,.hotel-drawer-form .hotel-notes-input,.hotel-drawer-form label:nth-of-type(5){grid-column:1/-1}
-.hotel-drawer-form button{grid-column:1/-1;justify-self:stretch;margin-top:5px}
-.hotel-editor-danger{margin-top:30px;padding-top:15px;border-top:1px solid #8296ab;color:#e5a17c;font-size:12px}
-.hotel-editor-danger summary{cursor:pointer}
-.hotel-editor-danger button{margin-top:12px}
-.atlas-choice,.atlas-flight-ticket,.ledger-item,.atlas-add{background:#103847!important;color:#f4e7b8;border:1px solid #8296ab!important}
-.atlas-choice-label strong,.ledger-item strong{color:#d8e5eb}
-.atlas-choice-label small,.ledger-item small{color:#b5d9db}
-.atlas-choice select{background:#0d3040;color:#f4e7b8;border:1px solid #8fa5b8}
-.atlas-budget .option-form,.ledger-section{background:#103847;border:1px solid #8296ab;border-radius:12px;padding:16px}
-.atlas-budget .option-form input{background:#0d3040;color:#f4e7b8;border-color:#8fa5b8}
-.workspace-warning{background:#4b2338;color:#ffe0d1;border:1px solid #c69a60}
-@media(max-width:650px){.atlas-jump{position:static}.hotel-editor-drawer{width:100vw;border-radius:0}.hotel-editor-header{padding:20px}.hotel-editor-body{padding:20px}.hotel-drawer-form{grid-template-columns:1fr}.hotel-drawer-form label{grid-column:1/-1}.atlas-city-tile{min-height:120px!important}}
-
-/* Stay timeline: explicit dark Atlas surface and accessible text contrast. */
-.atlas-timeline{background:#103847!important;color:#d8e5eb!important;border:1px solid #8296ab!important;border-left:4px solid #e5a17c!important;border-radius:10px;padding:18px 22px}
-.atlas-timeline .eyebrow{color:#e5a17c!important}
-.atlas-timeline>div{border-top:1px solid #416a79!important;color:#d8e5eb!important}
-.atlas-timeline>div strong{color:#f4e7b8!important}
-.atlas-timeline>div span:not(.atlas-time-dot){color:#d8e5eb!important}
-.atlas-timeline>div small{color:#b5d9db!important}
-.atlas-time-dot{background:#c69a60!important;flex-shrink:0}
-
-/* Accessible new-route control: remove legacy light input. */
-.scenario-new{align-items:center}
-.scenario-new-label{color:#d8e5eb;font-size:13px;font-weight:600;letter-spacing:.01em}
-.scenario-new input[name="name"]{background:#0d3040!important;color:#f4e7b8!important;border:1px solid #a9bccb!important;border-radius:8px;padding:10px 12px;min-height:44px;min-width:min(220px,100%);font:inherit}
-.scenario-new input[name="name"]::placeholder{color:#b8cdd5;opacity:1}
-.scenario-new input[name="name"]:focus-visible{outline:3px solid #f4be4f!important;outline-offset:3px!important}
-.scenario-new button{min-height:44px}
-@media(max-width:550px){.scenario-new-label{width:100%}.scenario-new input[name="name"]{flex:1 1 100%;min-width:0}}
-
-/* Firefox Accessibility Inspector contrast remediation — Trip Workspace.
-   Keep approved jewel colors, but use higher contrast text on colored surfaces. */
-.atlas-page .atlas-hero .eyebrow,
-.atlas-page .atlas-hero-caption,
-.atlas-page .atlas-hero p,
-.atlas-page .atlas-hero small{color:#fff1d5!important}
-.atlas-page .atlas-hero .atlas-route-identity,
-.atlas-page .atlas-route-bar small,
-.atlas-page .atlas-section-head .eyebrow{color:#f5c9aa!important}
-.atlas-page .atlas-section-head p,
-.atlas-page .atlas-section-head small,
-.atlas-page .atlas-section-head span,
-.atlas-page .atlas-choice-label small,
-.atlas-page .hotel-city-heading>span,
-.atlas-page .hotel-card-notes,
-.atlas-page .hotel-dates,
-.atlas-page .hotel-card-candidate,
-.atlas-page .ledger-item small,
-.atlas-page .atlas-flight-ticket small,
-.atlas-page .atlas-flight-ticket span,
-.atlas-page .atlas-add summary,
-.atlas-page .hotel-add-stay summary,
-.atlas-page .hotel-quick-quote label,
-.atlas-page .atlas-budget label{color:#d8e5eb!important}
-.atlas-page .atlas-city-tile:nth-child(4n+1){background:linear-gradient(145deg,#19418f,#122348)!important}
-.atlas-page .atlas-city-tile:nth-child(4n+2){background:linear-gradient(145deg,#075d48,#073438)!important}
-.atlas-page .atlas-city-tile:nth-child(4n+3){background:linear-gradient(145deg,#652580,#2c1746)!important}
-.atlas-page .atlas-city-tile:nth-child(4n){background:linear-gradient(145deg,#8f2649,#47152e)!important}
-.atlas-page .atlas-city-tile strong,
-.atlas-page .atlas-city-tile small,
-.atlas-page .atlas-city-tile span{color:#fff1dc!important}
-.atlas-page .atlas-number,
-.atlas-page .atlas-mark{color:#f5c9aa!important}
-.atlas-page :is(a,button,summary,input,select,textarea):focus-visible{outline:3px solid #f4be4f!important;outline-offset:3px}
-
-/* Accessibility: audited workspace contrast surfaces (WCAG AA normal text target).
-   Darken underlying gradients instead of endlessly layering foreground overrides. */
-.atlas-page .atlas-hero{
-  background:linear-gradient(115deg,#092f34 0%,#0c334a 65%,#15294c 100%)!important;
-}
-.atlas-page .atlas-overline{
-  color:#ffffff!important;
-  font-size:12px;
-  letter-spacing:.12em;
-  line-height:1.65;
-}
-.atlas-page .atlas-overline span{color:#f8d6b1!important}
-.atlas-page .atlas-kicker,
-.atlas-page .atlas-hero-grid p,
-.atlas-page .atlas-hero-caption,
-.atlas-page .atlas-route-identity span,
-.atlas-page .atlas-route-identity small{color:#f4e7d9!important}
-.atlas-page .atlas-route-identity{background:#092c3d!important}
-.atlas-page .atlas-section-head .eyebrow,
-.atlas-page .atlas-section-head .atlas-number,
-.atlas-page .atlas-section-head .atlas-mark{color:#f5c9aa!important}
-.atlas-page .atlas-section-head p,
-.atlas-page .atlas-section-head small,
-.atlas-page .atlas-section-head span:not(.atlas-mark):not(.atlas-number){color:#d8e5eb!important}
-.atlas-page .atlas-city-tile:nth-child(4n+1){background:linear-gradient(145deg,#193b78,#12223e)!important}
-.atlas-page .atlas-city-tile:nth-child(4n+2){background:linear-gradient(145deg,#084937,#082e32)!important}
-.atlas-page .atlas-city-tile:nth-child(4n+3){background:linear-gradient(145deg,#522367,#271638)!important}
-.atlas-page .atlas-city-tile:nth-child(4n){background:linear-gradient(145deg,#74233d,#39152a)!important}
-.atlas-page .atlas-city-tile :is(strong,small,span){color:#ffffff!important}
-.atlas-page .atlas-city-tile small{font-size:12px}
-.atlas-page .hotel-comparison-card .hotel-price small,
-.atlas-page .hotel-comparison-card .hotel-card-candidate,
-.atlas-page .hotel-comparison-card .hotel-dates,
-.atlas-page .hotel-comparison-card .hotel-card-notes,
-.atlas-page .hotel-quick-quote label,
-.atlas-page .atlas-flight-ticket :is(small,span),
-.atlas-page .atlas-choice-label small,
-.atlas-page .ledger-item small{color:#d8e5eb!important}
-.atlas-page .atlas-add summary,
-.atlas-page .hotel-add-stay summary{color:#fff1d5!important}
-
-/* Firefox accessibility follow-up: remaining confirmed link and budget text failures. */
-.atlas-page .hotel-city-heading a.city-hub-shortcut,
-.atlas-page a.city-hub-shortcut{
-  color:#f5d3a8!important;
-  text-decoration:underline;
-  text-decoration-thickness:1.5px;
-  text-underline-offset:3px;
-  font-weight:600;
-}
-.atlas-page a.city-hub-shortcut:hover{color:#ffffff!important}
-.atlas-page .atlas-budget .atlas-section-head p,
-.atlas-page .atlas-budget .page-subtitle,
-.atlas-page .ledger-section h3,
-.atlas-page .ledger-section p,
-.atlas-page .ledger-section label,
-.atlas-page .ledger-section small{
-  color:#d8e5eb!important;
-}
-.atlas-page .atlas-budget .atlas-section-head h2,
-.atlas-page .ledger-section h3{color:#f4e7b8!important}
-.atlas-page .atlas-budget .atlas-section-head .eyebrow{color:#f5c9aa!important}
-
-/* Accessibility follow-up: budget section descriptive copy. */
-.atlas-page section#budget .atlas-section-head > div > p:not(.eyebrow){
-  color:#f1f5f8!important;
-  background:#103847;
-  border-radius:6px;
-  padding:5px 8px;
-}
-
-/* Visible labels for scenario option selectors; keep card grid layout intact. */
-.atlas-page .atlas-choice-field-label{display:block;min-width:0;color:#f1f5f8!important;font-size:12px;font-weight:600;line-height:1.5}
-.atlas-page .atlas-choice-field-label select{display:block;width:100%;margin-top:5px}
-.atlas-page section#budget{background:#092936!important;border:1px solid #547588!important;border-radius:12px}
-.atlas-page section#budget .atlas-section-head>div>p:not(.eyebrow){background:#092936!important;color:#ffffff!important}
-
-/* Route naming: match Atlas controls with readable, responsive editing. */
-.scenario-rename{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px}
-.scenario-rename label{color:#d8e5eb;font-size:12px;font-weight:600}
-.scenario-rename input{background:#0d3040!important;color:#f4e7b8!important;border:1px solid #a9bccb!important;border-radius:8px;padding:9px 11px;min-height:44px;max-width:240px;width:100%}
-.scenario-rename button{min-height:44px}
-.scenario-rename input:focus-visible{outline:3px solid #f4be4f!important;outline-offset:3px}
-@media(max-width:550px){.scenario-rename label{width:100%}.scenario-rename input{max-width:none;flex:1 1 100%}}
-
-/* Compact flight comparisons — matching hotel shortlist density. */
-.flight-route-list{display:grid;gap:19px}
-.flight-route-group{background:#0b2e3c;border:1px solid #547588;border-radius:12px;padding:16px}
-.flight-route-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
-.flight-route-heading h3{font-size:22px;color:#d8e5eb;margin:0}
-.flight-route-heading>span{font-size:12px;color:#b5d9db}
-.flight-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,265px),1fr));gap:10px}
-.flight-option-card{background:#103847;border:1px solid #8296ab;border-radius:10px;padding:13px 15px;min-width:0;color:#d8e5eb}
-.flight-option-card.flight-is-selected{background:#113c43;border:2px solid #f4be4f;padding:12px 14px}
-.flight-card-top{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px;font-size:11px}
-.flight-card-number,.flight-alternative{color:#c4d4e2}
-.flight-selected{color:#b2ecd7}
-.flight-option-card h4{font-size:19px;line-height:1.25;margin:0 0 5px;color:#f4e7b8}
-.flight-card-route{font-size:14px;font-weight:700;color:#d8e5eb;margin:3px 0}
-.flight-card-price{font:500 21px var(--font-heading);color:#f4be4f;margin:6px 0}
-.flight-card-price small{font:500 11px var(--font-body);color:#d8e5eb}
-.flight-card-meta{display:grid;gap:3px;font-size:12px;color:#b5d9db;overflow-wrap:anywhere}
-.flight-card-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:start;margin-top:12px}
-.flight-card-actions form{margin:0}
-.flight-card-actions button{font-size:12px;padding:8px 11px}
-.flight-edit{background:#0a2d3c!important;border:1px solid #678b99!important;border-radius:8px;padding:7px 10px;min-width:0;flex:1 1 130px}
-.flight-edit summary{cursor:pointer;color:#f4be4f!important;font-size:12px;font-weight:600}
-.flight-edit[open]{flex-basis:100%}
-.flight-edit-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px 0 3px}
-.flight-edit-form label{display:flex;flex-direction:column;gap:5px;color:#d8e5eb;font-size:12px}
-.flight-edit-form input{width:100%;min-width:0;border:1px solid #8fa5b8;background:#0d3040;color:#f4e7b8;border-radius:7px;padding:9px}
-.flight-edit-form button{grid-column:1/-1}
-.flight-clear{margin-top:10px}
-.flight-clear button{font-size:12px}
-.flight-empty{color:#b5d9db}
-.flight-add{margin-top:17px}
-@media(max-width:650px){.flight-route-group{padding:12px}.flight-edit-form{grid-template-columns:1fr}}
-
-.flight-card-date{margin:4px 0;color:#d8e5eb;font-size:13px;font-weight:600}
-.flight-delete{margin-top:10px;border-top:1px solid #547588;padding-top:8px}
-.flight-delete summary{color:#f5c9aa!important;font-size:12px}
-.flight-delete form{margin-top:9px}
-
-/* Workspace review: sapphire and amethyst surfaces, emerald as an accent. */
-.workspace-view{--bg:#101725;--surface:#1b2437;--text:#e7eaf0;background:#101725;color:#e7eaf0}
-.workspace-view .sidebar{background:#141b2b;border-color:#43495d}
-.workspace-view .atlas-page{background:#101725;color:#e7eaf0}
-.workspace-view .atlas-hero{background:radial-gradient(ellipse at 85% 10%,#45406a 0,transparent 55%),linear-gradient(120deg,#1c3151,#29233e)!important}
-.workspace-view .atlas-route-bar,.workspace-view .atlas-metrics>div{background:#1b2437!important}
-.workspace-view .atlas-route-identity{background:#161e32}
-.workspace-view .atlas-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
-.workspace-view .atlas-jump{background:#101725f5;border-color:#484c65}
-.workspace-view .atlas-jump a{background:#202940;border-color:#626b82}
-.workspace-view .hotel-comparison-card,.workspace-view .flight-option-card{background:#1c263a!important;border-color:#626b82!important;display:flex;flex-direction:column;min-width:0}
-.workspace-view .hotel-is-selected{background:#1b3438!important;border-color:#91c4b6!important}
-.workspace-view .hotel-add-stay,.workspace-view .atlas-add{background:#1d2639!important;border-color:#71637e!important}
-.workspace-view .hotel-quote-form input,.workspace-view .hotel-quote-form textarea,.workspace-view .atlas-add-grid input,.workspace-view .atlas-add-grid select{background:#111a2b!important;color:#e7eaf0!important}
-.workspace-view .hotel-card-notes,.workspace-view .hotel-dates,.workspace-view .flight-card-meta,.workspace-view .flight-card-date{color:#c2c9d7}
-.workspace-view .flight-option-card h4{color:#e7eaf0}
-.workspace-view .hotel-card-actions{margin-top:auto!important;padding-top:12px}
-.workspace-view .hotel-editor-drawer{background:#182237!important;color:#e7eaf0}
-.workspace-view .hotel-editor-header{background:#25283f!important}
-.workspace-view .atlas-metrics .over-budget strong{color:#ffb5bd!important}
-.workspace-view .experience-group{margin-bottom:30px}
-.workspace-view .hotel-city-section,.workspace-view .atlas-section{scroll-margin-top:90px}
-.workspace-view .hotel-city-section:target{outline:2px solid #b8a6ce;outline-offset:8px;border-radius:8px}
-@media(max-width:850px){.workspace-view .atlas-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Approved combination: navy foundations, jewel destinations, restrained metals. */
+.workspace-view{--workspace-bg:#0b1426;--workspace-panel:#131f33;--workspace-card:#1a293f;--workspace-line:#40516a;--workspace-muted:#c0ccdc;--workspace-metal:#d3b781;background:var(--workspace-bg)!important;color:#edf1f7}
+.workspace-view .sidebar{background:#0e192b!important;border-right:1px solid #33445c!important}
+.workspace-view .atlas-page{max-width:1600px;background:var(--workspace-bg)!important;padding:30px 34px 60px}
+.workspace-view .atlas-hero{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:0;padding:25px 28px;border:1px solid #59627a!important;border-radius:14px;background:radial-gradient(ellipse at 95% 0,#392c514d,transparent 60%),linear-gradient(110deg,#142b40,#18233c)!important;box-shadow:none}
+.workspace-view .atlas-hero h1{font-family:var(--font-heading,'Newsreader',serif);font-size:clamp(30px,3vw,44px);line-height:1.12;margin:6px 0 8px}
+.workspace-view .atlas-hero p{margin:0;font-size:13px;color:#d1dae7!important}
+.workspace-view .atlas-hero .atlas-kicker{font:600 10px var(--font-body,'DM Sans',sans-serif);letter-spacing:.14em;color:#ddc69f!important}
+.workspace-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.density-switch{display:flex;gap:2px;padding:3px;border:1px solid #52627b;border-radius:9px;background:#0e192b}
+.density-switch button{font:600 12px var(--font-body,'DM Sans',sans-serif);border:0;border-radius:6px;background:transparent;color:#c9d4e3;min-height:38px;padding:8px 13px;cursor:pointer}
+.density-switch button[aria-pressed=true]{background:#31415c;color:#fff1d9;box-shadow:inset 0 0 0 1px #bda778}
+.workspace-view .atlas-route-bar{display:block;padding:12px 0;margin:0 0 6px;background:transparent!important;border:0!important;box-shadow:none!important}
+.workspace-view .atlas-route-bar small{font-size:10px;letter-spacing:.13em;color:#b8c6d9!important}
+.workspace-view .scenario-tabs{margin:8px 0 0;gap:7px}
+.workspace-view .scenario-tabs a{padding:9px 13px;font-size:12px;min-height:40px}
+.workspace-view .atlas-city-gallery{display:flex;gap:8px;overflow-x:auto;margin:16px 0;padding-bottom:5px;scrollbar-width:thin}
+.workspace-view .atlas-city-tile{flex:1 0 150px;min-height:86px!important;max-width:none;border:1px solid var(--city-accent)!important;border-radius:10px;background:linear-gradient(115deg,var(--city-shade),#17263d)!important;box-shadow:none!important;text-decoration:none;position:relative}
+.workspace-view .atlas-city-overlay{position:relative;inset:auto;padding:13px 16px;background:none;display:grid;gap:5px}
+.workspace-view .atlas-city-tile small{font:600 9px var(--font-body,'DM Sans',sans-serif);letter-spacing:.08em;color:#d5deeb!important}
+.workspace-view .atlas-city-tile strong{font:500 23px var(--font-heading,'Newsreader',serif);color:#f5f7fb!important}
+.workspace-view .atlas-city-tile span{font-size:11px;color:#d5deeb!important}
+.workspace-view .atlas-city-tile:hover{outline:1px solid var(--city-accent);outline-offset:2px}
+.workspace-attention{margin:12px 0 18px}
+.attention-heading{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.attention-heading h2{font:500 21px var(--font-heading,'Newsreader',serif);margin:0}
+.attention-heading h2 span{font:600 11px var(--font-body,'DM Sans',sans-serif);padding:3px 7px;margin-left:6px;border-radius:20px;border:1px solid #796b52;color:#ead2a6}
+.attention-heading p{font-size:12px;color:var(--workspace-muted);margin:0}
+.attention-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:9px}
+.attention-tile{display:grid;gap:6px;border:1px solid #7b6851;border-radius:10px;padding:13px 15px;background:linear-gradient(115deg,#362e2b,#1a263c);text-decoration:none;color:#edf1f7}
+.attention-tile strong{font-size:13px;display:flex;justify-content:space-between;gap:10px}
+.attention-tile>span{font-size:12px;line-height:1.5;color:#d7deea}
+.attention-tile:hover{border-color:#dfc28b;background:#283248}
+.workspace-view .atlas-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:18px 0}
+.workspace-view .atlas-metrics>div{background:#131f33!important;border:1px solid #40516a!important;border-radius:10px;box-shadow:none!important;padding:15px 17px}
+.workspace-view .atlas-metrics>div span{font-size:10px;letter-spacing:.07em;color:#c0ccdc!important}
+.workspace-view .atlas-metrics>div strong{font:500 27px var(--font-heading,'Newsreader',serif);display:block;margin-top:7px;color:#f0e4cf!important}
+.workspace-view .atlas-metrics>div:nth-child(3){border-top:2px solid #d3b781!important}
+.workspace-view .atlas-metrics .over-budget{background:#3a2636!important;border-color:#bf91a4!important}
+.workspace-view .atlas-metrics .over-budget :is(strong,span){color:#ffe4ea!important}
+.workspace-view .atlas-jump{position:sticky;top:0;z-index:8;display:flex;flex-wrap:wrap;gap:7px;background:#0b1426f5!important;padding:10px 0;border-bottom:1px solid #40516a!important;margin:0 0 22px;backdrop-filter:blur(10px)}
+.workspace-view .atlas-jump a{padding:8px 12px;border-radius:7px;font-size:12px;min-height:36px;text-decoration:none}
+.workspace-view .atlas-section{background:transparent!important;border:0!important;border-bottom:1px solid #40516a!important;border-radius:0;box-shadow:none!important;padding:0 0 28px;margin:0 0 28px;scroll-margin-top:84px}
+.workspace-view .atlas-section-head{gap:12px;align-items:center;margin:18px 0}
+.workspace-view .atlas-section-head h2{font-size:29px;margin:3px 0 5px}
+.workspace-view .atlas-section-head p:not(.eyebrow){font-size:12px;line-height:1.55;color:#c0ccdc!important}
+.workspace-view .atlas-section-head .eyebrow{font-size:10px;letter-spacing:.12em}
+.workspace-view .atlas-number{font-size:14px!important;color:#d3b781!important}
+.workspace-view .atlas-mark{display:none}
+.workspace-view .hotel-city-sections{display:grid;gap:20px}
+.workspace-view :is(.hotel-city-section,.hotel-castle-panel,.experience-group,.flight-route-group){padding:18px;border:1px solid #40516a!important;border-radius:12px;background:#111e31!important;scroll-margin-top:90px;min-width:0}
+.workspace-view [data-city-color]:is(.hotel-city-section,.experience-group){border-top:2px solid var(--city-accent)!important}
+.workspace-view .hotel-city-heading{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 14px}
+.workspace-view .hotel-city-heading h3{font-size:26px;margin:0;border-left:3px solid var(--city-accent,#d3b781)!important;padding-left:10px}
+.workspace-view .hotel-city-heading>span{font-size:11px;color:#c0ccdc!important;margin-left:auto}
+.workspace-view .hotel-city-heading form{margin:0}
+.workspace-view .city-hub-shortcut{color:#e8cf9e!important;font-size:11px;text-underline-offset:3px}
+.stop-date-summary{font-size:11px;color:#c0ccdc;margin-bottom:9px}
+.workspace-view .hotel-comparison-grid{display:grid;grid-template-columns:1fr;gap:9px}
+.workspace-view :is(.hotel-comparison-card,.flight-option-card){display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,.35fr) auto;align-items:center;column-gap:18px;row-gap:5px;background:#1a293f!important;border:1px solid #4c5d76!important;border-left:3px solid var(--city-accent,var(--route-line,#617590))!important;border-radius:9px;padding:13px 16px!important;min-width:0;box-shadow:none!important;scroll-margin-top:100px}
+.workspace-view :is(.hotel-comparison-card,.flight-option-card)>*{min-width:0}
+.workspace-view .hotel-card-top,.workspace-view .flight-card-top{grid-column:1;grid-row:1;font-size:10px;display:flex;align-items:center;gap:8px;margin:0!important}
+.workspace-view .hotel-card-number,.workspace-view .flight-card-number{display:none}
+.workspace-view :is(.hotel-card-candidate,.flight-alternative){color:#c0ccdc!important}
+.workspace-view :is(.hotel-card-chosen,.flight-selected){font-size:10px;color:#bce4d0!important;font-weight:600}
+.workspace-view .hotel-comparison-card h4{grid-column:1;grid-row:2;margin:0!important;font:500 20px var(--font-heading,'Newsreader',serif);line-height:1.25;color:#edf1f7!important}
+.workspace-view :is(.hotel-price,.flight-card-price){grid-column:2;grid-row:1 / span 2;font:500 22px var(--font-heading,'Newsreader',serif);margin:0!important;color:#ead2a6!important}
+.workspace-view :is(.hotel-price,.flight-card-price) small{display:block;font:400 10px var(--font-body,'DM Sans',sans-serif);color:#c0ccdc!important;margin-top:4px}
+.workspace-view :is(.hotel-dates,.flight-card-date){grid-column:1;grid-row:3;font-size:11px;line-height:1.4;color:#c0ccdc!important;margin:0!important}
+.workspace-view .hotel-card-notes{grid-column:1 / -1;display:none;font-size:12px;color:#d0d9e6!important;margin:7px 0 0!important;white-space:pre-line;line-height:1.6}
+.workspace-view .hotel-card-actions{grid-column:3;grid-row:1 / span 3;display:flex;flex-wrap:wrap;gap:7px;align-items:center;justify-content:flex-end;max-width:240px;margin:0!important;padding:0!important}
+.workspace-view .hotel-card-actions form{margin:0}
+.workspace-view .hotel-card-actions :is(button,a){font-size:11px!important;padding:8px 10px!important;min-height:36px}
+.workspace-view .hotel-card-actions button.primary-btn{background:#263e4b!important;color:#d7e9ef!important;border-color:#7895a9!important}
+.workspace-view .hotel-is-selected{border-color:var(--city-accent,#d3b781)!important;background:#1c3041!important;box-shadow:inset 3px 0 0 var(--city-accent,#d3b781)!important}
+.workspace-view .hotel-is-selected .hotel-price{color:#ecd6ae!important}
+.workspace-view .hotel-price-missing{font-size:16px;color:#ead2a6!important}
+.workspace-view .flight-card-route{grid-column:1;grid-row:3;font-size:12px;margin:0}
+.workspace-view .flight-card-date{grid-row:4}
+.workspace-view .flight-card-meta{grid-column:1 / span 2;font-size:11px;display:none;gap:5px;line-height:1.5;color:#c0ccdc!important}
+.workspace-view .flight-route-heading{margin:0 0 12px;padding:10px 13px;border-radius:8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.workspace-view .flight-route-heading h3{font-size:23px;margin:0}
+.workspace-view .flight-route-heading>span{font-size:11px;color:#d1dbea}
+.workspace-view .flight-route-list{display:grid;gap:16px}
+.workspace-view .hotel-castle-panel{margin-top:20px}
+.workspace-view :is(.hotel-add-stay,.atlas-add){background:#142238!important;border:1px dashed #5a6b82!important;border-radius:8px;padding:11px 14px;margin:12px 0;box-shadow:none!important}
+.workspace-view :is(.hotel-add-stay,.atlas-add) summary{font-size:12px;color:#d4deec!important;cursor:pointer}
+.workspace-view :is(.hotel-quote-form,.atlas-add-grid){margin-top:14px}
+.workspace-view :is(input,select,textarea){background:#0e192b!important;color:#edf1f7!important;border:1px solid #60728b!important;border-radius:7px;padding:10px;max-width:100%;font:inherit}
+.workspace-view .hotel-quote-form label{font-size:12px;color:#d4deec}
+.workspace-view .hotel-quote-form textarea{resize:vertical}
+.workspace-view .atlas-timeline{background:#131f33!important;border:1px solid #40516a;border-radius:10px;padding:18px;margin-top:20px;color:#d4deec}
+.workspace-view .atlas-timeline>div{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 0;border-top:1px solid #40516a;font-size:12px}
+.workspace-view .atlas-time-dot{width:7px;height:7px;border-radius:50%;background:var(--city-accent,#d3b781)}
+.workspace-view .workspace-warning{padding:12px 15px;border-radius:8px;background:#352b35!important;border:1px solid #b191a1;font-size:12px;line-height:1.5;color:#ffe4ea!important}
+.workspace-view .atlas-choice{background:#17263d!important;border:1px solid #4c5d76!important;border-radius:9px;padding:15px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.workspace-view .atlas-choice-field-label{font-size:11px;flex:1;min-width:min(260px,100%)}
+.workspace-view .atlas-choice-field-label select{display:block;width:100%;margin-top:5px}
+.workspace-view .atlas-choice-label{min-width:150px;display:grid;gap:4px}
+.workspace-view .atlas-choice-label small{font-size:11px;color:#c0ccdc!important}
+.workspace-view .atlas-choice-list{display:grid;gap:10px}
+.workspace-view .atlas-budget .option-form,.workspace-view .ledger-section{padding:18px;background:#131f33;border:1px solid #40516a;border-radius:10px}
+.workspace-view .ledger-item{border:1px solid #40516a!important;padding:12px;border-radius:8px}
+.workspace-view .hotel-editor-drawer{position:fixed;inset:0 0 0 auto;margin:0;width:min(520px,100vw);max-width:100vw;height:100dvh;max-height:100dvh;padding:0;border:0;border-left:1px solid #b79f79;border-radius:14px 0 0 14px;background:#111e31!important;color:#edf1f7;box-shadow:-20px 0 70px #0008;overflow-y:auto}
+.workspace-view .hotel-editor-drawer::backdrop{background:#030a16c9;backdrop-filter:blur(3px)}
+.workspace-view .hotel-editor-header{display:flex;justify-content:space-between;align-items:start;gap:18px;position:sticky;top:0;z-index:1;background:#17263d!important;border-bottom:1px solid #4c5d76;padding:23px 25px}
+.workspace-view .hotel-editor-header h3{font-size:27px;margin:5px 0 0}
+.workspace-view .hotel-editor-close{background:transparent;border:0;color:#e4eaf2;font-size:30px;line-height:1;cursor:pointer;padding:4px}
+.workspace-view .hotel-editor-body{padding:22px 25px 35px}
+.workspace-view .hotel-editor-hint{font-size:12px;line-height:1.6;color:#c0ccdc!important}
+.workspace-view .hotel-drawer-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.workspace-view .hotel-drawer-form label{display:grid;gap:6px}
+.workspace-view .hotel-drawer-form label:has(textarea),.workspace-view .hotel-drawer-form label:first-of-type,.workspace-view .hotel-drawer-form button{grid-column:1 / -1}
+.workspace-view .hotel-editor-danger{margin-top:25px;border-top:1px solid #40516a;padding-top:15px;font-size:12px}
+.workspace-view .hotel-editor-danger form{margin-top:14px}
+.preference-section{display:grid;gap:14px;margin-bottom:24px;padding-bottom:22px;border-bottom:1px solid #40516a}
+.preference-section h4{font:500 23px var(--font-heading,'Newsreader',serif);margin:0}
+.preference-section p{margin:0}
+.preference-section label{font-size:12px;display:grid;gap:7px}
+.preference-section .preference-check{display:flex;align-items:center;gap:10px;cursor:pointer}
+.preference-check input{width:17px;height:17px;accent-color:#d3b781}
+#preference-status{min-height:18px;font-size:11px;color:#bddacb}
+.workspace-view .scenario-rename,.workspace-view .scenario-new{display:grid;gap:8px;margin:0}
+.workspace-view .scenario-new input,.workspace-view .scenario-rename input{width:100%;max-width:none;min-width:0}
+.workspace-view .scenario-new button,.workspace-view .scenario-rename button{justify-self:start;min-height:40px}
+.workspace-view .scenario-new-label{font-size:12px;color:#d4deec}
+.workspace-view .workspace-footer{display:flex;gap:10px;flex-wrap:wrap}
+.workspace-view :is(button,a,input,select,textarea,summary):focus-visible{outline:3px solid #dce5f0!important;outline-offset:3px!important}
+.workspace-view :is(.hotel-city-section,.hotel-comparison-card):target{outline:2px solid var(--city-accent,#d3b781);outline-offset:5px}
+.workspace-view [hidden]{display:none!important}
+.workspace-view[data-density=detailed] .hotel-comparison-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.workspace-view[data-density=detailed] :is(.hotel-comparison-card,.flight-option-card){display:flex;flex-direction:column;align-items:stretch;gap:7px;padding:17px!important}
+.workspace-view[data-density=detailed] .hotel-card-notes{display:block}
+.workspace-view[data-density=detailed] .flight-card-meta{display:grid}
+.workspace-view[data-density=detailed] .hotel-card-actions{max-width:none;justify-content:flex-start;margin-top:auto!important;padding-top:10px!important}
+.workspace-view[data-density=detailed][data-show-notes=false] .hotel-card-notes{display:none}
+.workspace-view[data-show-timeline=false] .atlas-timeline{display:none}
+@media(max-width:1100px){.workspace-view .atlas-page{padding:24px}.workspace-view .hotel-card-actions{max-width:180px}.workspace-view .hotel-comparison-card{column-gap:12px}}
+@media(max-width:850px){.workspace-view .atlas-hero{align-items:start;flex-direction:column;padding:20px}.workspace-view .atlas-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.workspace-view .atlas-page{padding:20px}.workspace-view .hotel-comparison-card{grid-template-columns:minmax(0,1fr) auto}.workspace-view .hotel-card-actions{grid-column:1 / -1;grid-row:auto;max-width:none;justify-content:flex-start;margin-top:7px!important}.workspace-view .flight-card-meta{grid-column:1 / -1}}
+@media(max-width:550px){.workspace-view .atlas-page{padding:16px 12px 35px}.workspace-view .atlas-hero h1{font-size:32px}.workspace-toolbar{width:100%;justify-content:space-between}.workspace-view .atlas-metrics>div{padding:12px}.workspace-view .atlas-metrics>div strong{font-size:25px}.workspace-view .atlas-jump{position:static}.workspace-view .hotel-city-section,.workspace-view .flight-route-group,.workspace-view .experience-group{padding:12px}.workspace-view .hotel-comparison-card h4{font-size:19px}.workspace-view .hotel-city-heading>span{margin-left:0}.workspace-view .hotel-editor-drawer{border-radius:0}.workspace-view .hotel-editor-header,.workspace-view .hotel-editor-body{padding:20px}.workspace-view .hotel-drawer-form{grid-template-columns:1fr}.workspace-view .hotel-drawer-form label{grid-column:1 / -1}.workspace-view .hotel-city-section{scroll-margin-top:15px}}
 @media(prefers-reduced-motion:no-preference){html:has(.workspace-view){scroll-behavior:smooth}}
-.workspace-view .hotel-city-section,.workspace-view .hotel-castle-panel{background:#151e30!important;border-color:#4b536b!important}
-.workspace-view .hotel-comparison-card h4{color:#e7eaf0}
-.workspace-view .atlas-metrics .over-budget{background:#432b3c!important}
-.workspace-view .atlas-metrics .over-budget span{color:#f4ccd4!important}
+
+/* Match the shared palette layer for intentional color overrides.
+   Layout stays unlayered so it supersedes the legacy page layout. */
+@layer furlong-palette {
+.workspace-view{background:var(--workspace-bg)!important}
+.workspace-view .sidebar{background:#0e192b!important;border-right:1px solid #33445c!important}
+.workspace-view .atlas-page{background:var(--workspace-bg)!important}
+.workspace-view .atlas-hero{border:1px solid #59627a!important;background:radial-gradient(ellipse at 95% 0,#392c514d,transparent 60%),linear-gradient(110deg,#142b40,#18233c)!important}
+.workspace-view .atlas-hero p{color:#d1dae7!important}
+.workspace-view .atlas-hero .atlas-kicker{color:#ddc69f!important}
+.workspace-view .atlas-route-bar{background:transparent!important;border:0!important;box-shadow:none!important}
+.workspace-view .atlas-route-bar small{color:#b8c6d9!important}
+.workspace-view .atlas-city-tile{min-height:86px!important;border:1px solid var(--city-accent)!important;background:linear-gradient(115deg,var(--city-shade),#17263d)!important;box-shadow:none!important}
+.workspace-view .atlas-city-tile small{color:#d5deeb!important}
+.workspace-view .atlas-city-tile strong{color:#f5f7fb!important}
+.workspace-view .atlas-city-tile span{color:#d5deeb!important}
+.workspace-view .atlas-metrics>div{background:#131f33!important;border:1px solid #40516a!important;box-shadow:none!important}
+.workspace-view .atlas-metrics>div span{color:#c0ccdc!important}
+.workspace-view .atlas-metrics>div strong{color:#f0e4cf!important}
+.workspace-view .atlas-metrics>div:nth-child(3){border-top:2px solid #d3b781!important}
+.workspace-view .atlas-metrics .over-budget{background:#3a2636!important;border-color:#bf91a4!important}
+.workspace-view .atlas-metrics .over-budget :is(strong,span){color:#ffe4ea!important}
+.workspace-view .atlas-jump{background:#0b1426f5!important;border-bottom:1px solid #40516a!important}
+.workspace-view .atlas-section{background:transparent!important;border:0!important;border-bottom:1px solid #40516a!important;box-shadow:none!important}
+.workspace-view .atlas-section-head p:not(.eyebrow){color:#c0ccdc!important}
+.workspace-view .atlas-number{font-size:14px!important;color:#d3b781!important}
+.workspace-view :is(.hotel-city-section,.hotel-castle-panel,.experience-group,.flight-route-group){border:1px solid #40516a!important;background:#111e31!important}
+.workspace-view [data-city-color]:is(.hotel-city-section,.experience-group){border-top:2px solid var(--city-accent)!important}
+.workspace-view .hotel-city-heading h3{border-left:3px solid var(--city-accent,#d3b781)!important}
+.workspace-view .hotel-city-heading>span{color:#c0ccdc!important}
+.workspace-view .city-hub-shortcut{color:#e8cf9e!important}
+.workspace-view :is(.hotel-comparison-card,.flight-option-card){background:#1a293f!important;border:1px solid #4c5d76!important;border-left:3px solid var(--city-accent,var(--route-line,#617590))!important;padding:13px 16px!important;box-shadow:none!important}
+.workspace-view .hotel-card-top,.workspace-view .flight-card-top{margin:0!important}
+.workspace-view :is(.hotel-card-candidate,.flight-alternative){color:#c0ccdc!important}
+.workspace-view :is(.hotel-card-chosen,.flight-selected){color:#bce4d0!important}
+.workspace-view .hotel-comparison-card h4{margin:0!important;color:#edf1f7!important}
+.workspace-view :is(.hotel-price,.flight-card-price){margin:0!important;color:#ead2a6!important}
+.workspace-view :is(.hotel-price,.flight-card-price) small{color:#c0ccdc!important}
+.workspace-view :is(.hotel-dates,.flight-card-date){color:#c0ccdc!important;margin:0!important}
+.workspace-view .hotel-card-notes{color:#d0d9e6!important;margin:7px 0 0!important}
+.workspace-view .hotel-card-actions{margin:0!important;padding:0!important}
+.workspace-view .hotel-card-actions :is(button,a){font-size:11px!important;padding:8px 10px!important}
+.workspace-view .hotel-card-actions button.primary-btn{background:#263e4b!important;color:#d7e9ef!important;border-color:#7895a9!important}
+.workspace-view .hotel-is-selected{border-color:var(--city-accent,#d3b781)!important;background:#1c3041!important;box-shadow:inset 3px 0 0 var(--city-accent,#d3b781)!important}
+.workspace-view .hotel-is-selected .hotel-price{color:#ecd6ae!important}
+.workspace-view .hotel-price-missing{color:#ead2a6!important}
+.workspace-view .flight-card-meta{color:#c0ccdc!important}
+.workspace-view :is(.hotel-add-stay,.atlas-add){background:#142238!important;border:1px dashed #5a6b82!important;box-shadow:none!important}
+.workspace-view :is(.hotel-add-stay,.atlas-add) summary{color:#d4deec!important}
+.workspace-view :is(input,select,textarea){background:#0e192b!important;color:#edf1f7!important;border:1px solid #60728b!important}
+.workspace-view .atlas-timeline{background:#131f33!important}
+.workspace-view .workspace-warning{background:#352b35!important;color:#ffe4ea!important}
+.workspace-view .atlas-choice{background:#17263d!important;border:1px solid #4c5d76!important}
+.workspace-view .atlas-choice-label small{color:#c0ccdc!important}
+.workspace-view .ledger-item{border:1px solid #40516a!important}
+.workspace-view .hotel-editor-drawer{background:#111e31!important}
+.workspace-view .hotel-editor-header{background:#17263d!important}
+.workspace-view .hotel-editor-hint{color:#c0ccdc!important}
+.workspace-view :is(button,a,input,select,textarea,summary):focus-visible{outline:3px solid #dce5f0!important;outline-offset:3px!important}
+.workspace-view [hidden]{display:none!important}
+.workspace-view[data-density=detailed] :is(.hotel-comparison-card,.flight-option-card){padding:17px!important}
+.workspace-view[data-density=detailed] .hotel-card-actions{margin-top:auto!important;padding-top:10px!important}
+.workspace-view .hotel-card-actions{margin-top:7px!important}
+}
