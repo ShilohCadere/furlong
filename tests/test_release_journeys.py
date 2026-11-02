@@ -129,7 +129,7 @@ class ReleaseJourneyTests(unittest.TestCase):
             if 'trip_id' not in rule.arguments:
                 continue
             values = {'trip_id': self.trip, 'option_id': 1, 'activity_id': 1,
-                      'expense_id': 1, 'city': 'Edinburgh'}
+                      'expense_id': 1, 'file_id': 'not-a-real-file', 'city': 'Edinburgh'}
             with furlong.app.test_request_context():
                 url = rule.build({k: values[k] for k in rule.arguments})[1]
             for method in rule.methods & {'GET', 'POST'}:
