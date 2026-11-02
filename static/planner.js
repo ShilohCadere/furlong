@@ -107,7 +107,7 @@ function budgetHTML(){
  if(budgetTrial.sid!==sid)budgetTrial={sid,choices:{},extras:[]};
  const sc=activeScenario(),base=C.budget(S,sid,fx()),seen=new Set(),missing=[];
  let total=Number(sc.foodAllowance||0);
- const selectors=C.groups(S,sid).map(g=>{
+ const selectors=C.groups(S,sid).filter(g=>{const opts=C.options(S,g.id);return opts.length>0||g.allowance!=null||Boolean(g.selectedId&&S.options[g.selectedId]&&alive(S.options[g.selectedId]));}).map(g=>{
   const opts=C.options(S,g.id),override=Object.prototype.hasOwnProperty.call(budgetTrial.choices,g.id);
   const selected=override?budgetTrial.choices[g.id]:(g.selectedId||((g.allowance!=null)?'__allowance__':''));
   const o=opts.find(o=>o.id===selected);
