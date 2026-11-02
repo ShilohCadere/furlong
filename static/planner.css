@@ -22,3 +22,16 @@
 .idea-section .idea-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
 .idea-section .idea-list{display:grid;grid-template-columns:1fr;gap:7px}
 @media(max-width:680px){.idea-card.idea-compact .idea-body{align-items:stretch;flex-direction:column}.idea-card.idea-compact .add-row{flex-wrap:wrap}}
+
+/* Each city owns its own expandable research module and category shelves. */
+.idea-city{border:1px solid var(--city,#526783);border-radius:14px;margin:14px 0;background:#111f33;overflow:hidden}
+.idea-city>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 20px;cursor:pointer;list-style:none;background:linear-gradient(95deg,var(--city-bg,#20364f),#111f33 85%)}
+.idea-city>summary::-webkit-details-marker{display:none}
+.idea-city>summary strong{font:600 1.3rem var(--serif);color:#f0f3fa}
+.idea-city>summary span{font-size:.82rem;color:#c4d0df}
+.idea-city-content{padding:8px 16px 16px;display:grid;gap:13px}
+.idea-category{min-width:0}
+.idea-category h4{display:flex;gap:9px;align-items:center;font-size:.93rem;color:#d6e0ed;margin:8px 0 10px}
+.idea-category h4 span{font-size:.74rem;font-weight:400;color:#a9b9ce}
+.idea-category .idea-list{display:grid;gap:7px}
+.idea-category .idea-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
