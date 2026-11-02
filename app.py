@@ -1384,6 +1384,9 @@ def import_europe_trip():
 
 init_db()
 
+from planner import install as install_planner
+install_planner(app,get_db_connection,get_trip,DATA_DIR)
+
 if __name__ == "__main__":
     app.run(debug=True)
 
