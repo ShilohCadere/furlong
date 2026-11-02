@@ -410,7 +410,7 @@ def edit_trip(trip_id):
     return redirect(url_for("trip_overview", trip_id=trip_id))
 
 
-@app.route("/trip/<int:trip_id>/itinerary")
+@app.route("/trip/<int:trip_id>/itinerary/legacy")
 def itinerary(trip_id):
     trip=get_trip(trip_id)
     with get_db_connection() as db:
@@ -550,7 +550,7 @@ def add_itinerary_day(trip_id):
 
 
 
-@app.route("/trip/<int:trip_id>/options")
+@app.route("/trip/<int:trip_id>/options/legacy")
 def saved_options(trip_id):
     trip = get_trip(trip_id)
     with get_db_connection() as connection:
