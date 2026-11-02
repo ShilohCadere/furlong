@@ -1,0 +1,57 @@
+{
+  "head": "f0f9c7fea6384650c5e3ee990c906599ec79cc94",
+  "files": {
+    "planner.py": {
+      "before": null,
+      "after": "e9550dc4c362d768ca9584b2be9b4c9b9771438eddbc0f1bc0b89e23e7d408a4"
+    },
+    "app.py": {
+      "before": "1447ef5c8a19244a2c3697e7ac7914e87b2eced04fbdda7a5ccbefa377f88166",
+      "after": "f30d7a83059e79d24470d6ea9456e338f1168f6b5cd4cf336bc3e0793d18d9eb"
+    },
+    "static/planner-core.js": {
+      "before": null,
+      "after": "35780c3a834be1cc18b135ae343f9645e6aac8a6bd158448c0d25acac2bca323"
+    },
+    "static/planner.css": {
+      "before": null,
+      "after": "ce33bfdd52213f537c5cfcb6fd85c9c5d2566b8f43e52b3298a54d183aaf7eaf"
+    },
+    "static/planner.js": {
+      "before": null,
+      "after": "558338564d98b0a0e2c73e2aa398dc18869b55ba26cb3ddad6ecea0e1e8f5f40"
+    },
+    "static/planner-sw.js": {
+      "before": null,
+      "after": "d3af98cf7cef627629560e2fa8b3dac829399180115f6d6f123eea56b2019a81"
+    },
+    "templates/index.html": {
+      "before": "d53097be859b4765a88bb0a28f0ccc1b5b6216468fda18f91e48b9d8d7aeb066",
+      "after": "99823776a35a63ce6ed1e0095e506fdba70b77e186ec618c20a72358231dee35"
+    },
+    "templates/planner.html": {
+      "before": null,
+      "after": "485e23459c50ce9763f13a347f391a9a3d628a5ce60560af0f37e3a25b8cc6ef"
+    },
+    "tests/test_saved_options.py": {
+      "before": "f7472cd6bf482f711c2cf6ee7973a43aa7d723d23556df5d4d394f244241e997",
+      "after": "da513fd52dc32488055020073c8b554a493d84379616342d481b4e0c8f473eea"
+    },
+    "tests/test_planner.py": {
+      "before": null,
+      "after": "2585b37bc32dc3a709792d64f085534fa9b6c1df446e949946783bcbb0634688"
+    },
+    "tests/test_release_journeys.py": {
+      "before": "f2a96dc91cbe4f313a216882245c5013c5dd62e92460379b0137297f4e86857d",
+      "after": "5a7bbfc1758c820c7e48ae8e3cdeaaa4c3cb5bea4e2357ebce2834c39b371184"
+    },
+    "tests/test_workspace_review.py": {
+      "before": "d582972f4ed43a856805d4eefe6b081d95f514cb6c1a7bb408ce15a3e1c548de",
+      "after": "632817954c8cd79a1b676eb61afdf7df847b520bbd4420f0ba8fbdf08c7a8be6"
+    },
+    "tests/planner-core.test.js": {
+      "before": null,
+      "after": "eaeb0a250c7bff78e58c6564bd6ca383ccb2db684270786330050832a0460f61"
+    }
+  }
+}

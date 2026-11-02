@@ -1,0 +1,201 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Furlong | My Journeys</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="app-layout">
+
+        <aside class="sidebar">
+            <a href="{{ url_for('home') }}" class="brand"><img class="furlong-bear-mark" src="{{ url_for('static',filename='furlong-bear.svg') }}" alt=""><span class="brand-wordmark">furlong<span>.</span></span></a>
+
+            <nav class="sidebar-nav" aria-label="Main navigation">
+                <a href="{{ url_for('home') }}"
+                   class="nav-link active"
+                   aria-current="page">
+                    <span class="nav-icon">⌂</span>
+                    My Journeys
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <span>Signed in as {{ active_username }}</span><form action="{{ url_for('logout') }}" method="post">
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><button class="secondary-btn" type="submit">Sign out</button></form>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <header class="page-header">
+                <div>
+                    <p class="eyebrow">YOUR TRAVEL JOURNAL</p>
+                    <h1>Your next chapter awaits.</h1>
+                    <p class="page-subtitle">
+                        Every great journey begins with a little inspiration.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="primary-btn"
+                    id="new-trip-btn"
+                    aria-haspopup="dialog"
+                    aria-controls="new-trip-dialog"
+                >
+                    + New Trip
+                </button>
+            </header>
+
+            <section class="journeys-section">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">COLLECTION</p>
+                        <h2>My Journeys</h2>
+                    </div>
+
+                    <span class="trip-count">
+                        {{ trips|length }}
+                        {{ "journey" if trips|length == 1 else "journeys" }}
+                    </span>
+                </div>
+
+                {% if trips %}
+                    <div class="trip-grid">
+                        {% for trip in trips %}
+                            <a
+                                href="{{ url_for('planner_workspace', trip_id=trip.id) }}"
+                                class="trip-card"
+                            >
+                                <div class="trip-cover">
+                                    <span class="cover-label">
+                                        JOURNEY {{ "%02d"|format(loop.index) }}
+                                    </span>
+                                    <span class="cover-decoration">✦</span>
+                                </div>
+
+                                <div class="trip-details">
+                                    <h3>{{ trip.name }}</h3>
+
+                                    {% if trip.destination %}
+                                        <p class="trip-destination">
+                                            {{ trip.destination }}
+                                        </p>
+                                    {% else %}
+                                        <p class="trip-destination muted">
+                                            Destination to be discovered
+                                        </p>
+                                    {% endif %}
+
+                                    <span class="trip-status">Planning</span>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <span class="empty-symbol">✦</span>
+                        <h3>Your story starts here.</h3>
+                        <p>
+                            Create your first journey and start collecting
+                            the places you dream of exploring.
+                        </p>
+
+                        <button
+                            type="button"
+                            class="primary-btn"
+                            id="empty-new-trip-btn"
+                            aria-haspopup="dialog"
+                            aria-controls="new-trip-dialog"
+                        >
+                            Create your first journey
+                        </button>
+                    </div>
+                {% endif %}
+            </section>
+
+            <footer class="page-footer">
+                Furlong · A little further, every day.
+            </footer>
+
+        </main>
+    </div>
+
+    <dialog
+        id="new-trip-dialog"
+        class="trip-dialog"
+        aria-labelledby="dialog-title"
+        aria-describedby="dialog-description"
+    >
+        <div class="dialog-heading">
+            <div>
+                <p class="eyebrow">SOMETHING NEW</p>
+                <h2 id="dialog-title">Where to next?</h2>
+                <p id="dialog-description" class="dialog-description">
+                    Every journey begins somewhere.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="close-btn"
+                id="close-trip-btn"
+                aria-label="Close new journey dialog"
+            >
+                &times;
+            </button>
+        </div>
+
+        <form method="POST" class="trip-form">
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <label for="trip-name">Trip name *</label>
+            <input
+                type="text"
+                id="trip-name"
+                name="trip-name"
+                required
+                maxlength="120"
+                placeholder="A summer in Scotland"
+                autocomplete="off"
+            >
+
+            <label for="destination">Destination (optional)</label>
+            <input
+                type="text"
+                id="destination"
+                name="destination"
+                placeholder="Scotland, United Kingdom"
+            >
+
+            <label for="first-route-name">First route name *</label>
+            <input id="first-route-name" name="first-route-name" maxlength="50" required value="Main route" autocomplete="off">
+
+            <div class="form-actions">
+                <button
+                    type="button"
+                    class="secondary-btn"
+                    id="cancel-trip-btn"
+                >
+                    Cancel
+                </button>
+
+                <button type="submit" class="primary-btn">
+                    Create Journey
+                </button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
