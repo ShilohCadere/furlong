@@ -319,7 +319,7 @@ def home():
     return render_template("index.html", trips=trips)
 
 
-@app.route("/trip/<int:trip_id>")
+@app.route("/trip/<int:trip_id>/legacy")
 def trip_overview(trip_id):
     trip = get_trip(trip_id)
 
@@ -891,7 +891,7 @@ def flight_date_from_itinerary(flight, days):
     return matches[0] if len(set(matches))==1 else ""
 
 
-@app.route("/trip/<int:trip_id>/workspace")
+@app.route("/trip/<int:trip_id>/workspace/legacy")
 def trip_workspace(trip_id):
     trip=get_trip(trip_id)
     with get_db_connection() as db:
