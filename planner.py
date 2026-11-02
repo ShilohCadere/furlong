@@ -198,18 +198,10 @@ def install(app, db_connect, get_trip, data_dir):
     def bundle(state,rev,user,urev):
         return {'state':state,'revision':rev,'user':user,'userRevision':urev,'userId':session['user_id'],'csrf':app.jinja_env.globals['csrf_token']()}
 
-    @app.get('/trip/<int:trip_id>/workspace',endpoint='planner_workspace')
-    @app.get('/trip/<int:trip_id>/plan',endpoint='planner_shortcut')
+    @app.get('/trip/<int:trip_id>/plan',endpoint='planner_workspace')
     def workspace(trip_id):
         get_trip(trip_id)
         return render_template('planner.html',trip_id=trip_id)
-
-    @app.get('/trip/<int:trip_id>')
-    @app.get('/trip/<int:trip_id>/options')
-    @app.get('/trip/<int:trip_id>/itinerary')
-    def planner_entry(trip_id):
-        get_trip(trip_id)
-        return redirect(url_for('planner_workspace',trip_id=trip_id,view='ideas' if request.path.endswith('/options') else 'plan'))
 
     @app.get('/api/planner/<int:trip_id>')
     def planner_get(trip_id):
