@@ -74,7 +74,7 @@
                     <div class="trip-grid">
                         {% for trip in trips %}
                             <a
-                                href="{{ url_for('trip_overview', trip_id=trip.id) }}"
+                                href="{{ url_for('planner_workspace', trip_id=trip.id) }}"
                                 class="trip-card"
                             >
                                 <div class="trip-cover">
