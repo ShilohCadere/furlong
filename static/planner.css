@@ -81,3 +81,5 @@
 .budget-food label{font-size:12px;color:#d7e0ec;min-width:180px}
 .budget-food input{display:block;margin-top:5px}
 @media(max-width:650px){.budget-choice-list{grid-template-columns:1fr}.budget-types{padding:10px}.budget-city>h3{font-size:20px}}
+
+.budget-category-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}.budget-category-actions button{font-size:12px;padding:6px 10px;border-color:var(--city);color:#e4edf7;background:#1b3049}.budget-category-actions button:hover{background:var(--city-bg)}
