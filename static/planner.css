@@ -83,3 +83,27 @@
 @media(max-width:650px){.budget-choice-list{grid-template-columns:1fr}.budget-types{padding:10px}.budget-city>h3{font-size:20px}}
 
 .budget-category-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}.budget-category-actions button{font-size:12px;padding:6px 10px;border-color:var(--city);color:#e4edf7;background:#1b3049}.budget-category-actions button:hover{background:var(--city-bg)}
+
+/* Public beta: keep trip navigation and account actions usable on narrow screens. */
+.mobile-account{display:none}
+@media(max-width:700px){
+ .mobile-account{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+ .mobile-account .button,.mobile-account button{min-height:44px}
+ .sidebar{gap:10px}
+ .nav-stack{scroll-snap-type:x proximity;scrollbar-width:thin;overscroll-behavior-x:contain}
+ .nav-stack button{flex:0 0 auto;min-height:44px;scroll-snap-align:start}
+ .tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:6px}
+ .tabs button{flex:0 0 auto;min-height:44px}
+ .journey-ribbon a{min-height:76px}
+ .stop-actions button,.option-actions button,.add-row button{min-height:44px}
+ .header-actions button{min-height:44px}
+ .editor-header button{min-width:44px;min-height:44px}
+ .table-wrap{max-width:100%;overscroll-behavior-x:contain}
+ .settings-nav button{min-height:44px}
+}
+@media(max-width:360px){
+ .option-card{grid-template-columns:1fr}
+ .option-price{white-space:normal}
+ .option-actions{grid-column:1}
+ .rail-budget .metric-line{width:100%;margin-right:0}
+}
