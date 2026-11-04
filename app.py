@@ -259,7 +259,7 @@ def reject_stale_account_sessions():
 
 @app.before_request
 def require_login():
-    if request.endpoint in ("login","register","static","verify_email","forgot_password","reset_password") or request.endpoint is None:
+    if request.endpoint in ("login","register","static","verify_email","forgot_password","reset_password","resend_verification") or request.endpoint is None:
         return
     if not session.get("user_id"):
         return redirect(url_for("login"))
@@ -329,6 +329,25 @@ def verify_email(token):
     return redirect(url_for("login",verified="1"))
 
 
+@app.route("/resend-verification",methods=["GET","POST"])
+def resend_verification():
+    if request.method=="GET":
+        return render_template("account_recovery.html",mode="resend",error=None)
+    email=request.form.get("email","").strip().lower()
+    token=None
+    if email_configured():
+        with get_db_connection() as db:
+            user=db.execute("SELECT id,email FROM users WHERE email=? COLLATE NOCASE AND email_verified=0",(email,)).fetchone()
+            if user:
+                last=db.execute("SELECT created_at FROM account_tokens WHERE user_id=? AND purpose='verify'",(user["id"],)).fetchone()
+                if not last or int(time.time())-last["created_at"]>=60:
+                    token=issue_account_token(db,user["id"],"verify")
+        if token:
+            try:account_message(user["email"],token,"verify")
+            except EmailDeliveryError:app.logger.warning("Verification email delivery failed")
+    return render_template("account_recovery.html",mode="sent",error=None)
+
+
 @app.route("/forgot-password",methods=["GET","POST"])
 def forgot_password():
     if request.method=="GET":
@@ -336,10 +355,12 @@ def forgot_password():
     email=request.form.get("email","").strip().lower()
     with get_db_connection() as db:
         user=db.execute("SELECT id,email FROM users WHERE email=? COLLATE NOCASE",(email,)).fetchone()
+        token=None
         if user and email_configured():
-            # Avoid sending an email before the token is committed.
-            token=issue_account_token(db,user["id"],"reset")
-    if user and email_configured():
+            last=db.execute("SELECT created_at FROM account_tokens WHERE user_id=? AND purpose='reset'",(user["id"],)).fetchone()
+            if not last or int(time.time())-last["created_at"]>=60:
+                token=issue_account_token(db,user["id"],"reset")
+    if user and token:
         try:account_message(user["email"],token,"reset")
         except EmailDeliveryError:
             app.logger.warning("Password reset email delivery failed")
