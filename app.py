@@ -897,7 +897,10 @@ def trip_workspace(trip_id):
     # A migrated trip must never be modified by legacy workspace GET handlers.
     # Unmigrated trips retain the old workspace until their first planner import.
     with get_db_connection() as db:
-        migrated=db.execute(
+        planner_table_exists=db.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='planner_trip_documents'"
+        ).fetchone()
+        migrated=planner_table_exists and db.execute(
             "SELECT 1 FROM planner_trip_documents WHERE trip_id=?",(trip_id,)
         ).fetchone()
     if migrated:
