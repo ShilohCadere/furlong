@@ -4,7 +4,7 @@ import os
 import secrets
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from flask import (
@@ -38,7 +38,8 @@ else:
         except FileExistsError:pass
     app.secret_key=_secret_path.read_text().strip()
 app.config.update(SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE="Lax",
-                  SESSION_COOKIE_SECURE=os.environ.get("FURLONG_HTTPS", "0") == "1")
+                  SESSION_COOKIE_SECURE=os.environ.get("FURLONG_HTTPS", "0") == "1",
+                  PERMANENT_SESSION_LIFETIME=timedelta(days=7))
 
 
 
@@ -226,6 +227,17 @@ def validate_csrf_token():
 
 
 @app.before_request
+def reject_stale_account_sessions():
+    """Invalidate sessions for accounts that have been removed."""
+    uid=session.get("user_id")
+    if uid is None:
+        return
+    with get_db_connection() as db:
+        if db.execute("SELECT 1 FROM users WHERE id=?",(uid,)).fetchone() is None:
+            session.clear()
+
+
+@app.before_request
 def require_login():
     if request.endpoint in ("login","register","static") or request.endpoint is None:
         return
@@ -288,6 +300,7 @@ def register():
             db.execute("UPDATE trips SET user_id=? WHERE user_id IS NULL",(uid,))
     session.clear()
     session.update(user_id=uid,username=username)
+    session.permanent=True
     return redirect(url_for("home"))
 
 
@@ -301,6 +314,7 @@ def login():
         return render_template("auth.html",mode="login",error="Incorrect username or password."),401
     session.clear()
     session.update(user_id=user["id"],username=user["username"])
+    session.permanent=True
     return redirect(url_for("home"))
 
 
