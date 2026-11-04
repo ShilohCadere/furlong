@@ -86,6 +86,31 @@ class PlannerTests(unittest.TestCase):
             ).fetchone()[0],1)
         self.assertEqual(self.client.get(self.path).get_json()['state'],imported['state'])
 
+    def test_first_journey_opens_planner_after_creation(self):
+        response=self.client.post('/',data={
+            'trip-name':'First journey','destination':'Scotland',
+            'first-route-name':'Main route'
+        })
+        self.assertEqual(response.status_code,302)
+        with f.get_db_connection() as db:
+            trip=db.execute("SELECT id FROM trips WHERE name='First journey'").fetchone()
+        self.assertIsNotNone(trip)
+        self.assertIn(f'/trip/{trip[0]}/plan',response.headers['Location'])
+
+    def test_invalid_journey_form_does_not_create_trip(self):
+        with f.get_db_connection() as db:
+            initial=db.execute('SELECT COUNT(*) FROM trips').fetchone()[0]
+        for data in [
+            {'trip-name':'  ','first-route-name':'Main route'},
+            {'trip-name':'x'*121,'first-route-name':'Main route'},
+            {'trip-name':'Valid','first-route-name':' '},
+            {'trip-name':'Valid','first-route-name':'Main route','destination':'x'*201},
+        ]:
+            response=self.client.post('/',data=data)
+            self.assertEqual(response.status_code,400)
+        with f.get_db_connection() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM trips').fetchone()[0],initial)
+
     def test_initial_import_does_not_mix_old_generic_days_into_scenario_plans(self):
         with f.get_db_connection() as db:
             db.execute('INSERT INTO itinerary_days (trip_id,day_number,title,trip_date) VALUES (?,?,?,?)',
