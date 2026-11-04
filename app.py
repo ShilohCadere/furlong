@@ -316,21 +316,25 @@ def home():
         trip_name = request.form.get("trip-name", "").strip()
         destination = request.form.get("destination", "").strip()
         first_route = request.form.get("first-route-name", "Main route").strip()
-        if not first_route or len(first_route) > 50: abort(400, "Enter a route name up to 50 characters.")
-
-        if trip_name and len(trip_name) <= 120:
-            with get_db_connection() as connection:
-                connection.execute(
-                    """
-                    INSERT INTO trips (name, destination, user_id)
-                    VALUES (?, ?, ?)
-                    """,
-                    (trip_name, destination,session["user_id"])
-                )
-                trip_id=connection.execute("SELECT last_insert_rowid()").fetchone()[0]
-                connection.execute("INSERT INTO trip_scenarios (trip_id,name) VALUES (?,?)",(trip_id,first_route))
-
-        return redirect(url_for("home"))
+        if not trip_name or len(trip_name) > 120:
+            abort(400, "Enter a trip name up to 120 characters.")
+        if not first_route or len(first_route) > 50:
+            abort(400, "Enter a route name up to 50 characters.")
+        if len(destination) > 200:
+            abort(400, "Enter a destination up to 200 characters.")
+        with get_db_connection() as connection:
+            connection.execute(
+                "INSERT INTO trips (name, destination, user_id) VALUES (?, ?, ?)",
+                (trip_name, destination, session["user_id"])
+            )
+            trip_id=connection.execute("SELECT last_insert_rowid()").fetchone()[0]
+            connection.execute(
+                "INSERT INTO trip_scenarios (trip_id,name) VALUES (?,?)",
+                (trip_id,first_route)
+            )
+        # Open the new journey immediately instead of sending the user back
+        # to an otherwise empty dashboard.
+        return redirect(url_for("planner_workspace",trip_id=trip_id))
 
     with get_db_connection() as connection:
         trips = connection.execute(
