@@ -99,7 +99,18 @@ def install(app, db_connect, get_trip, data_dir):
         if not plans:
             # Graph-only default. Legacy tables are never seeded on page loads.
             plans=[{'id':'new','name':'Plan A','food_budget':0,'budget_limit':20000}]
-        originals=conn.execute('SELECT * FROM saved_options WHERE trip_id=? ORDER BY id',(tid,)).fetchall()
+        # A deleted seed candidate must not be resurrected by the first import.
+        # The tombstone key includes scenario_tag; untagged exclusions are distinct.
+        exclusions={
+            (row['city'],row['name'],row['category'],row['scenario_tag'])
+            for row in conn.execute(
+                'SELECT city,name,category,scenario_tag FROM excluded_seed_options WHERE trip_id=?',(tid,)
+            )
+        }
+        originals=[
+            row for row in conn.execute('SELECT * FROM saved_options WHERE trip_id=? ORDER BY id',(tid,))
+            if (row['city'],row['name'],row['category'],row['scenario_tag'] or '') not in exclusions
+        ]
         # The library also keeps research tagged to an archived or renamed route.
         for option in originals:
             idea_id=ident('idea',tid,option['id'])
