@@ -39,6 +39,18 @@ class PlannerTests(unittest.TestCase):
             self.assertEqual(db.execute('SELECT COUNT(*) FROM scenario_itinerary').fetchone()[0],before)
             self.assertEqual(db.execute('SELECT revision FROM planner_trip_documents WHERE trip_id=?',(self.tid,)).fetchone()[0],revision)
 
+    def test_migrated_trip_rejects_legacy_mutations_without_changing_data(self):
+        with f.get_db_connection() as db:
+            before=db.execute('SELECT COUNT(*) FROM saved_options WHERE trip_id=?',(self.tid,)).fetchone()[0]
+            revision=db.execute('SELECT revision FROM planner_trip_documents WHERE trip_id=?',(self.tid,)).fetchone()[0]
+        response=self.client.post(f'/trip/{self.tid}/options/add',data={
+            'city':'London','category':'hotel','name':'Stale legacy option','price':'100'
+        })
+        self.assertEqual(response.status_code,409)
+        with f.get_db_connection() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM saved_options WHERE trip_id=?',(self.tid,)).fetchone()[0],before)
+            self.assertEqual(db.execute('SELECT revision FROM planner_trip_documents WHERE trip_id=?',(self.tid,)).fetchone()[0],revision)
+
     def tearDown(self):
         f.DATABASE=self.previous;f.app.config['TESTING']=self.testing;self.tmp.cleanup()
     def op(self,col,id,patch,base=None,scope='trip',create=False):
