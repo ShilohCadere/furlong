@@ -71,6 +71,21 @@ class PlannerTests(unittest.TestCase):
         option=one['state']['options'][self.oid];self.assertEqual(option['quote']['amount'],300)
         self.assertEqual(one['user']['ideas'][option['ideaId']]['website'],'https://example.com/hotel')
         with f.get_db_connection() as db:self.assertEqual(before,{t:[tuple(r) for r in db.execute('SELECT * FROM '+t)] for t in tables})
+    def test_initial_import_respects_excluded_seed_tombstones(self):
+        with f.get_db_connection() as db:
+            db.execute("""INSERT INTO excluded_seed_options
+                (trip_id,city,name,category,scenario_tag) VALUES (?,?,?,?,?)""",
+                (self.tid,'Edinburgh','Researched hotel','hotel',''))
+            db.execute('DELETE FROM planner_trip_documents WHERE trip_id=?',(self.tid,))
+        imported=self.client.get(self.path).get_json()
+        self.assertEqual(imported['state']['options'],{})
+        self.assertFalse(any(idea['name']=='Researched hotel' for idea in imported['user']['ideas'].values()))
+        with f.get_db_connection() as db:
+            self.assertEqual(db.execute(
+                'SELECT COUNT(*) FROM saved_options WHERE trip_id=?',(self.tid,)
+            ).fetchone()[0],1)
+        self.assertEqual(self.client.get(self.path).get_json()['state'],imported['state'])
+
     def test_unrelated_nested_fields_merge_from_stale_clients(self):
         old=self.s['options'][self.oid]['fields']
         a=self.op('options',self.oid,{'fields.notes':'First client'},{'fields.notes':old['notes']})
