@@ -893,7 +893,14 @@ def flight_date_from_itinerary(flight, days):
 
 @app.route("/trip/<int:trip_id>/workspace")
 def trip_workspace(trip_id):
-    trip=get_trip(trip_id)
+    # The legacy workspace performs writes during GET. Keep old bookmarks usable
+    # without running legacy seeders or modifying the authoritative planner state.
+    get_trip(trip_id)
+    scenario=request.args.get('scenario',type=int)
+    destination=url_for('planner_workspace',trip_id=trip_id)
+    if scenario is not None:
+        destination+='?'+urlencode({'scenario':scenario})
+    return redirect(destination,code=302)
     with get_db_connection() as db:
         if trip["name"] == "Europe 2027" and db.execute("SELECT 1 FROM trip_scenarios WHERE trip_id=? AND name='S1'", (trip_id,)).fetchone():
             from europe_seed import add_missing_europe_candidates
