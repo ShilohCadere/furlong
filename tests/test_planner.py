@@ -27,6 +27,32 @@ class PlannerTests(unittest.TestCase):
         self.path=f'/api/planner/{self.tid}'
         self.data=self.client.get(self.path).get_json();self.s=self.data['state'];self.u=self.data['user']
         self.sid=next(iter(self.s['scenarios']));self.oid=next(iter(self.s['options']));self.gid=self.s['options'][self.oid]['groupId']
+    def test_auth_sessions_are_permanent_and_account_scoped(self):
+        with self.client.session_transaction() as sess:
+            self.assertTrue(sess.permanent)
+            self.assertEqual(sess.get('username'),'planner')
+        self.client.post('/logout')
+        self.assertEqual(self.client.get('/').status_code,302)
+        response=self.client.post('/login',data={
+            'username':'planner','password':'wrong-password'
+        })
+        self.assertEqual(response.status_code,401)
+        self.assertEqual(self.client.get('/').status_code,302)
+        self.assertEqual(self.client.post('/login',data={
+            'username':'planner','password':'test-only-password'
+        }).status_code,302)
+        with self.client.session_transaction() as sess:
+            self.assertTrue(sess.permanent)
+
+    def test_removed_account_session_is_invalidated(self):
+        with f.get_db_connection() as db:
+            db.execute('DELETE FROM trips WHERE user_id=(SELECT id FROM users WHERE username=?)',('planner',))
+            db.execute('DELETE FROM users WHERE username=?',('planner',))
+        response=self.client.get('/')
+        self.assertEqual(response.status_code,302)
+        with self.client.session_transaction() as sess:
+            self.assertNotIn('user_id',sess)
+
     def test_legacy_workspace_redirect_does_not_mutate_legacy_data(self):
         with f.get_db_connection() as db:
             before=db.execute('SELECT COUNT(*) FROM scenario_itinerary').fetchone()[0]
