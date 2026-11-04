@@ -15,6 +15,11 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run JavaScript planning regression tests
+        run: node --test tests/planner-core.test.js
       - name: Run regression suite
         env:
           FURLONG_DATA_DIR: ${{ runner.temp }}/furlong-data
