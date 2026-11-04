@@ -240,6 +240,28 @@ def require_login():
         if not allowed:abort(404)
 
 
+
+@app.before_request
+def protect_migrated_planner_from_legacy_writes():
+    """Reject old-form mutations after a trip has a versioned planner document."""
+    if request.method not in ("POST", "PUT", "PATCH", "DELETE"):
+        return
+    trip_id=(request.view_args or {}).get("trip_id")
+    if trip_id is None or not session.get("user_id"):
+        return
+    # Only the old trip routes are blocked; planner API sync remains authoritative.
+    if not request.path.startswith(f"/trip/{trip_id}/"):
+        return
+    with get_db_connection() as db:
+        table=db.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='planner_trip_documents'"
+        ).fetchone()
+        if table and db.execute(
+            "SELECT 1 FROM planner_trip_documents WHERE trip_id=?",(trip_id,)
+        ).fetchone():
+            abort(409,description="This trip uses the new planner. Open the planner to make changes.")
+
+
 @app.context_processor
 def logged_in_user():
     return {"active_username":session.get("username")}
