@@ -86,6 +86,38 @@ class PlannerTests(unittest.TestCase):
             ).fetchone()[0],1)
         self.assertEqual(self.client.get(self.path).get_json()['state'],imported['state'])
 
+    def test_initial_import_does_not_mix_old_generic_days_into_scenario_plans(self):
+        with f.get_db_connection() as db:
+            db.execute('INSERT INTO itinerary_days (trip_id,day_number,title,trip_date) VALUES (?,?,?,?)',
+                       (self.tid,1,'Old generic itinerary','2027-08-31'))
+            db.execute('DELETE FROM scenario_itinerary WHERE trip_id=? AND day_date=?',
+                       (self.tid,'2027-09-01'))
+            db.execute('INSERT INTO trip_scenarios (trip_id,name) VALUES (?,?)',
+                       (self.tid,'New September plan'))
+            new_plan=db.execute('SELECT id FROM trip_scenarios WHERE trip_id=? AND name=?',
+                                (self.tid,'New September plan')).fetchone()[0]
+            db.execute('INSERT INTO scenario_itinerary (trip_id,scenario_id,day_date,city,title,notes) VALUES (?,?,?,?,?,?)',
+                       (self.tid,new_plan,'2027-09-14','Dublin','Arrival',''))
+            db.execute('DELETE FROM planner_trip_documents WHERE trip_id=?',(self.tid,))
+        state=self.client.get(self.path).get_json()['state']
+        self.assertNotIn('2027-08-31',{d['date'] for d in state['days'].values()})
+        self.assertIn('2027-09-14',{d['date'] for d in state['days'].values()})
+
+    def test_initial_import_avoids_empty_hotel_group_when_castle_exists(self):
+        with f.get_db_connection() as db:
+            db.execute("""INSERT INTO saved_options
+                (trip_id,city,name,category,price,start_date,end_date)
+                VALUES (?,?,?,?,?,?,?)""",
+                (self.tid,'Edinburgh','Castle option','castle',450,'2027-09-01','2027-09-03'))
+            db.execute('DELETE FROM planner_trip_documents WHERE trip_id=?',(self.tid,))
+        state=self.client.get(self.path).get_json()['state']
+        for stop in state['stops'].values():
+            if stop['name']!='Edinburgh':continue
+            groups=[g for g in state['groups'].values() if g['stopId']==stop['id']]
+            if any(g['type']=='castle' for g in groups):
+                self.assertFalse(any(g['type']=='hotel' and not any(
+                    o['groupId']==g['id'] for o in state['options'].values()) for g in groups))
+
     def test_unrelated_nested_fields_merge_from_stale_clients(self):
         old=self.s['options'][self.oid]['fields']
         a=self.op('options',self.oid,{'fields.notes':'First client'},{'fields.notes':old['notes']})
