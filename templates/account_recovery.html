@@ -13,8 +13,13 @@
 <form method="post" class="auth-form"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 <label>New password<input type="password" name="password" autocomplete="new-password" minlength="10" required></label>
 <button class="primary-btn">Reset password</button></form>
+{% elif mode=='resend' %}
+<h1>Resend verification</h1><p class="page-subtitle">Enter your registration email to request another verification link.</p>
+<form method="post" class="auth-form"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+<label>Email address<input type="email" name="email" autocomplete="email" maxlength="254" required></label>
+<button class="primary-btn">Resend verification</button></form>
 {% elif mode=='registered' %}
-<h1>Check your inbox</h1><p class="page-subtitle">We've sent a verification link. Open it before signing in.</p>
+<h1>Check your inbox</h1><p class="page-subtitle">We've sent a verification link. Open it before signing in.</p><p class="page-subtitle"><a href="{{ url_for('resend_verification') }}">Resend verification email</a></p>
 {% else %}
 <h1>Check your inbox</h1><p class="page-subtitle">If the address belongs to an account, a password-reset link will arrive shortly.</p>
 {% endif %}
