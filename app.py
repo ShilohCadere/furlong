@@ -2,6 +2,9 @@
 import sqlite3
 import os
 import secrets
+import hashlib
+import time
+from account_email import configured as email_configured, send_account_email, EmailDeliveryError
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date, datetime, timedelta
@@ -65,6 +68,23 @@ def init_db():
             username TEXT NOT NULL UNIQUE COLLATE NOCASE,
             password_hash TEXT NOT NULL
         )""")
+        user_columns={row["name"] for row in connection.execute("PRAGMA table_info(users)")}
+        if "email" not in user_columns:
+            connection.execute("ALTER TABLE users ADD COLUMN email TEXT")
+        if "email_verified" not in user_columns:
+            # Existing username-only accounts retain their access.
+            connection.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 1")
+        connection.execute("""CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique
+                              ON users(email COLLATE NOCASE) WHERE email IS NOT NULL""")
+        connection.execute("""CREATE TABLE IF NOT EXISTS account_tokens (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            purpose TEXT NOT NULL CHECK(purpose IN ('verify','reset')),
+            token_hash TEXT NOT NULL UNIQUE,
+            expires_at INTEGER NOT NULL,
+            created_at INTEGER NOT NULL
+        )""")
+        connection.execute("CREATE INDEX IF NOT EXISTS account_tokens_user ON account_tokens(user_id,purpose)")
         trip_columns={row["name"] for row in connection.execute("PRAGMA table_info(trips)")}
         if "user_id" not in trip_columns:
             connection.execute("ALTER TABLE trips ADD COLUMN user_id INTEGER REFERENCES users(id)")
@@ -239,7 +259,7 @@ def reject_stale_account_sessions():
 
 @app.before_request
 def require_login():
-    if request.endpoint in ("login","register","static") or request.endpoint is None:
+    if request.endpoint in ("login","register","static","verify_email","forgot_password","reset_password") or request.endpoint is None:
         return
     if not session.get("user_id"):
         return redirect(url_for("login"))
@@ -279,11 +299,83 @@ def logged_in_user():
     return {"active_username":session.get("username")}
 
 
+def issue_account_token(db, uid, purpose):
+    raw=secrets.token_urlsafe(32)
+    digest=hashlib.sha256(raw.encode()).hexdigest()
+    now=int(time.time())
+    db.execute("DELETE FROM account_tokens WHERE user_id=? AND purpose=?",(uid,purpose))
+    db.execute("INSERT INTO account_tokens(user_id,purpose,token_hash,expires_at,created_at) VALUES (?,?,?,?,?)",
+               (uid,purpose,digest,now+(86400 if purpose=="verify" else 1800),now))
+    return raw
+
+
+def account_message(email, token, purpose):
+    base=os.environ["FURLONG_BASE_URL"].rstrip("/")
+    path="verify-email" if purpose=="verify" else "reset-password"
+    subject="Verify your Furlong email" if purpose=="verify" else "Reset your Furlong password"
+    body=("To verify your email, open: " if purpose=="verify" else "To reset your password, open: ")
+    send_account_email(email,subject,body+base+"/"+path+"/"+token+"\\nThis link expires automatically.")
+
+
+@app.route("/verify-email/<token>")
+def verify_email(token):
+    digest=hashlib.sha256(token.encode()).hexdigest()
+    with get_db_connection() as db:
+        row=db.execute("SELECT user_id FROM account_tokens WHERE token_hash=? AND purpose='verify' AND expires_at>?",
+                       (digest,int(time.time()))).fetchone()
+        if not row:abort(400,"Verification link expired or invalid")
+        db.execute("UPDATE users SET email_verified=1 WHERE id=?",(row["user_id"],))
+        db.execute("DELETE FROM account_tokens WHERE user_id=? AND purpose='verify'",(row["user_id"],))
+    return redirect(url_for("login",verified="1"))
+
+
+@app.route("/forgot-password",methods=["GET","POST"])
+def forgot_password():
+    if request.method=="GET":
+        return render_template("account_recovery.html",mode="forgot",error=None)
+    email=request.form.get("email","").strip().lower()
+    with get_db_connection() as db:
+        user=db.execute("SELECT id,email FROM users WHERE email=? COLLATE NOCASE",(email,)).fetchone()
+        if user and email_configured():
+            # Avoid sending an email before the token is committed.
+            token=issue_account_token(db,user["id"],"reset")
+    if user and email_configured():
+        try:account_message(user["email"],token,"reset")
+        except EmailDeliveryError:
+            app.logger.warning("Password reset email delivery failed")
+    return render_template("account_recovery.html",mode="sent",error=None)
+
+
+@app.route("/reset-password/<token>",methods=["GET","POST"])
+def reset_password(token):
+    digest=hashlib.sha256(token.encode()).hexdigest()
+    with get_db_connection() as db:
+        row=db.execute("SELECT user_id FROM account_tokens WHERE token_hash=? AND purpose='reset' AND expires_at>?",
+                       (digest,int(time.time()))).fetchone()
+    if not row:abort(400,"Reset link expired or invalid")
+    if request.method=="GET":
+        return render_template("account_recovery.html",mode="reset",token=token,error=None)
+    password=request.form.get("password","")
+    if len(password)<10:
+        return render_template("account_recovery.html",mode="reset",token=token,error="Use at least 10 characters."),400
+    with get_db_connection() as db:
+        updated=db.execute("DELETE FROM account_tokens WHERE token_hash=? AND purpose='reset' AND expires_at>?",
+                           (digest,int(time.time())))
+        if updated.rowcount!=1:abort(400,"Reset link expired or invalid")
+        db.execute("UPDATE users SET password_hash=? WHERE id=?",(generate_password_hash(password),row["user_id"]))
+        db.execute("DELETE FROM account_tokens WHERE user_id=?",(row["user_id"],))
+    session.clear()
+    return redirect(url_for("login",reset="1"))
+
+
 @app.route("/register",methods=["GET","POST"])
 def register():
     if request.method=="GET":return render_template("auth.html",mode="register",error=None)
     username=request.form.get("username","").strip()
     password=request.form.get("password","")
+    email=request.form.get("email","").strip().lower()
+    if email_configured() and (len(email)>254 or "@" not in email or email.startswith("@") or email.endswith("@")):
+        return render_template("auth.html",mode="register",error="Enter a valid email address."),400
     if not 3<=len(username)<=40 or not username.replace("_","").replace("-","").isalnum() or len(password)<10:
         return render_template("auth.html",mode="register",
             error="Use a 3–40 character username (letters, numbers, _ or -) and a password of at least 10 characters."),400
@@ -291,13 +383,24 @@ def register():
         if db.execute("SELECT 1 FROM users WHERE username=?",(username,)).fetchone():
             return render_template("auth.html",mode="register",error="That username is already taken."),409
         had_users=db.execute("SELECT COUNT(*) FROM users").fetchone()[0]>0
-        db.execute("INSERT INTO users(username,password_hash) VALUES (?,?)",
-                   (username,generate_password_hash(password)))
+        if email_configured() and db.execute("SELECT 1 FROM users WHERE email=? COLLATE NOCASE",(email,)).fetchone():
+            return render_template("auth.html",mode="register",error="That email is already registered."),409
+        db.execute("INSERT INTO users(username,password_hash,email,email_verified) VALUES (?,?,?,?)",
+                   (username,generate_password_hash(password),email if email_configured() else None,
+                    0 if email_configured() else 1))
         uid=db.execute("SELECT last_insert_rowid()").fetchone()[0]
+        if email_configured():
+            token=issue_account_token(db,uid,"verify")
         # First local account inherits this installation's existing guest trips.
         # Future accounts never inherit other users' trips.
         if not had_users and os.environ.get("FURLONG_CLAIM_LEGACY_TRIPS") == "1":
             db.execute("UPDATE trips SET user_id=? WHERE user_id IS NULL",(uid,))
+    if email_configured():
+        try:account_message(email,token,"verify")
+        except EmailDeliveryError:
+            app.logger.warning("Registration verification email delivery failed")
+            return render_template("auth.html",mode="login",error="Account created, but the verification email could not be sent. Contact support."),503
+        return render_template("account_recovery.html",mode="registered",error=None)
     session.clear()
     session.update(user_id=uid,username=username)
     session.permanent=True
@@ -312,6 +415,8 @@ def login():
         user=db.execute("SELECT * FROM users WHERE username=?",(username,)).fetchone()
     if not user or not check_password_hash(user["password_hash"],request.form.get("password","")):
         return render_template("auth.html",mode="login",error="Incorrect username or password."),401
+    if not user["email_verified"]:
+        return render_template("auth.html",mode="login",error="Verify your email before signing in."),403
     session.clear()
     session.update(user_id=user["id"],username=user["username"])
     session.permanent=True
