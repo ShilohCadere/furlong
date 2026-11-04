@@ -49,5 +49,31 @@ function operations(scope,collection,id,before,after){const d=diff(before||{},af
 function shiftScenario(s,sid,newStart){const scenario=s.scenarios[sid],delta=scenario.startDate&&newStart?dayNumber(newStart)-dayNumber(scenario.startDate):0;const changes=[];changes.push(['scenarios',sid,{...scenario,startDate:newStart||null}]);if(!delta)return changes;
 for(const kind of ['stops','days','groups','activities','options'])for(const entity of values(s[kind]).filter(x=>x.scenarioId===sid&&!x.archived)){if(kind==='days'&&s.stops[entity.stopId]?.archived)continue;if(kind==='groups'&&s.stops[entity.stopId]?.archived)continue;if(kind==='activities'&&(s.days[entity.dayId]?.archived||s.stops[s.days[entity.dayId]?.stopId]?.archived))continue;if(kind==='options'&&(s.groups[entity.groupId]?.archived||s.stops[s.groups[entity.groupId]?.stopId]?.archived))continue;const next=clone(entity);if(kind==='options'){const parts=next.parts?.length?next.parts:[next];for(const p of parts)if(!p.archived&&!p.confirmed&&!booking(s,p)){for(const field of ['startDate','endDate'])if(p.fields?.[field])p.fields[field]=datePlus(p.fields[field],delta);}}else for(const field of ['startDate','endDate','date'])if(next[field])next[field]=datePlus(next[field],delta);changes.push([kind,entity.id,next]);}
 return changes;}
-return {values,clone,alive,uid,dayNumber,datePlus,byPosition,stops,groups,options,title,booking,status,conditions,needsRecheck,quoteTotal,exchange,cost,budget,duration,zonedStamp,notices,diff,setPath,patch,operations,shiftScenario};
+function previewScenarioShift(s,sid,newStart){
+ const scenario=s.scenarios[sid],oldStart=scenario?.startDate||null;
+ const delta=oldStart&&newStart?dayNumber(newStart)-dayNumber(oldStart):0;
+ const changes=shiftScenario(s,sid,newStart);
+ const details=[],moved=new Set();
+ for(const [kind,id,next] of changes){
+  if(kind==='scenarios')continue;
+  const previous=s[kind][id],dates=[];
+  if(kind==='options'){
+   const oldParts=previous.parts?.length?previous.parts:[previous],newParts=next.parts?.length?next.parts:[next];
+   oldParts.forEach((part,i)=>{for(const field of ['startDate','endDate'])if(part.fields?.[field]&&part.fields[field]!==newParts[i]?.fields?.[field])dates.push({field,before:part.fields[field],after:newParts[i].fields[field]});});
+  }else for(const field of ['startDate','endDate','date'])if(previous[field]&&previous[field]!==next[field])dates.push({field,before:previous[field],after:next[field]});
+  if(dates.length){moved.add(kind+':'+id);details.push({kind,id,label:previous.name||previous.title||previous.label||kind+' '+id,dates});}
+ }
+ const held=[];
+ if(delta)for(const option of values(s.options).filter(o=>o.scenarioId===sid&&!o.archived)){
+  const parts=option.parts?.length?option.parts:[option];
+  for(const part of parts)if(!part.archived&&(part.confirmed||booking(s,part))&&['startDate','endDate'].some(k=>part.fields?.[k])){
+   held.push({id:option.id,label:option.label||option.name||'Reserved option',reason:'Confirmed or booked dates remain fixed'});
+  }
+ }
+ const warnings=[];
+ if(held.length)warnings.push('Booked or confirmed dates will not move; review them against the new itinerary.');
+ if(details.some(d=>d.kind==='options'))warnings.push('Saved quotes are unchanged and may need to be rechecked.');
+ return {oldStart,newStart,delta,changes,details,held,warnings};
+}
+return {values,clone,alive,uid,dayNumber,datePlus,byPosition,stops,groups,options,title,booking,status,conditions,needsRecheck,quoteTotal,exchange,cost,budget,duration,zonedStamp,notices,diff,setPath,patch,operations,shiftScenario,previewScenarioShift};
 });
