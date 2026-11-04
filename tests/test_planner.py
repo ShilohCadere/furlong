@@ -27,6 +27,18 @@ class PlannerTests(unittest.TestCase):
         self.path=f'/api/planner/{self.tid}'
         self.data=self.client.get(self.path).get_json();self.s=self.data['state'];self.u=self.data['user']
         self.sid=next(iter(self.s['scenarios']));self.oid=next(iter(self.s['options']));self.gid=self.s['options'][self.oid]['groupId']
+    def test_legacy_workspace_redirect_does_not_mutate_legacy_data(self):
+        with f.get_db_connection() as db:
+            before=db.execute('SELECT COUNT(*) FROM scenario_itinerary').fetchone()[0]
+            scenario=db.execute('SELECT id FROM trip_scenarios WHERE trip_id=?',(self.tid,)).fetchone()[0]
+            revision=db.execute('SELECT revision FROM planner_trip_documents WHERE trip_id=?',(self.tid,)).fetchone()[0]
+        response=self.client.get(f'/trip/{self.tid}/workspace?scenario={scenario}')
+        self.assertEqual(response.status_code,302)
+        self.assertIn(f'/trip/{self.tid}/plan?scenario={scenario}',response.headers['Location'])
+        with f.get_db_connection() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM scenario_itinerary').fetchone()[0],before)
+            self.assertEqual(db.execute('SELECT revision FROM planner_trip_documents WHERE trip_id=?',(self.tid,)).fetchone()[0],revision)
+
     def tearDown(self):
         f.DATABASE=self.previous;f.app.config['TESTING']=self.testing;self.tmp.cleanup()
     def op(self,col,id,patch,base=None,scope='trip',create=False):
