@@ -237,6 +237,16 @@ def csrf_token():
 app.jinja_env.globals["csrf_token"] = csrf_token
 
 
+@app.after_request
+def protect_account_links(response):
+    """Prevent emailed one-time tokens leaking through referrers or caches."""
+    response.headers["Referrer-Policy"]="no-referrer"
+    if request.path.startswith(("/verify-email/","/reset-password/")) or request.path in (
+        "/login","/register","/forgot-password","/resend-verification"):
+        response.headers["Cache-Control"]="no-store"
+    return response
+
+
 @app.before_request
 def validate_csrf_token():
     if request.method in ("POST", "PUT", "PATCH", "DELETE") and not app.config.get("TESTING", False):
