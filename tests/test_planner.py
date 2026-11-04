@@ -27,6 +27,14 @@ class PlannerTests(unittest.TestCase):
         self.path=f'/api/planner/{self.tid}'
         self.data=self.client.get(self.path).get_json();self.s=self.data['state'];self.u=self.data['user']
         self.sid=next(iter(self.s['scenarios']));self.oid=next(iter(self.s['options']));self.gid=self.s['options'][self.oid]['groupId']
+    def test_account_token_pages_disable_referrers_and_caching(self):
+        for path in ('/login','/register','/forgot-password',
+                     '/resend-verification','/verify-email/not-a-token',
+                     '/reset-password/not-a-token'):
+            response=self.client.get(path)
+            self.assertEqual(response.headers.get('Referrer-Policy'),'no-referrer')
+            self.assertEqual(response.headers.get('Cache-Control'),'no-store')
+
     def test_email_verification_requires_valid_one_time_token(self):
         with patch.dict('os.environ',{
             'RESEND_API_KEY':'test-only','FURLONG_EMAIL_FROM':'Furlong <no-reply@gofurlong.com>',
