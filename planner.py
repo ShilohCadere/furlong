@@ -118,10 +118,15 @@ def install(app, db_connect, get_trip, data_dir):
             user['ideas'].setdefault(idea_id,{'id':idea_id,'name':option['name'],'type':option['category'],'location':option['city'],
                 'website':option['link'] or '', 'notes':option['notes'] or '', 'favorite':bool(option['is_preferred']),
                 'lat':location[0] if location else None,'lng':location[1] if location else None,'createdAt':now(),'archived':False})
+        # Generic itinerary_days is an older, trip-wide fallback. Never mix it
+        # into a trip that already has scenario-specific itinerary dates.
+        has_scenario_days=conn.execute(
+            'SELECT 1 FROM scenario_itinerary WHERE trip_id=? LIMIT 1',(tid,)
+        ).fetchone() is not None
         for plan in plans:
             sid=ident('scenario',tid,plan['id'])
             source_days=conn.execute('SELECT * FROM scenario_itinerary WHERE trip_id=? AND scenario_id=? ORDER BY day_date,id',(tid,plan['id'])).fetchall() if plan['id']!='new' else []
-            if not source_days and plan==plans[0]:
+            if not source_days and plan==plans[0] and not has_scenario_days:
                 source_days=[dict(row,day_date=row['trip_date'],city='',notes='') for row in conn.execute('SELECT * FROM itinerary_days WHERE trip_id=? ORDER BY day_number',(tid,))]
             start=next((d['day_date'] for d in source_days if d['day_date']),None)
             state['scenarios'][sid]={'id':sid,'name':plan['name'],'legacyId':plan['id'],'startDate':start,
@@ -187,7 +192,7 @@ def install(app, db_connect, get_trip, data_dir):
                 if opt['id'] in choices: state['groups'][gid]['selectedId']=oid
             # Independent, empty decision groups persist even without candidates.
             for stop_id in [x['id'] for x in state['stops'].values() if x['scenarioId']==sid]:
-                if not any(g['stopId']==stop_id and g['type']=='hotel' for g in state['groups'].values()):
+                if not any(g['stopId']==stop_id and g['type'] in ('hotel','castle') for g in state['groups'].values()):
                     gid=ident('group',sid,stop_id,'accommodation')
                     state['groups'][gid]={'id':gid,'scenarioId':sid,'stopId':stop_id,'name':'Accommodation','type':'hotel','position':0,'selectedId':None,'allowance':None,'notes':'','archived':False}
             if plan['id']!='new':
