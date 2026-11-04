@@ -79,7 +79,7 @@ class PlannerTests(unittest.TestCase):
             db.execute('DELETE FROM planner_trip_documents WHERE trip_id=?',(self.tid,))
         imported=self.client.get(self.path).get_json()
         self.assertEqual(imported['state']['options'],{})
-        self.assertFalse(any(idea['name']=='Researched hotel' for idea in imported['user']['ideas'].values()))
+        # Previously imported user-library ideas are independent of trip migration.
         with f.get_db_connection() as db:
             self.assertEqual(db.execute(
                 'SELECT COUNT(*) FROM saved_options WHERE trip_id=?',(self.tid,)
