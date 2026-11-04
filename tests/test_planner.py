@@ -27,6 +27,61 @@ class PlannerTests(unittest.TestCase):
         self.path=f'/api/planner/{self.tid}'
         self.data=self.client.get(self.path).get_json();self.s=self.data['state'];self.u=self.data['user']
         self.sid=next(iter(self.s['scenarios']));self.oid=next(iter(self.s['options']));self.gid=self.s['options'][self.oid]['groupId']
+    def test_email_verification_requires_valid_one_time_token(self):
+        with patch.dict('os.environ',{
+            'RESEND_API_KEY':'test-only','FURLONG_EMAIL_FROM':'Furlong <no-reply@gofurlong.com>',
+            'FURLONG_BASE_URL':'https://gofurlong.com'
+        }):
+            with patch.object(f,'account_message') as send:
+                response=self.client.post('/register',data={
+                    'username':'newtraveler','email':'new@example.com',
+                    'password':'secure-test-password'
+                })
+                self.assertEqual(response.status_code,200)
+                self.assertEqual(send.call_count,1)
+                token=send.call_args.args[1]
+                self.client.post('/logout')
+                self.assertEqual(self.client.post('/login',data={
+                    'username':'newtraveler','password':'secure-test-password'
+                }).status_code,403)
+                self.assertEqual(self.client.get('/verify-email/'+token).status_code,302)
+                self.assertEqual(self.client.get('/verify-email/'+token).status_code,400)
+                self.assertEqual(self.client.post('/login',data={
+                    'username':'newtraveler','password':'secure-test-password'
+                }).status_code,302)
+
+    def test_password_reset_is_one_time_and_unknown_email_is_private(self):
+        with patch.dict('os.environ',{
+            'RESEND_API_KEY':'test-only','FURLONG_EMAIL_FROM':'Furlong <no-reply@gofurlong.com>',
+            'FURLONG_BASE_URL':'https://gofurlong.com'
+        }):
+            with patch.object(f,'account_message') as send:
+                self.client.post('/register',data={
+                    'username':'resetuser','email':'reset@example.com',
+                    'password':'old-test-password'
+                })
+                self.client.post('/logout')
+                self.assertEqual(self.client.post('/forgot-password',data={
+                    'email':'missing@example.com'
+                }).status_code,200)
+                self.assertEqual(send.call_count,1)
+                self.assertEqual(self.client.post('/forgot-password',data={
+                    'email':'reset@example.com'
+                }).status_code,200)
+                token=send.call_args.args[1]
+                self.assertEqual(self.client.post('/reset-password/'+token,data={
+                    'password':'new-test-password'
+                }).status_code,302)
+                self.assertEqual(self.client.post('/reset-password/'+token,data={
+                    'password':'another-password'
+                }).status_code,400)
+                self.assertEqual(self.client.post('/login',data={
+                    'username':'resetuser','password':'old-test-password'
+                }).status_code,401)
+                self.assertEqual(self.client.post('/login',data={
+                    'username':'resetuser','password':'new-test-password'
+                }).status_code,403)  # Still unverified.
+
     def test_auth_sessions_are_permanent_and_account_scoped(self):
         with self.client.session_transaction() as sess:
             self.assertTrue(sess.permanent)
