@@ -279,6 +279,11 @@ def require_login():
         with get_db_connection() as db:
             allowed=db.execute("SELECT 1 FROM trips WHERE id=? AND user_id=?",
                                (trip_id,session["user_id"])).fetchone()
+            if not allowed and request.endpoint == "planner_file":
+                table = db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='planner_files'").fetchone()
+                if table:
+                    allowed = db.execute('SELECT 1 FROM planner_files WHERE id=? AND trip_id=? AND user_id=?',
+                        (request.view_args['file_id'], trip_id, session['user_id'])).fetchone()
         if not allowed:abort(404)
 
 
@@ -472,6 +477,8 @@ def home():
             abort(400, "Enter a route name up to 50 characters.")
         if len(destination) > 200:
             abort(400, "Enter a destination up to 200 characters.")
+        from planner import parse_trip_setup, create_route_plan
+        setup = parse_trip_setup(request.form)
         with get_db_connection() as connection:
             connection.execute(
                 "INSERT INTO trips (name, destination, user_id) VALUES (?, ?, ?)",
@@ -482,6 +489,8 @@ def home():
                 "INSERT INTO trip_scenarios (trip_id,name) VALUES (?,?)",
                 (trip_id,first_route)
             )
+            if setup['stops'] or setup['start'] or request.form.get('setup-budget') or request.form.get('setup-food'):
+                create_route_plan(connection, {'id': trip_id, 'name': trip_name}, first_route, setup)
         # Open the new journey immediately instead of sending the user back
         # to an otherwise empty dashboard.
         return redirect(url_for("planner_workspace",trip_id=trip_id))
@@ -492,6 +501,13 @@ def home():
             ,(session["user_id"],)
         ).fetchall()
 
+        trips = [dict(trip) for trip in trips]
+        if connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='planner_trip_documents'").fetchone():
+            import json
+            for trip in trips:
+                document = connection.execute('SELECT body FROM planner_trip_documents WHERE trip_id=?', (trip['id'],)).fetchone()
+                if document:
+                    trip['name'] = json.loads(document['body'])['meta']['name']
     return render_template("index.html", trips=trips)
 
 

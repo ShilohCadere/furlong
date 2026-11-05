@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='2') }}">
 </head>
 
 <body>
@@ -73,10 +73,8 @@
                 {% if trips %}
                     <div class="trip-grid">
                         {% for trip in trips %}
-                            <a
-                                href="{{ url_for('planner_workspace', trip_id=trip.id) }}"
-                                class="trip-card"
-                            >
+                            <article class="trip-card">
+                            <a href="{{ url_for('planner_workspace', trip_id=trip.id) }}" class="trip-card-link">
                                 <div class="trip-cover">
                                     <span class="cover-label">
                                         JOURNEY {{ "%02d"|format(loop.index) }}
@@ -100,6 +98,17 @@
                                     <span class="trip-status">Planning</span>
                                 </div>
                             </a>
+                            <details class="trip-delete">
+                                <summary>Delete trip</summary>
+                                <p>This permanently deletes this trip, its alternatives, itinerary, budget, bookings, and attachments. Your reusable idea collection stays available.</p>
+                                <form method="post" action="{{ url_for('delete_trip', trip_id=trip.id) }}">
+                                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                    <label for="delete-trip-{{ trip.id }}">Type <strong>{{ trip.name }}</strong> to confirm</label>
+                                    <input id="delete-trip-{{ trip.id }}" name="confirm-name" required autocomplete="off" data-confirm-name="{{ trip.name }}">
+                                    <button type="submit" class="secondary-btn">Permanently delete trip</button>
+                                </form>
+                            </details>
+                            </article>
                         {% endfor %}
                     </div>
                 {% else %}
@@ -181,6 +190,23 @@
             <label for="first-route-name">First route name *</label>
             <input id="first-route-name" name="first-route-name" maxlength="50" required value="Main route" autocomplete="off">
 
+            <details class="trip-setup">
+                <summary>Build the route now</summary>
+                <p>Add your stops in order, one per line, with the number of nights. Furlong creates the stops, accommodation groups, and itinerary days.</p>
+                <label for="route-stops">Stops and nights</label>
+                <textarea id="route-stops" name="route-stops" rows="6" maxlength="7000" placeholder="Dublin | 2&#10;Galway | 3&#10;Edinburgh | 2"></textarea>
+                <button type="button" class="secondary-btn" id="find-route-places">Find map locations</button>
+                <div id="route-place-results" aria-live="polite"></div>
+                <p class="muted">Location search by Open-Meteo, using GeoNames data. Choose each matching place to fill its map coordinates.</p>
+                <input type="hidden" name="setup-places" id="setup-places" value="{}">
+                <label for="route-start">Arrival date at the first stop (optional)</label>
+                <input id="route-start" name="route-start" type="date">
+                <label for="setup-budget">Trip budget ceiling in USD (optional)</label>
+                <input id="setup-budget" name="setup-budget" type="number" min="0" max="1000000000" step="0.01" placeholder="20000">
+                <label for="setup-food">Total food allowance in USD (optional)</label>
+                <input id="setup-food" name="setup-food" type="number" min="0" max="1000000000" step="0.01" placeholder="5120">
+            </details>
+
             <div class="form-actions">
                 <button
                     type="button"
@@ -197,6 +223,6 @@
         </form>
     </dialog>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js', v='2') }}"></script>
 </body>
 </html>

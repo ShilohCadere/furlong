@@ -62,6 +62,97 @@ def empty_trip(trip):
     return result
 
 
+def parse_trip_setup(form):
+    """Validate the optional route builder before creating any trip records."""
+    stops = []
+    route_text = form.get('route-stops', '')
+    if len(route_text) > 7000:
+        abort(400, 'Use up to 50 stops and 365 nights per trip.')
+    for line in route_text.splitlines():
+        if not line.strip():
+            continue
+        parts = line.rsplit('|', 1)
+        try:
+            name, nights = parts[0].strip(), int(parts[1].strip())
+        except (IndexError, ValueError):
+            abort(400, 'Enter each stop as Place | number of nights.')
+        if not name or len(name) > 100 or not 1 <= nights <= 365:
+            abort(400, 'Each stop needs a name and 1 to 365 nights.')
+        stops.append({'name': name, 'nights': nights})
+    if len(stops) > 50 or sum(stop['nights'] for stop in stops) > 365:
+        abort(400, 'Use up to 50 stops and 365 nights per trip.')
+    start = form.get('route-start', '').strip()
+    if start:
+        try:
+            date.fromisoformat(start) + timedelta(days=sum(stop['nights'] for stop in stops))
+        except (ValueError, OverflowError):
+            abort(400, 'Use a valid arrival date.')
+    amounts = {}
+    for key, default in (('setup-budget', 20000), ('setup-food', 0)):
+        try:
+            value = float(form.get(key, '').strip() or default)
+        except ValueError:
+            abort(400, 'Use a valid budget amount.')
+        if not math.isfinite(value) or not 0 <= value <= 1e9:
+            abort(400, 'Use a nonnegative budget amount.')
+        amounts[key] = value
+    try:
+        places = json.loads(form.get('setup-places', '{}'))
+    except (ValueError, TypeError):
+        abort(400, 'Use valid map locations.')
+    if not isinstance(places, dict):
+        abort(400, 'Use valid map locations.')
+    for stop in stops:
+        place = places.get(stop['name'])
+        if place is None:
+            continue
+        try:
+            lat, lng = float(place['lat']), float(place['lng'])
+        except (KeyError, TypeError, ValueError):
+            abort(400, 'Use valid map coordinates.')
+        if not math.isfinite(lat) or not math.isfinite(lng) or not -90 <= lat <= 90 or not -180 <= lng <= 180:
+            abort(400, 'Use valid map coordinates.')
+        stop.update(lat=lat, lng=lng, timeZone=str(place.get('timeZone', ''))[:100],
+                    location=str(place.get('label', stop['name']))[:200])
+    return {'stops': stops, 'start': start or None,
+            'budget': amounts['setup-budget'], 'food': amounts['setup-food']}
+
+
+def create_route_plan(conn, trip, route_name, setup):
+    state = empty_trip(trip)
+    sid = uuid.uuid4().hex
+    state['meta']['activeScenario'] = sid
+    state['scenarios'][sid] = {'id': sid, 'name': route_name,
+        'startDate': setup['start'], 'budget': setup['budget'],
+        'foodAllowance': setup['food'], 'archived': False}
+    start = date.fromisoformat(setup['start']) if setup['start'] else None
+    for position, stop in enumerate(setup['stops']):
+        stop_id, group_id = uuid.uuid4().hex, uuid.uuid4().hex
+        state['stops'][stop_id] = {'id': stop_id, 'scenarioId': sid,
+            'name': stop['name'], 'location': stop.get('location', stop['name']), 'position': position,
+            'startDate': start.isoformat() if start else None,
+            'nights': stop['nights'], 'lat': stop.get('lat'), 'lng': stop.get('lng'),
+            'timeZone': stop.get('timeZone', ''),
+            'notes': '', 'archived': False}
+        state['groups'][group_id] = {'id': group_id, 'scenarioId': sid,
+            'stopId': stop_id, 'name': 'Accommodation', 'type': 'hotel',
+            'selectedId': None, 'allowance': None, 'position': 0,
+            'notes': '', 'archived': False}
+        for day in range(stop['nights']):
+            day_id = uuid.uuid4().hex
+            state['days'][day_id] = {'id': day_id, 'scenarioId': sid,
+                'stopId': stop_id, 'position': day,
+                'date': (start + timedelta(days=day)).isoformat() if start else None,
+                'title': 'Arrival in ' + stop['name'] if day == 0 else '',
+                'notes': '', 'archived': False}
+        if start:
+            start += timedelta(days=stop['nights'])
+    conn.execute('CREATE TABLE IF NOT EXISTS planner_trip_documents '
+        '(trip_id INTEGER PRIMARY KEY, revision INTEGER NOT NULL DEFAULT 1, body TEXT NOT NULL, updated_at TEXT NOT NULL)')
+    conn.execute('INSERT INTO planner_trip_documents VALUES (?,1,?,?)',
+        (trip['id'], json.dumps(state), now()))
+
+
 def install(app, db_connect, get_trip, data_dir):
     """Register the new workspace; no existing application data is overwritten."""
     data_dir=Path(data_dir)
@@ -76,7 +167,9 @@ def install(app, db_connect, get_trip, data_dir):
             conn.execute('CREATE TABLE IF NOT EXISTS planner_operations(user_id INTEGER NOT NULL, op_id TEXT NOT NULL, trip_id INTEGER NOT NULL, PRIMARY KEY(user_id,op_id))')
             conn.execute('CREATE TABLE IF NOT EXISTS planner_rates(base TEXT PRIMARY KEY, body TEXT NOT NULL, checked_on TEXT NOT NULL)')
             conn.execute('CREATE TABLE IF NOT EXISTS planner_files(id TEXT PRIMARY KEY,trip_id INTEGER NOT NULL,user_id INTEGER NOT NULL,name TEXT NOT NULL,mime TEXT NOT NULL,size INTEGER NOT NULL,created_at TEXT NOT NULL)')
-            with conn:yield conn
+            with conn:
+                conn.execute("BEGIN IMMEDIATE")
+                yield conn
         finally:conn.close()
     with db() as conn:
         for table in ('planner_trip_documents','planner_user_documents'):
@@ -203,6 +296,9 @@ def install(app, db_connect, get_trip, data_dir):
         return state
 
     def documents(conn,trip):
+        if not conn.execute('SELECT 1 FROM trips WHERE id=? AND user_id=?',
+                            (trip['id'], session['user_id'])).fetchone():
+            abort(404)
         user,urev=load_user(conn,session['user_id'])
         row=conn.execute('SELECT * FROM planner_trip_documents WHERE trip_id=?',(trip['id'],)).fetchone()
         if row:return json.loads(row['body']),row['revision'],user,urev
@@ -213,6 +309,61 @@ def install(app, db_connect, get_trip, data_dir):
 
     def bundle(state,rev,user,urev):
         return {'state':state,'revision':rev,'user':user,'userRevision':urev,'userId':session['user_id'],'csrf':app.jinja_env.globals['csrf_token']()}
+
+    @app.post('/trips/<int:trip_id>/delete', endpoint='delete_trip')
+    def delete_trip(trip_id):
+        get_trip(trip_id)
+        with db() as conn:
+            trip = conn.execute('SELECT * FROM trips WHERE id=? AND user_id=?',
+                                (trip_id, session['user_id'])).fetchone()
+            if not trip:
+                abort(404)
+            document = conn.execute('SELECT body FROM planner_trip_documents WHERE trip_id=?',
+                                    (trip_id,)).fetchone()
+            name = json.loads(document['body'])['meta']['name'] if document else trip['name']
+            if request.form.get('confirm-name', '').strip() != name.strip():
+                abort(400, 'Type the trip name to confirm deletion.')
+            files = conn.execute('SELECT id FROM planner_files WHERE trip_id=?', (trip_id,)).fetchall()
+            # Images and attachments can be reused in another plan or the idea collection.
+            references = [row['body'] for row in conn.execute(
+                'SELECT body FROM planner_user_documents WHERE user_id=?', (session['user_id'],))]
+            references.extend(row['body'] for row in conn.execute(
+                'SELECT d.body FROM planner_trip_documents d JOIN trips t ON t.id=d.trip_id '
+                'WHERE t.user_id=? AND t.id<>?', (session['user_id'], trip_id)))
+            files = [file for file in files if not any(file['id'] in body for body in references)]
+            for file in files:
+                conn.execute('DELETE FROM planner_files WHERE id=?', (file['id'],))
+            for table in ('planner_trip_documents', 'planner_operations'):
+                conn.execute(f'DELETE FROM {table} WHERE trip_id=?', (trip_id,))
+            # Relational itinerary, options and scenario rows use cascading foreign keys.
+            conn.execute('DELETE FROM trips WHERE id=? AND user_id=?',
+                         (trip_id, session['user_id']))
+        for file in files:
+            try:
+                (data_dir / 'planner-files' / file['id']).unlink(missing_ok=True)
+            except OSError:
+                app.logger.warning('Could not remove an unreferenced trip attachment')
+        return redirect(url_for('home'))
+
+    @app.get('/api/places')
+    def search_places():
+        query = request.args.get('name', '').strip()
+        if not 2 <= len(query) <= 100:
+            abort(400, 'Enter a place name between 2 and 100 characters.')
+        try:
+            payload = json.loads(public_fetch('https://geocoding-api.open-meteo.com/v1/search?' +
+                urlencode({'name': query, 'count': 5, 'language': 'en', 'format': 'json'}))[0])
+            results = []
+            for place in payload.get('results', [])[:5]:
+                lat, lng = float(place['latitude']), float(place['longitude'])
+                if not math.isfinite(lat) or not math.isfinite(lng) or not -90 <= lat <= 90 or not -180 <= lng <= 180:
+                    continue
+                label = ', '.join(dict.fromkeys(str(place[key]) for key in ('name', 'admin1', 'country') if place.get(key)))
+                results.append({'label': label, 'lat': lat, 'lng': lng,
+                                'timeZone': place.get('timezone', '')})
+            return jsonify({'results': results})
+        except (ValueError, KeyError, TypeError, OSError, http.client.HTTPException):
+            return jsonify({'results': [], 'error': 'Place search is unavailable. You can save the stop and add its map location later.'}), 502
 
     @app.get('/trip/<int:trip_id>/plan',endpoint='planner_workspace')
     def workspace(trip_id):
@@ -231,7 +382,6 @@ def install(app, db_connect, get_trip, data_dir):
         payload=request.get_json(silent=True) or {};ops=payload.get('operations')
         if not isinstance(ops,list) or len(ops)>2000:abort(400,'Send at most 2000 operations at a time.')
         with db() as conn:
-            conn.execute('BEGIN IMMEDIATE')
             state,rev,user,urev=documents(conn,trip)
             original=copy.deepcopy(state);original_user=copy.deepcopy(user);conflicts=[];new_ids=[]
             for op in ops:
@@ -316,12 +466,21 @@ def install(app, db_connect, get_trip, data_dir):
         fid=uuid.uuid4().hex;folder=data_dir/'planner-files';folder.mkdir(exist_ok=True)
         path=folder/fid;path.write_bytes(contents);path.chmod(0o600)
         mime=mimetypes.guess_type(name)[0] or 'application/octet-stream'
-        with db() as conn:conn.execute('INSERT INTO planner_files VALUES (?,?,?,?,?,?,?)',(fid,trip_id,session['user_id'],name,mime,len(contents),now()))
+        try:
+            with db() as conn:
+                if not conn.execute('SELECT 1 FROM trips WHERE id=? AND user_id=?',
+                                    (trip_id, session['user_id'])).fetchone():
+                    abort(404)
+                conn.execute('INSERT INTO planner_files VALUES (?,?,?,?,?,?,?)',
+                    (fid, trip_id, session['user_id'], name, mime, len(contents), now()))
+        except Exception:
+            path.unlink(missing_ok=True)
+            raise
         return jsonify({'id':fid,'name':name,'size':len(contents),'url':url_for('planner_file',trip_id=trip_id,file_id=fid)})
 
     @app.get('/trip/<int:trip_id>/planner-files/<file_id>',endpoint='planner_file')
     def download_file(trip_id,file_id):
-        get_trip(trip_id)
+        # Shared research attachments retain their owner after a source trip is deleted.
         with db() as conn:row=conn.execute('SELECT * FROM planner_files WHERE id=? AND trip_id=? AND user_id=?',(file_id,trip_id,session['user_id'])).fetchone()
         if row is None:abort(404)
         response=send_file(data_dir/'planner-files'/file_id,as_attachment=True,download_name=row['name'],mimetype=row['mime'])
