@@ -163,7 +163,71 @@ function jump(id){view='plan';render();requestAnimationFrame(()=>{const target=d
 function setView(next){view=next;if(view==='travel')sid=S.meta.activeScenario||sid;render();window.scrollTo({top:0,behavior:'instant'});}
 function contextGroup(gid){const g=S.groups[gid],st=S.stops[g?.stopId];return {g,st,fields:{startDate:g?.startDate||st?.startDate||'',endDate:g?.endDate||(st?.startDate?C.datePlus(st.startDate,Number(st.nights||0)):''),guests:vals(S.travelers).filter(alive).length||null}};}
 function newIdeaOption(idea,g,fields={}){return {id:uid(),scenarioId:g.scenarioId,groupId:g.id,ideaId:idea.id,type:idea.type,label:'',fields:{...fields},quote:{amount:null,currency:S.meta.currency,basis:'total',quantity:1,units:1,startDate:fields.startDate||'',endDate:fields.endDate||'',conditions:C.conditions(fields),checkedAt:null},quoteHistory:[],stage:'idea',parts:[],bookingId:null,confirmed:false,position:C.options(S,g.id).length,archived:false};}
-function openAddIdea(groupId=null,existingIdeaId=null){const group=groupId&&S.groups[groupId],existing=existingIdeaId&&U.ideas[existingIdeaId],ctx=group?contextGroup(group.id):null;showEditor(existing?'Use '+existing.name:group?'Add an option':'Save an idea',`<form id="new-idea"><p class="muted">${group?'Adding to '+text(group.name)+' · '+text(S.scenarios[group.scenarioId]?.name):'Save to your general collection. A name is enough.'}</p>${field('Name','name',existing?.name||'','text','required maxlength="160"')}${select('Type','type',existing?.type||group?.type||'idea',templates())}${field('Website / booking link','website',existing?.website||'','url','maxlength="2048"')}<div class="add-row">${optButton('Try filling details from link','fill-link')}</div><p id="link-preview-note" class="muted"></p>${field('Location','location',existing?.location||ctx?.st?.location||'')}${field('Notes','notes',existing?.notes||'','textarea')}<button class="primary">${group?'Save option':'Save idea'}</button></form>`,'ROOM FOR POSSIBILITIES');editor.querySelector('#new-idea').onsubmit=e=>{e.preventDefault();if(!e.target.reportValidity())return;const data=formValues(e.target),idea=existing||{id:uid(),...data,createdAt:new Date().toISOString(),favorite:false,archived:false};const changes=[];if(!existing)changes.push(['ideas',idea.id,idea,'user']);if(group){const option=newIdeaOption(idea,group,ctx.fields);changes.push(['options',option.id,option]);}addChanges(changes,'Save idea');editor.pendingSave=null;editor.close();render();toast(group?'Option saved. Add a quote or more details whenever you are ready.':'Idea saved to your collection.');};editor.querySelector('[data-action="fill-link"]').onclick=async()=>{const form=editor.querySelector('form'),url=form.elements.website.value,note=editor.querySelector('#link-preview-note');if(!url){note.textContent='Paste a link first, or keep entering details manually.';return;}note.textContent='Reading available page details…';try{const response=await requestAPI(`/api/planner/${tid}/link-preview`,{method:'POST',body:JSON.stringify({url})});const data=await response.json();for(const [k,v] of Object.entries(data.suggestions||{}))if(form.elements[k]&&!form.elements[k].value)form.elements[k].value=v;note.textContent=data.notice;}catch(_){note.textContent='Details could not be read. Manual entry is available.';}};}
+function openAddIdea(groupId=null,existingIdeaId=null){
+ const group=groupId&&S.groups[groupId],existing=existingIdeaId&&U.ideas[existingIdeaId];
+ const ctx=group?contextGroup(group.id):null;
+ showEditor(existing?'Use '+existing.name:group?'Add an option':'Save an idea',`<form id="new-idea">
+ <p class="muted">${group?'Adding to '+text(group.name)+' · '+text(S.scenarios[group.scenarioId]?.name):'Save to your general collection. A name is enough.'}</p>
+ ${field('Name','name',existing?.name||'','text','required maxlength="160"')}
+ ${select('Type','type',existing?.type||group?.type||'idea',templates())}
+ ${field('Website / booking link','website',existing?.website||'','url','maxlength="2048"')}
+ <div class="add-row">${optButton('Try filling details from link','fill-link')}</div>
+ <p id="link-preview-note" class="muted"></p>
+ <div id="new-option-details"></div>
+ ${field('Location','location',existing?.location||ctx?.st?.location||'')}
+ ${field('Notes','notes',existing?.notes||'','textarea')}
+ <button class="primary">${group?'Save option':'Save idea'}</button></form>`,'ROOM FOR POSSIBILITIES');
+ const form=editor.querySelector('#new-idea');
+ const flightDraft={};
+ const showFlightFields=()=>{
+  const container=form.querySelector('#new-option-details');
+  Object.assign(flightDraft,formValues(container));
+  if(!group||form.elements.type.value!=='flight'){
+   container.innerHTML='';
+   return;
+  }
+  const fields={...ctx.fields,travelers:ctx.fields.guests,...Object.fromEntries(
+   Object.entries(flightDraft).filter(([key])=>key.startsWith('field_')).map(([key,value])=>[key.slice(6),value]))};
+  const descriptors=U.templates.flight?.fields||[];
+  container.innerHTML=`<h3>Flight details</h3>
+   <p class="muted">Use local dates and times for each airport. Add connections and baggage details from the fare.</p>
+   <div class="form-grid">${descriptors.map(f=>field(f.label,'field_'+f.key,fields[f.key]??'',f.kind)).join('')}</div>
+   <h3>Flight quote</h3>
+   <div class="form-grid">
+   ${field('Quoted price (optional)','quote_amount',flightDraft.quote_amount??'','number','min="0"')}
+   ${field('Currency','quote_currency',flightDraft.quote_currency??S.meta.currency,'text','required minlength="3" maxlength="3" pattern="[A-Za-z]{3}"')}
+   ${select('Pricing basis','quote_basis',flightDraft.quote_basis||'total',[['total','Total for this option'],['person','Per person']])}
+   ${field('Number of travelers priced','quote_quantity',flightDraft.quote_quantity??fields.travelers??1,'number','required min="1" step="1"')}
+   </div>`;
+ };
+ form.elements.type.onchange=showFlightFields;
+ showFlightFields();
+ form.onsubmit=e=>{
+  e.preventDefault();
+  if(!form.reportValidity())return;
+  const data=formValues(form);
+  const idea=existing||{id:uid(),name:data.name,type:data.type,website:data.website,
+   location:data.location,notes:data.notes,createdAt:new Date().toISOString(),favorite:false,archived:false};
+  const changes=[];
+  if(!existing)changes.push(['ideas',idea.id,idea,'user']);
+  if(group){
+   const fields={...ctx.fields};
+   if(data.type==='flight'){
+    for(const [key,value] of Object.entries(data))if(key.startsWith('field_'))fields[key.slice(6)]=value;
+   }
+   const option=newIdeaOption(idea,group,fields);
+   option.type=data.type;
+   if(data.type==='flight'&&data.quote_amount!==null){
+    option.quote={...option.quote,amount:data.quote_amount,currency:data.quote_currency.toUpperCase(),
+     basis:data.quote_basis,quantity:data.quote_quantity,units:1,checkedAt:new Date().toISOString()};
+   }
+   changes.push(['options',option.id,option]);
+  }
+  addChanges(changes,'Save idea');
+  editor.pendingSave=null;editor.close();render();
+  toast(group?'Option saved.':'Idea saved to your collection.');
+ };
+ editor.querySelector('[data-action="fill-link"]').onclick=async()=>{const form=editor.querySelector('form'),url=form.elements.website.value,note=editor.querySelector('#link-preview-note');if(!url){note.textContent='Paste a link first, or keep entering details manually.';return;}note.textContent='Reading available page details…';try{const response=await requestAPI(`/api/planner/${tid}/link-preview`,{method:'POST',body:JSON.stringify({url})});const data=await response.json();for(const [k,v] of Object.entries(data.suggestions||{}))if(form.elements[k]&&!form.elements[k].value)form.elements[k].value=v;note.textContent=data.notice;}catch(_){note.textContent='Details could not be read. Manual entry is available.';}};}
 function openIdea(id){const idea=U.ideas[id];showEditor(idea.name,`<form id="idea-details"><p class="muted">Core details are shared wherever this idea is used. Dates, quotes and choices stay independent in each plan.</p>${field('Name','name',idea.name,'text','required maxlength="160"')}${select('Type','type',idea.type,templates())}${field('Location / address','location',idea.location||'')}${field('Website','website',idea.website||'','url')}${field('Notes','notes',idea.notes||'','textarea')}<div class="form-grid">${field('Latitude','lat',idea.lat??'','number','min="-90" max="90"')}${field('Longitude','lng',idea.lng??'','number','min="-180" max="180"')}</div><span class="save-status" data-editor-saved>Edits save automatically.</span></form><h3 style="margin:20px 0 10px">Image</h3>${idea.image?`<img src="${attr(idea.image.url)}" alt="${attr(idea.name)}" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px">`:''}<label>Upload image<input id="idea-image" type="file" accept="image/png,image/jpeg,image/webp"></label><div class="editor-actions">${optButton('Use in a plan','use-idea',`data-id="${id}"`,'primary')}${optButton('Archive idea','archive-idea',`data-id="${id}"`,'danger')}</div>`,'SHARED IDEA');autosave(editor.querySelector('form'),data=>{editEntity('ideas',id,data,'user','Edit shared idea');render();});editor.querySelector('#idea-image').onchange=async e=>{const f=e.target.files[0];if(!f)return;const uploaded=await upload(f);if(uploaded){editEntity('ideas',id,{image:uploaded},'user','Add idea image');openIdea(id);}};wireEditorActions();}
 function openOption(id,partId=null){const option=S.options[id];if(!option)return;const item=partId?option.parts.find(p=>p.id===partId):option;if(!item)return;const group=S.groups[option.groupId],template=U.templates[item.type]||U.templates.idea,fields=item.fields||{};
 const descriptors=[...(template.fields||[])];for(const key of Object.keys(fields))if(!descriptors.some(f=>f.key===key)&&!['notes'].includes(key))descriptors.push({key,label:item.customLabels?.[key]||key,kind:'text'});
