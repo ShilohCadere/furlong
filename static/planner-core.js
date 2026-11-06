@@ -9,6 +9,56 @@ const byPosition=(a,b)=>(a.position||0)-(b.position||0)||String(a.id).localeComp
 const stops=(s,sid)=>values(s.stops).filter(x=>alive(x)&&x.scenarioId===sid).sort(byPosition);
 const groups=(s,sid,stopId)=>values(s.groups).filter(x=>alive(x)&&x.scenarioId===sid&&(stopId===undefined||x.stopId===stopId)).sort(byPosition);
 const options=(s,gid)=>values(s.options).filter(x=>alive(x)&&x.groupId===gid).sort(byPosition);
+// Each shared journey appears exactly once. Explicit placement wins; dates
+// place outside-trip flights without changing the stop sequence or its dates.
+function journeySlots(s,sid){
+ const ss=stops(s,sid),result={before:[],after:Object.fromEntries(ss.map(st=>[st.id,[]])),shared:[]};
+ for(const g of groups(s,sid).filter(g=>!g.stopId)){
+  let anchor=null,before=false;
+  if(g.itineraryPlacement==='before')before=true;
+  else if(g.itineraryPlacement==='after')anchor=ss.find(st=>st.id===g.anchorStopId)?.id;
+  else {
+   anchor=ss.find(st=>st.id===g.fromStopId)?.id;
+   if(!anchor&&g.toStopId){const i=ss.findIndex(st=>st.id===g.toStopId);if(i===0)before=true;else if(i>0)anchor=ss[i-1].id;}
+   if(!anchor&&!before){
+    const selected=s.options[g.selectedId],opts=selected&&alive(selected)?[selected]:options(s,g.id);
+    const dates=opts.flatMap(o=>(o.parts?.length?o.parts:[o]).map(p=>p.fields?.startDate)).filter(Boolean).sort();
+    const date=dates[0]||g.startDate;
+    if(date&&ss.length&&ss.every(st=>st.startDate)){
+     if(date<=ss[0].startDate)before=true;
+     else {const i=ss.findIndex(st=>st.startDate>=date);anchor=(i<0?ss.at(-1):ss[i-1]).id;}
+    }
+   }
+  }
+  if(before)result.before.push(g);else if(anchor)result.after[anchor].push(g);else result.shared.push(g);
+ }
+ return result;
+}
+function itemNotes(item,user){
+ const shared=user?.ideas?.[item?.ideaId]?.notes||'',planning=item?.fields?.notes??item?.notes??'';
+ return [...new Set([shared,planning].filter(n=>String(n).trim()))];
+}
+// An explicit quote creates a normal selected option, never a second expense.
+// Linked alternatives keep their group, history, booking and selection intact.
+function activityQuoteChanges(s,a,quote,include,makeId=uid){
+ const linked=s.options[a.optionId],existing=alive(linked)?linked:null;
+ if(existing&&existing.scenarioId!==a.scenarioId)throw Error('Activity quotes stay within their itinerary alternative.');
+ if(existing?.parts?.length)throw Error('Edit the individual option parts to change this quote.');
+ if(existing&&booking(s,existing))throw Error('Edit the reservation to change its booked price.');
+ if(quote.amount!==null&&(!Number.isFinite(quote.amount)||quote.amount<0))throw Error('Enter a nonnegative price.');
+ if(!/^[A-Z]{3}$/.test(quote.currency))throw Error('Use a three-letter currency code.');
+ for(const k of ['quantity','units'])if(!Number.isFinite(quote[k])||quote[k]<=0)throw Error('Enter a quantity greater than zero.');
+ const day=s.days[a.dayId],date=day?.date||(s.stops[day?.stopId]?.startDate?datePlus(s.stops[day.stopId].startDate,Number(day.position||0)):'');
+ const fields=existing?.fields||{startDate:date||'',startTime:a.time||'',notes:a.notes||''};
+ const gid=existing?.groupId||makeId(),oid=existing?.id||makeId();
+ const next={...existing,id:oid,groupId:gid,scenarioId:a.scenarioId,ideaId:existing?.ideaId||a.ideaId,type:existing?.type||'activity',label:existing?.label||a.name,fields,
+  quote:{...quote,startDate:fields.startDate||'',endDate:fields.endDate||'',conditions:conditions(fields),checkedAt:new Date().toISOString()},
+  quoteHistory:[...(existing?.quoteHistory||[]),...(existing?.quote?[clone(existing.quote)]:[])],archived:false};
+ const changes=[];
+ if(!existing)changes.push(['groups',gid,{id:gid,scenarioId:a.scenarioId,stopId:day?.stopId||null,name:a.name,type:'activity',selectedId:include?oid:null,allowance:null,position:groups(s,a.scenarioId,day?.stopId||null).length,activityId:a.id,archived:false}]);
+ changes.push(['options',oid,next],['activities',a.id,{...a,optionId:oid}]);
+ return changes;
+}
 const title=(o,user)=>o.label||user.ideas[o.ideaId]?.name||o.name||'Untitled idea';
 const booking=(s,o)=>o.bookingId&&s.bookings[o.bookingId]&&!s.bookings[o.bookingId].canceled?s.bookings[o.bookingId]:null;
 const status=(s,o,g)=>{if(o.parts?.length){const n=o.parts.filter(p=>booking(s,p)||p.confirmed).length;if(n===o.parts.length)return 'Booked / confirmed';if(n)return 'Partially booked';}if(booking(s,o))return 'Booked';if(o.confirmed)return 'Confirmed';if(g?.selectedId===o.id)return 'Selected';return o.stage==='shortlisted'?'Shortlisted':'Idea';};
@@ -75,5 +125,5 @@ function previewScenarioShift(s,sid,newStart){
  if(details.some(d=>d.kind==='options'))warnings.push('Saved quotes are unchanged and may need to be rechecked.');
  return {oldStart,newStart,delta,changes,details,held,warnings};
 }
-return {values,clone,alive,uid,dayNumber,datePlus,byPosition,stops,groups,options,title,booking,status,conditions,needsRecheck,quoteTotal,exchange,cost,budget,duration,zonedStamp,notices,diff,setPath,patch,operations,shiftScenario,previewScenarioShift};
+return {values,clone,alive,uid,dayNumber,datePlus,byPosition,stops,groups,options,journeySlots,itemNotes,activityQuoteChanges,title,booking,status,conditions,needsRecheck,quoteTotal,exchange,cost,budget,duration,zonedStamp,notices,diff,setPath,patch,operations,shiftScenario,previewScenarioShift};
 });
