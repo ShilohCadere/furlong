@@ -64,3 +64,43 @@ test('date shifts preserve archived descendants and unrelated scenarios',()=>{co
 test('confirmed and archived multipart reservations never shift',()=>{const s=fixture();s.options.o.parts=[{id:'flex',fields:{startDate:'2027-09-01'}},{id:'confirmed',confirmed:true,fields:{startDate:'2027-09-01'}},{id:'archived',archived:true,fields:{startDate:'2027-09-01'}}];const changes=C.shiftScenario(s,'s','2027-09-04');const parts=changes.find(([kind,id])=>kind==='options'&&id==='o')[2].parts;assert.equal(parts[0].fields.startDate,'2027-09-04');assert.equal(parts[1].fields.startDate,'2027-09-01');assert.equal(parts[2].fields.startDate,'2027-09-01');});
 
 test('shift preview describes exact changes and held bookings without mutating state',()=>{const s=fixture(),before=C.clone(s);s.days.d={id:'d',scenarioId:'s',date:'2027-09-01',title:'Arrival'};s.options.held={id:'held',scenarioId:'s',groupId:'g',bookingId:'b',fields:{startDate:'2027-09-01'}};s.bookings.b={id:'b',fields:{startDate:'2027-09-01'}};const snapshot=C.clone(s),preview=C.previewScenarioShift(s,'s','2027-09-04');assert.equal(preview.delta,3);assert.ok(preview.details.some(x=>x.kind==='days'&&x.dates[0].after==='2027-09-04'));assert.ok(preview.held.some(x=>x.id==='held'));assert.ok(preview.warnings.length);assert.deepEqual(s,snapshot);assert.deepEqual(preview.changes,C.shiftScenario(s,'s','2027-09-04'));});
+
+test('copy destinations exclude archived itineraries, archived stops and orphaned groups',()=>{
+ const s=fixture();s.options.o.type='hotel';s.meta.activeScenario='current';
+ s.scenarios.current={id:'current',name:'Current'};s.scenarios.old={id:'old',name:'Old',archived:true};
+ s.scenarios.other={id:'other',name:'Another current plan'};
+ s.stops.live={id:'live',scenarioId:'current',name:'Dublin',position:0};
+ s.stops.removed={id:'removed',scenarioId:'current',name:'Old Dublin',archived:true};
+ for(const [id,scenarioId,stopId,type] of [['live','current','live','hotel'],['wrongType','current','live','activity'],['removed','current','removed','hotel'],['old','old',null,'hotel'],['orphan','current','missing','hotel'],['cross','current','st','hotel'],['transfer','current',null,'flight']])
+  s.groups[id]={id,scenarioId,stopId,type,name:id,position:0};
+ s.groups.archived={id:'archived',scenarioId:'current',stopId:'live',archived:true};
+ const before=C.clone(s),targets=C.copyOptionDestinations(s,'o');
+ assert.deepEqual(targets.map(t=>t.scenario.id),['current','other']);
+ assert.deepEqual(targets[0].locations.map(l=>l.id),['live','']);
+ assert.deepEqual(targets[0].locations[0].groups.map(g=>g.id),['live','wrongType']);
+ assert.deepEqual(targets[0].locations[1].groups.map(g=>g.id),['transfer']);assert.deepEqual(s,before);
+ assert.deepEqual(C.copyOptionDestinations(s,'missing'),[]);
+});
+test('copy retains independent research and shared reservation references without selecting or changing costs',()=>{
+ const s=fixture();s.scenarios.dest={id:'dest',name:'Destination',budget:1000};
+ s.groups.dest={id:'dest',scenarioId:'dest',stopId:null,selectedId:'existing'};
+ Object.assign(s.options.o,{notes:'Keep notes',ideaId:'shared',bookingId:'reservation',quoteHistory:[{amount:80}],parts:[{id:'part',fields:{startDate:'2027-09-01'},bookingId:'partReservation'}]});
+ const before=C.clone(s),changes=C.copyOptionChanges(s,'o','dest','','dest','',()=> 'copied'),item=changes[0][2];
+ assert.deepEqual(s,before);assert.equal(changes.length,1);assert.equal(item.scenarioId,'dest');assert.equal(item.groupId,'dest');
+ for(const key of ['fields','quote','quoteHistory','notes','ideaId','bookingId','parts'])assert.deepEqual(item[key],s.options.o[key]);
+ item.fields.startDate='2027-10-01';item.quote.amount=999;item.parts[0].fields.startDate='2027-10-01';
+ assert.deepEqual(s,before);assert.equal(s.groups.dest.selectedId,'existing');
+ s.scenarios.dest.archived=true;assert.throws(()=>C.copyOptionChanges(s,'o','dest','','dest'),/current itinerary/);
+ s.scenarios.dest.archived=false;s.groups.dest.archived=true;
+ assert.throws(()=>C.copyOptionChanges(s,'o','dest','','dest'),/no longer available/);
+});
+test('copy creates a matching destination group in one undoable change set',()=>{
+ const s=fixture();s.options.o.type='hotel';s.scenarios.dest={id:'dest',name:'Destination'};
+ s.stops.dst={id:'dst',scenarioId:'dest',name:'Edinburgh'};let n=0;
+ const before=C.clone(s),changes=C.copyOptionChanges(s,'o','dest','dst','','Accommodation',()=>`new${++n}`);
+ assert.deepEqual(changes.map(c=>c[0]),['groups','options']);const g=changes[0][2],o=changes[1][2];
+ assert.equal(g.stopId,'dst');assert.equal(g.type,'hotel');assert.equal(g.selectedId,null);assert.equal(g.allowance,null);
+ assert.equal(o.groupId,g.id);assert.equal(o.scenarioId,'dest');assert.deepEqual(s,before);
+ assert.throws(()=>C.copyOptionChanges(s,'o','dest','dst','','  '),/group name/);
+ s.stops.dst.archived=true;assert.throws(()=>C.copyOptionChanges(s,'o','dest','dst','','Stay'),/current itinerary/);
+});

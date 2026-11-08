@@ -9,6 +9,32 @@ const byPosition=(a,b)=>(a.position||0)-(b.position||0)||String(a.id).localeComp
 const stops=(s,sid)=>values(s.stops).filter(x=>alive(x)&&x.scenarioId===sid).sort(byPosition);
 const groups=(s,sid,stopId)=>values(s.groups).filter(x=>alive(x)&&x.scenarioId===sid&&(stopId===undefined||x.stopId===stopId)).sort(byPosition);
 const options=(s,gid)=>values(s.options).filter(x=>alive(x)&&x.groupId===gid).sort(byPosition);
+// A live child is not a destination when its itinerary or stop was archived.
+function copyOptionDestinations(s,optionId){
+ const source=s.options[optionId];
+ if(!alive(source))return [];
+ return values(s.scenarios).filter(x=>alive(x)&&x.id!==source.scenarioId)
+  .sort((a,b)=>Number(b.id===s.meta.activeScenario)-Number(a.id===s.meta.activeScenario)||a.name.localeCompare(b.name))
+  .map(scenario=>({scenario,locations:[...stops(s,scenario.id).map(stop=>({id:stop.id,name:stop.name,stop})),
+   {id:'',name:'Transport & trip-wide groups',stop:null}].map(location=>({...location,
+    groups:groups(s,scenario.id,location.id||null).sort((a,b)=>Number(b.type===source.type)-Number(a.type===source.type)||byPosition(a,b))}))}));
+}
+function copyOptionChanges(s,optionId,scenarioId,stopId,groupId,newGroupName='',makeId=uid){
+ const source=s.options[optionId],target=copyOptionDestinations(s,optionId).find(x=>x.scenario.id===scenarioId),
+  location=target?.locations.find(x=>x.id===(stopId||''));
+ if(!location)throw Error('Choose a current itinerary and destination.');
+ let group=location.groups.find(g=>g.id===groupId);const changes=[];
+ if(groupId){if(!group)throw Error('This destination group is no longer available.');}
+ else {
+  const name=newGroupName.trim();if(!name||name.length>100)throw Error('Enter a group name up to 100 characters.');
+  const id=makeId();group={id,scenarioId,stopId:stopId||null,name,type:source.type,selectedId:null,allowance:null,
+   position:location.groups.reduce((n,g)=>Math.max(n,Number(g.position||0)+1),0),notes:'',archived:false};
+  changes.push(['groups',id,group]);
+ }
+ const id=makeId();changes.push(['options',id,{...clone(source),id,scenarioId,groupId:group.id,
+  position:options(s,group.id).reduce((n,o)=>Math.max(n,Number(o.position||0)+1),0),archived:false}]);
+ return changes;
+}
 // Each shared journey appears exactly once. Explicit placement wins; dates
 // place outside-trip flights without changing the stop sequence or its dates.
 function journeySlots(s,sid){
@@ -125,5 +151,5 @@ function previewScenarioShift(s,sid,newStart){
  if(details.some(d=>d.kind==='options'))warnings.push('Saved quotes are unchanged and may need to be rechecked.');
  return {oldStart,newStart,delta,changes,details,held,warnings};
 }
-return {values,clone,alive,uid,dayNumber,datePlus,byPosition,stops,groups,options,journeySlots,itemNotes,activityQuoteChanges,title,booking,status,conditions,needsRecheck,quoteTotal,exchange,cost,budget,duration,zonedStamp,notices,diff,setPath,patch,operations,shiftScenario,previewScenarioShift};
+return {values,clone,alive,uid,dayNumber,datePlus,byPosition,stops,groups,options,copyOptionDestinations,copyOptionChanges,journeySlots,itemNotes,activityQuoteChanges,title,booking,status,conditions,needsRecheck,quoteTotal,exchange,cost,budget,duration,zonedStamp,notices,diff,setPath,patch,operations,shiftScenario,previewScenarioShift};
 });
