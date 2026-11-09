@@ -60,9 +60,24 @@ function journeySlots(s,sid){
  }
  return result;
 }
-function itemNotes(item,user){
- const shared=user?.ideas?.[item?.ideaId]?.notes||'',planning=item?.fields?.notes??item?.notes??'';
- return [...new Set([shared,planning].filter(n=>String(n).trim()))];
+function itemNotes(item,user,s){
+ const shared=user?.ideas?.[item?.ideaId]?.notes||'',planning=item?.fields?.notes??item?.notes??'',linked=item?.optionId&&s?.options?.[item.optionId];
+ const linkedNotes=alive(linked)&&linked.scenarioId===item.scenarioId?linked.fields?.notes:'';
+ return [...new Set([shared,linkedNotes,planning].filter(n=>String(n).trim()))];
+}
+function scheduledActivity(s,option){
+ const activities=values(s.activities).filter(a=>alive(a)&&a.scenarioId===option.scenarioId);
+ return activities.find(a=>a.optionId===option.id)||activities.find(a=>option.ideaId&&a.ideaId===option.ideaId);
+}
+function scheduleActivityChange(s,option,day,name,fields,makeId=uid){
+ if(!alive(day)||day.scenarioId!==option.scenarioId)throw Error('Choose a day in this itinerary.');
+ const existing=scheduledActivity(s,option),id=existing?.id||makeId();
+ const position=existing?.dayId===day.id?existing.position:
+  values(s.activities).filter(a=>alive(a)&&a.dayId===day.id).reduce((n,a)=>Math.max(n,Number(a.position||0)+1),0);
+ return ['activities',id,{...existing,id,scenarioId:option.scenarioId,dayId:day.id,ideaId:option.ideaId,optionId:option.id,
+  name:existing?.optionId===option.id?existing.name:name,time:fields.startTime||'',timeBlock:fields.timeBlock||'',
+  duration:existing?.duration??fields.duration??null,notes:existing?.notes||'',confirmed:existing?.confirmed??!!option.confirmed,
+  position,archived:false}];
 }
 // An explicit quote creates a normal selected option, never a second expense.
 // Linked alternatives keep their group, history, booking and selection intact.
@@ -75,9 +90,10 @@ function activityQuoteChanges(s,a,quote,include,makeId=uid){
  if(!/^[A-Z]{3}$/.test(quote.currency))throw Error('Use a three-letter currency code.');
  for(const k of ['quantity','units'])if(!Number.isFinite(quote[k])||quote[k]<=0)throw Error('Enter a quantity greater than zero.');
  const day=s.days[a.dayId],date=day?.date||(s.stops[day?.stopId]?.startDate?datePlus(s.stops[day.stopId].startDate,Number(day.position||0)):'');
- const fields=existing?.fields||{startDate:date||'',startTime:a.time||'',notes:a.notes||''};
+ const fields=existing?.fields||{startDate:date||'',startTime:a.time||'',timeBlock:a.timeBlock||'',duration:a.duration??null,notes:a.notes||''};
  const gid=existing?.groupId||makeId(),oid=existing?.id||makeId();
  const next={...existing,id:oid,groupId:gid,scenarioId:a.scenarioId,ideaId:existing?.ideaId||a.ideaId,type:existing?.type||'activity',label:existing?.label||a.name,fields,
+  ...(existing?.website||a.website?{website:existing?.website||a.website}:{}),
   quote:{...quote,startDate:fields.startDate||'',endDate:fields.endDate||'',conditions:conditions(fields),checkedAt:new Date().toISOString()},
   quoteHistory:[...(existing?.quoteHistory||[]),...(existing?.quote?[clone(existing.quote)]:[])],archived:false};
  const changes=[];
@@ -151,5 +167,5 @@ function previewScenarioShift(s,sid,newStart){
  if(details.some(d=>d.kind==='options'))warnings.push('Saved quotes are unchanged and may need to be rechecked.');
  return {oldStart,newStart,delta,changes,details,held,warnings};
 }
-return {values,clone,alive,uid,dayNumber,datePlus,byPosition,stops,groups,options,copyOptionDestinations,copyOptionChanges,journeySlots,itemNotes,activityQuoteChanges,title,booking,status,conditions,needsRecheck,quoteTotal,exchange,cost,budget,duration,zonedStamp,notices,diff,setPath,patch,operations,shiftScenario,previewScenarioShift};
+return {values,clone,alive,uid,dayNumber,datePlus,byPosition,stops,groups,options,copyOptionDestinations,copyOptionChanges,journeySlots,itemNotes,scheduledActivity,scheduleActivityChange,activityQuoteChanges,title,booking,status,conditions,needsRecheck,quoteTotal,exchange,cost,budget,duration,zonedStamp,notices,diff,setPath,patch,operations,shiftScenario,previewScenarioShift};
 });

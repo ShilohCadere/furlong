@@ -104,3 +104,24 @@ test('copy creates a matching destination group in one undoable change set',()=>
  assert.throws(()=>C.copyOptionChanges(s,'o','dest','dst','','  '),/group name/);
  s.stops.dst.archived=true;assert.throws(()=>C.copyOptionChanges(s,'o','dest','dst','','Stay'),/current itinerary/);
 });
+
+test('scheduling a saved option reuses its day item and keeps details and quotes linked',()=>{
+ const s=fixture(),ideaId='idea',option=Object.assign(s.options.o,{ideaId,website:'https://example.com/tickets',fields:{
+  startDate:'2027-09-01',startTime:'19:00',timeBlock:'Evening',duration:2,notes:'Bring confirmation'
+ }});
+ const user={ideas:{[ideaId]:{notes:'Doors open at 18:30'}}};
+ const first=s.days.first={id:'first',scenarioId:'s'},second=s.days.second={id:'second',scenarioId:'s'};
+ const other=s.days.other={id:'other',scenarioId:'other'};
+ const optionBefore=C.clone(option);
+ const [kind,id,scheduled]=C.scheduleActivityChange(s,option,first,'Evening show',option.fields,()=> 'activity');
+ assert.equal(kind,'activities');assert.equal(scheduled.optionId,option.id);assert.equal(scheduled.duration,2);
+ assert.equal(scheduled.time,'19:00');assert.equal(scheduled.timeBlock,'Evening');
+ assert.deepEqual(C.itemNotes(scheduled,user,s),['Doors open at 18:30','Bring confirmation']);
+ s.activities[id]={...scheduled,notes:'Bring ID'};
+ s.activities.other={...scheduled,id:'other',scenarioId:'other',dayId:other.id};
+ const [,movedId,moved]=C.scheduleActivityChange(s,option,second,'Evening show',{...option.fields,startTime:'20:00'});
+ assert.equal(movedId,id);assert.equal(moved.dayId,'second');assert.equal(moved.time,'20:00');assert.equal(moved.notes,'Bring ID');
+ assert.equal(s.activities.other.dayId,other.id);assert.deepEqual(option,optionBefore);
+ assert.throws(()=>C.scheduleActivityChange(s,option,other,'Evening show',option.fields),/this itinerary/);
+ assert.equal(C.budget(s,'s',{GBP:1.3}).amount,150);
+});
