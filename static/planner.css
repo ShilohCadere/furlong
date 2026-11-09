@@ -108,3 +108,12 @@
  .option-actions{grid-column:1}
  .rail-budget .metric-line{width:100%;margin-right:0}
 }
+
+.option-parts{grid-column:1/-1;border-top:1px solid var(--line);margin-top:4px;padding-top:8px}
+.option-part-list{margin:0 0 7px;padding-left:24px;color:var(--muted)}
+.option-part-list li+li{margin-top:3px}
+.option-part-link{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 10px;width:100%;padding:5px 8px;text-align:left;background:transparent;border-color:transparent;overflow-wrap:anywhere}
+.editor-parts{margin-bottom:12px}
+@media(max-width:600px){
+ .option-part-link,.option-parts>button{min-height:44px}
+}
