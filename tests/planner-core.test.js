@@ -125,3 +125,32 @@ test('scheduling a saved option reuses its day item and keeps details and quotes
  assert.throws(()=>C.scheduleActivityChange(s,option,other,'Evening show',option.fields),/this itinerary/);
  assert.equal(C.budget(s,'s',{GBP:1.3}).amount,150);
 });
+
+test('journey copies prefer the matching populated route and recover older unlinked groups',()=>{
+ const s=fixture();
+ s.scenarios.dest={id:'dest',name:'Destination'};
+ for(const [id,scenarioId,name,position] of [
+  ['d','s','Doolin',1],['g','s','Glencoe',2],
+  ['dd','dest','Doolin',0],['gg','dest','Glencoe',1]
+ ])s.stops[id]={id,scenarioId,name,position,startDate:position===0?'2027-09-02':'2027-09-05'};
+ Object.assign(s.groups.g,{stopId:null,type:'transport',fromStopId:'d',toStopId:'g'});
+ Object.assign(s.options.o,{type:'transport'});
+ for(const [id,name,type] of [['duplicate','Doolin → Glencoe','transport'],
+  ['filled','Doolin → Glencoe','flight'],['unrelated','Another transfer','transport']]){
+  s.groups[id]={id,scenarioId:'dest',stopId:null,name,type,startDate:'2027-09-01'};
+ }
+ s.options.route={id:'route',groupId:'filled',scenarioId:'dest'};
+ const target=()=>C.copyOptionDestinations(s,'o')[0];
+ assert.equal(target().locations.at(-1).preferredGroupId,'filled');
+ assert.deepEqual(C.journeySlots(s,'dest').after.dd.map(g=>g.id),['duplicate','filled']);
+ s.groups.duplicate.archived=true;
+ assert.deepEqual(C.journeySlots(s,'dest').after.dd.map(g=>g.id),['filled']);
+ s.groups.filled.archived=true;
+ assert.equal(target().locations.at(-1).preferredGroupId,'');
+ let n=0;
+ const copied=C.copyOptionChanges(s,'o','dest','','','Doolin → Glencoe',()=>`copy${++n}`);
+ assert.equal(copied[0][2].fromStopId,'dd');
+ assert.equal(copied[0][2].toStopId,'gg');
+ assert.equal(copied[1][2].groupId,copied[0][1]);
+ assert.equal(s.groups.g.fromStopId,'d');
+});

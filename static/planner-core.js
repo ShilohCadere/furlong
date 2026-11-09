@@ -9,15 +9,43 @@ const byPosition=(a,b)=>(a.position||0)-(b.position||0)||String(a.id).localeComp
 const stops=(s,sid)=>values(s.stops).filter(x=>alive(x)&&x.scenarioId===sid).sort(byPosition);
 const groups=(s,sid,stopId)=>values(s.groups).filter(x=>alive(x)&&x.scenarioId===sid&&(stopId===undefined||x.stopId===stopId)).sort(byPosition);
 const options=(s,gid)=>values(s.options).filter(x=>alive(x)&&x.groupId===gid).sort(byPosition);
+const routeLabel=(from,to)=>from.name&&to.name?
+ from.name.trim().toLowerCase()+' → '+to.name.trim().toLowerCase():'';
+function connectionStops(ss,group){
+ if(!group||group.stopId||group.needsRouteReview||!['transport','flight'].includes(group.type))return null;
+ const name=group.name?.trim().toLowerCase().replace(/\s*→\s*/g,' → ');
+ const linked=group.fromStopId||group.toStopId;
+ if(!linked&&!name)return null;
+ // Older copies have only a label. Recover only an unambiguous adjacent pair.
+ const pairs=ss.slice(1).map((to,i)=>[ss[i],to]).filter(([from,to])=>linked?
+  from.id===group.fromStopId&&to.id===group.toStopId:routeLabel(from,to)===name);
+ return pairs.length===1?pairs[0]:null;
+}
 // A live child is not a destination when its itinerary or stop was archived.
 function copyOptionDestinations(s,optionId){
  const source=s.options[optionId];
  if(!alive(source))return [];
+ const sourceRoute=connectionStops(stops(s,source.scenarioId),s.groups[source.groupId]);
  return values(s.scenarios).filter(x=>alive(x)&&x.id!==source.scenarioId)
   .sort((a,b)=>Number(b.id===s.meta.activeScenario)-Number(a.id===s.meta.activeScenario)||a.name.localeCompare(b.name))
-  .map(scenario=>({scenario,locations:[...stops(s,scenario.id).map(stop=>({id:stop.id,name:stop.name,stop})),
-   {id:'',name:'Transport & trip-wide groups',stop:null}].map(location=>({...location,
-    groups:groups(s,scenario.id,location.id||null).sort((a,b)=>Number(b.type===source.type)-Number(a.type===source.type)||byPosition(a,b))}))}));
+  .map(scenario=>{
+   const ss=stops(s,scenario.id);
+   const route=sourceRoute&&connectionStops(ss,{name:routeLabel(...sourceRoute),type:'transport'});
+   const locations=[...ss.map(stop=>({id:stop.id,name:stop.name,stop})),
+    {id:'',name:'Transport & trip-wide groups',stop:null}].map(location=>{
+    const candidates=groups(s,scenario.id,location.id||null)
+     .sort((a,b)=>Number(b.type===source.type)-Number(a.type===source.type)||byPosition(a,b));
+    const matching=!location.stop&&route?candidates.filter(group=>{
+     const pair=connectionStops(ss,group);
+     return pair?.[0].id===route[0].id&&pair[1].id===route[1].id;
+    }):[];
+    const preferred=!location.stop&&sourceRoute?
+     matching.find(group=>options(s,group.id).length)||matching[0]:
+     candidates.find(group=>group.type===source.type);
+    return {...location,groups:candidates,preferredGroupId:preferred?.id||''};
+   });
+   return {scenario,locations,route};
+  });
 }
 function copyOptionChanges(s,optionId,scenarioId,stopId,groupId,newGroupName='',makeId=uid){
  const source=s.options[optionId],target=copyOptionDestinations(s,optionId).find(x=>x.scenario.id===scenarioId),
@@ -29,6 +57,10 @@ function copyOptionChanges(s,optionId,scenarioId,stopId,groupId,newGroupName='',
   const name=newGroupName.trim();if(!name||name.length>100)throw Error('Enter a group name up to 100 characters.');
   const id=makeId();group={id,scenarioId,stopId:stopId||null,name,type:source.type,selectedId:null,allowance:null,
    position:location.groups.reduce((n,g)=>Math.max(n,Number(g.position||0)+1),0),notes:'',archived:false};
+  if(!stopId&&target.route){
+   group.fromStopId=target.route[0].id;
+   group.toStopId=target.route[1].id;
+  }
   changes.push(['groups',id,group]);
  }
  const id=makeId();changes.push(['options',id,{...clone(source),id,scenarioId,groupId:group.id,
@@ -44,7 +76,7 @@ function journeySlots(s,sid){
   if(g.itineraryPlacement==='before')before=true;
   else if(g.itineraryPlacement==='after')anchor=ss.find(st=>st.id===g.anchorStopId)?.id;
   else {
-   anchor=ss.find(st=>st.id===g.fromStopId)?.id;
+   anchor=ss.find(st=>st.id===g.fromStopId)?.id||connectionStops(ss,g)?.[0].id;
    if(!anchor&&g.toStopId){const i=ss.findIndex(st=>st.id===g.toStopId);if(i===0)before=true;else if(i>0)anchor=ss[i-1].id;}
    if(!anchor&&!before){
     const selected=s.options[g.selectedId],opts=selected&&alive(selected)?[selected]:options(s,g.id);
@@ -167,5 +199,5 @@ function previewScenarioShift(s,sid,newStart){
  if(details.some(d=>d.kind==='options'))warnings.push('Saved quotes are unchanged and may need to be rechecked.');
  return {oldStart,newStart,delta,changes,details,held,warnings};
 }
-return {values,clone,alive,uid,dayNumber,datePlus,byPosition,stops,groups,options,copyOptionDestinations,copyOptionChanges,journeySlots,itemNotes,scheduledActivity,scheduleActivityChange,activityQuoteChanges,title,booking,status,conditions,needsRecheck,quoteTotal,exchange,cost,budget,duration,zonedStamp,notices,diff,setPath,patch,operations,shiftScenario,previewScenarioShift};
+return {values,clone,alive,uid,dayNumber,datePlus,byPosition,stops,groups,options,connectionStops,copyOptionDestinations,copyOptionChanges,journeySlots,itemNotes,scheduledActivity,scheduleActivityChange,activityQuoteChanges,title,booking,status,conditions,needsRecheck,quoteTotal,exchange,cost,budget,duration,zonedStamp,notices,diff,setPath,patch,operations,shiftScenario,previewScenarioShift};
 });
