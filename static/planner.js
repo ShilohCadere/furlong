@@ -162,11 +162,16 @@ function planHTML(){
  if(!stops.length)body=empty('Start anywhere','Add a stop, save a possibility, or leave the dates open.',optButton('+ Add a stop','add-stop','','primary'))+body;
  return `<section class="plan-workspace" aria-labelledby="plan-title">
   <div class="plan-heading"><h2 id="plan-title">Itinerary</h2>${stops.length?optButton('+ Add to plan','plan-activity','','small primary'):''}</div>
-  <div class="plan-timeline">${body}</div>
-  <div class="add-row">${optButton('+ Add stop','add-stop','','primary')}${optButton('+ Shared transport','add-group','data-type="transport"')}</div>
-  <details class="plan-overview" ${planDisclosure('summary-'+sid)}><summary class="plan-summary">Planning summary</summary>
-   <aside class="rail">${budgetRail()}<section class="rail-card">${attentionHTML()}</section>${taskRail()}</aside>
-  </details>
+  <div class="workspace-grid">
+   <div class="workspace-body">
+    <div class="plan-timeline">${body}</div>
+    <div class="add-row">${optButton('+ Add stop','add-stop','','primary')}${optButton('+ Shared transport','add-group','data-type="transport"')}</div>
+    <details class="plan-overview" ${planDisclosure('summary-'+sid)}><summary class="plan-summary">Planning summary</summary>
+     <div class="rail"><section class="rail-card">${attentionHTML()}</section>${taskRail()}</div>
+    </details>
+   </div>
+   <aside class="rail" aria-label="Itinerary budget">${budgetRail()}</aside>
+  </div>
  </section>`;
 }
 function ideasHTML(){
