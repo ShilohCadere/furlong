@@ -65,3 +65,16 @@ test('explicit unscheduling and another city or scenario take precedence over st
  layout=P.stopItinerary(s,'s','a');assert.equal(layout.unscheduled[0].options[0].id,'o');
  assert.deepEqual(P.stopItinerary(s,'s','b'),{days:[],stays:[],unscheduled:[]});
 });
+test('route strip follows the active alternative and real stop order without changing dates or records',()=>{
+ const s=fixture();s.stops.c={id:'c',name:'Galway',location:'Galway',scenarioId:'s',position:2,startDate:'2027-09-04',nights:3};
+ s.stops.hidden={id:'hidden',scenarioId:'s',position:1,archived:true,startDate:'2027-08-01',nights:9};
+ const before=structuredClone(s),stops=P.routeStops(s,'s');
+ assert.deepEqual(stops.map(st=>st.id),['a','c']);assert.equal(stops[1].end,'2027-09-07');
+ assert.deepEqual(P.routeStops(s,'other').map(st=>st.id),['b']);assert.deepEqual(P.routeStops(s,'empty'),[]);assert.deepEqual(s,before);
+});
+test('route strip leaves unknown dates and nights unknown rather than inventing a checkout',()=>{
+ const s=fixture();s.stops.a.nights=null;assert.equal(P.routeStops(s,'s')[0].end,null);
+ s.stops.a.nights='';assert.equal(P.routeStops(s,'s')[0].end,null);
+ s.stops.a.startDate='';assert.equal(P.routeStops(s,'s')[0].start,null);
+ s.stops.a.startDate='2027-02-31';assert.equal(P.routeStops(s,'s')[0].start,null);
+});

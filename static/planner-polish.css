@@ -153,3 +153,22 @@ button.primary,.button.primary{box-shadow:none}
 }
 @media(max-width:1099px){.plan-workspace .workspace-body,.plan-workspace .itinerary-rail{grid-row:auto}}
 .hide-notes .plan-timeline .itinerary-option .option-note{display:none}
+
+/* Route navigation replaces the duplicate sidebar city links. */
+.route-strip{position:sticky;top:0;z-index:12;padding:8px 0 10px;margin:0 0 12px;border-bottom:1px solid var(--line);background:var(--bg);overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:#64758e transparent;scroll-padding-inline:8px}
+.route-stops{list-style:none;display:flex;align-items:center;gap:12px;margin:0;padding:0;min-width:100%}
+.route-stops>li{display:flex;align-items:center;gap:12px;flex:1 0 140px;min-width:0}
+.route-stops>li:not(:last-child)::after{content:'';height:1px;background:linear-gradient(90deg,var(--city),#53647d);opacity:.7;flex:1;min-width:20px}
+.route-stops button{display:grid;grid-template-columns:16px minmax(0,1fr);gap:1px 8px;align-items:center;text-align:left;min-width:132px;min-height:54px;padding:6px 12px;background:transparent;border:1px solid transparent;border-bottom:2px solid transparent;border-radius:8px;color:var(--city);flex-shrink:0;max-width:240px}
+.route-stops button:hover{background:var(--panel);border-color:var(--line)}
+.route-stops button[aria-current=location]{background:var(--city-bg);border-bottom-color:var(--city)}
+.route-name{font:500 18px/1.25 var(--serif);overflow-wrap:anywhere}
+.route-dates{grid-column:2;color:var(--muted);font-size:11px;white-space:nowrap}
+.route-marker{grid-row:1/3;align-self:start;margin-top:3px;display:flex;align-items:center;justify-content:center;width:16px;height:16px}
+.route-dot{display:block;width:6px;height:6px;background:currentColor;border-radius:50%}
+.route-pin{display:none;width:16px;height:16px}
+.route-stops [aria-current=location] .route-pin{display:block}.route-stops [aria-current=location] .route-dot{display:none}
+.plan-view .plan-timeline>.stop{scroll-margin-top:110px}
+@media(max-width:700px){.route-strip{padding:7px 0 8px;margin-bottom:12px}.route-stops{gap:8px;width:max-content}.route-stops>li{flex:0 0 auto;gap:8px}.route-stops>li:not(:last-child)::after{width:24px;flex:none;min-width:24px}.route-stops button{max-width:200px;min-width:120px;padding:6px 9px;min-height:54px}.route-name{font-size:17px}.route-dates{font-size:11px}}
+@media print{.route-strip{display:none}}
+.route-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

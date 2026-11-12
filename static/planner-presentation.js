@@ -90,5 +90,6 @@ function stopItinerary(s,sid,stopId){
  }
  return {days,stays,unscheduled};
 }
-return {stopItinerary,itineraryDayDate,validDate,tripContext,comparisonFacts,optionStatuses,ideaOptions,coordinates,mapPoints};
+function routeStops(s,sid){return C.stops(s,sid).map(st=>({id:st.id,name:st.name||st.location||'Unnamed stop',location:st.location||st.name||'',start:validDate(st.startDate)?st.startDate:null,end:validDate(st.startDate)&&st.nights!=null&&st.nights!==''&&Number.isFinite(Number(st.nights))&&Number(st.nights)>=0?C.datePlus(st.startDate,Number(st.nights)):null}));}
+return {routeStops,stopItinerary,itineraryDayDate,validDate,tripContext,comparisonFacts,optionStatuses,ideaOptions,coordinates,mapPoints};
 });
