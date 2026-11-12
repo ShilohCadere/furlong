@@ -45,3 +45,23 @@ test('coordinates accept the equator and prime meridian while rejecting missing 
  assert.deepEqual(P.coordinates({lat:0,lng:0}),[0,0]);
  for(const record of [{lat:'',lng:0},{lat:null,lng:0},{lat:91,lng:10},{lat:0,lng:181},{lat:'invalid',lng:0}])assert.equal(P.coordinates(record),null);
 });
+test('city itinerary places activities under their assigned days and keeps accommodation separate without duplicating options',()=>{
+ const s=fixture();s.options.o.type='activity';s.options.o.fields.startDate='2027-09-02';
+ s.activities.act={id:'act',scenarioId:'s',dayId:'d',optionId:'o',ideaId:'i',name:'Museum'};
+ s.groups.hotel={id:'hotel',scenarioId:'s',stopId:'a',type:'hotel'};
+ s.options.hotel={id:'hotel',groupId:'hotel',scenarioId:'s',type:'hotel',fields:{startDate:'2027-09-02'}};
+ s.options.dated={id:'dated',groupId:'g',scenarioId:'s',type:'restaurant',fields:{startDate:'2027-09-02'}};
+ s.options.open={id:'open',groupId:'g',scenarioId:'s',type:'activity',fields:{}};
+ const before=structuredClone(s),layout=P.stopItinerary(s,'s','a');
+ assert.equal(layout.days[0].activities[0].option.id,'o');assert.deepEqual(layout.days[0].groups[0].options.map(o=>o.id),['dated']);
+ assert.deepEqual(layout.stays[0].options.map(o=>o.id),['hotel']);assert.deepEqual(layout.unscheduled[0].options.map(o=>o.id),['open']);
+ assert.deepEqual(s,before);
+});
+test('explicit unscheduling and another city or scenario take precedence over stale activity dates',()=>{
+ const s=fixture();s.options.o.type='activity';s.options.o.fields.startDate='2027-09-02';
+ s.activities.act={id:'act',scenarioId:'s',dayId:null,optionId:'o',ideaId:'i'};
+ let layout=P.stopItinerary(s,'s','a');assert.equal(layout.days[0].groups.length,0);assert.equal(layout.unscheduled[0].options[0].id,'o');
+ s.activities.act.dayId='elsewhere';s.days.elsewhere={id:'elsewhere',scenarioId:'s',stopId:'new',date:'2027-09-02'};
+ layout=P.stopItinerary(s,'s','a');assert.equal(layout.unscheduled[0].options[0].id,'o');
+ assert.deepEqual(P.stopItinerary(s,'s','b'),{days:[],stays:[],unscheduled:[]});
+});

@@ -64,5 +64,31 @@ function mapPoints(s,u,sid,{day='',backups=false,unscheduled=false}={}){
  if(unscheduled&&!day)for(const idea of values(u.ideas).filter(i=>live(i)&&i.originTripId===s.meta.tripId&&!linked.has(i.id)))push('idea',idea,idea.name,idea,null,{status:'Unscheduled'});
  return points;
 }
-return {validDate,tripContext,comparisonFacts,optionStatuses,ideaOptions,coordinates,mapPoints};
+function itineraryDayDate(s,day){return day.date||(validDate(s.stops[day.stopId]?.startDate)?C.datePlus(s.stops[day.stopId].startDate,Number(day.position||0)):null);}
+function stopItinerary(s,sid,stopId){
+ const stop=s.stops[stopId];if(!live(stop)||stop.scenarioId!==sid)return {days:[],stays:[],unscheduled:[]};
+ const days=values(s.days).filter(d=>live(d)&&d.scenarioId===sid&&d.stopId===stopId)
+  .sort((a,b)=>(itineraryDayDate(s,a)||'9999').localeCompare(itineraryDayDate(s,b)||'9999')||C.byPosition(a,b))
+  .map(day=>({day,activities:values(s.activities).filter(a=>live(a)&&a.scenarioId===sid&&a.dayId===day.id).map(activity=>({activity,option:null})),groups:[]}));
+ const byId=new Map(days.map(entry=>[entry.day.id,entry])),byDate=new Map();
+ for(const entry of days){const date=itineraryDayDate(s,entry.day);if(date&&!byDate.has(date))byDate.set(date,entry);}
+ const stays=[],unscheduled=[];
+ const add=(target,group,option)=>{let entry=target.find(entry=>entry.group.id===group.id);if(!entry){entry={group,options:[]};target.push(entry);}entry.options.push(option);};
+ for(const group of C.groups(s,sid,stopId)){
+  const options=C.options(s,group.id).filter(o=>o.scenarioId===sid);
+  if(!options.length){(['hotel','castle','flight','transport'].includes(group.type)?stays:unscheduled).push({group,options:[]});continue;}
+  for(const option of options){
+   if(['hotel','castle','accommodation','flight','transport'].includes(option.type)){add(stays,group,option);continue;}
+   const activity=C.scheduledActivity(s,option);
+   // An explicit assignment (including unscheduling) takes precedence over an old quote date.
+   const target=activity?byId.get(activity.dayId):byDate.get(option.fields?.startDate);
+   if(!target){add(unscheduled,group,option);continue;}
+   const row=activity&&target.activities.find(row=>row.activity.id===activity.id);
+   if(row&&(!row.activity.optionId||row.activity.optionId===option.id)&&!row.option)row.option=option;
+   else add(target.groups,group,option);
+  }
+ }
+ return {days,stays,unscheduled};
+}
+return {stopItinerary,itineraryDayDate,validDate,tripContext,comparisonFacts,optionStatuses,ideaOptions,coordinates,mapPoints};
 });
