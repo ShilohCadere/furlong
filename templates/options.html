@@ -4,8 +4,8 @@
 <title>Saved Ideas | {{ trip.name }} | Furlong</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}"></head>
-<body><a class="skip-link" href="#main-content">Skip to main content</a><div class="app-layout"><aside class="sidebar"><a class="brand" href="{{ url_for('home') }}"><img class="furlong-bear-mark" src="{{ url_for('static',filename='furlong-bear.svg') }}" alt=""><span class="brand-wordmark">furlong<span>.</span></span></a>
+<link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}">{% include "_brand_head.html" %}</head>
+<body><a class="skip-link" href="#main-content">Skip to main content</a><div class="app-layout"><aside class="sidebar"><a class="brand" href="{{ url_for('home') }}">{% include "_brand_mark.html" %}<span class="brand-wordmark">furlong<span>.</span></span></a>
 <nav class="sidebar-nav" aria-label="Trip navigation">
 <a class="nav-link" href="{{ url_for('home') }}">My Trips</a>
 <a class="nav-link" href="{{ url_for('trip_overview',trip_id=trip.id) }}">Overview</a>
@@ -41,5 +41,5 @@
 <form method="post" action="{{ url_for('remove_saved_option',trip_id=trip.id,option_id=item.id) }}" onsubmit="return confirm('Remove this saved option?');">
 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><button class="option-remove" type="submit">Remove</button></form></div>
 </article>{% endfor %}</div></section>{% endfor %}
-{% else %}<section class="option-empty"><h2>No saved ideas yet</h2><p>Add an idea using the form above.</p></section>{% endif %}
+{% else %}<section class="option-empty illustrated-empty"><picture class="brand-empty-art"><source srcset="{{ url_for('static', filename='brand/bear-exploring.svg', v='1') }}" type="image/svg+xml"><img src="{{ url_for('static', filename='brand/bear-exploring.png', v='1') }}" alt="" width="190" height="160" decoding="async"></picture><h2>No saved ideas yet</h2><p>Add an idea using the form above.</p></section>{% endif %}
 </main></div></body></html>

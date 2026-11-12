@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Account security · Furlong</title><link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}"></head>
+<title>Account security · Furlong</title><link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}">{% include "_brand_head.html" %}</head>
 <body><main class="auth-shell"><div class="auth-card">
-<a class="brand" href="{{ url_for('login') }}">furlong.</a>
+<a class="brand" href="{{ url_for('login') }}">{% include "_brand_mark.html" %}<span class="brand-wordmark">furlong<span>.</span></span></a>
 {% if mode=='forgot' %}
 <h1>Reset your password</h1><p class="page-subtitle">Enter your account email. If an account exists, we'll send a reset link.</p>
 <form method="post" class="auth-form"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">

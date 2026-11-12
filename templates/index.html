@@ -12,13 +12,13 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='2') }}">
-</head>
+{% include "_brand_head.html" %}</head>
 
 <body>
     <div class="app-layout">
 
         <aside class="sidebar">
-            <a href="{{ url_for('home') }}" class="brand"><img class="furlong-bear-mark" src="{{ url_for('static',filename='furlong-bear.svg') }}" alt=""><span class="brand-wordmark">furlong<span>.</span></span></a>
+            <a href="{{ url_for('home') }}" class="brand">{% include "_brand_mark.html" %}<span class="brand-wordmark">furlong<span>.</span></span></a>
 
             <nav class="sidebar-nav" aria-label="Main navigation">
                 <a href="{{ url_for('home') }}"
@@ -106,7 +106,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="empty-state">
+                    <div class="empty-state illustrated-empty"><picture class="brand-empty-art"><source srcset="{{ url_for('static', filename='brand/bear-packing.svg', v='1') }}" type="image/svg+xml"><img src="{{ url_for('static', filename='brand/bear-packing.png', v='1') }}" alt="" width="240" height="140" decoding="async"></picture>
 
                         <h3>No trips yet</h3>
                         <p>

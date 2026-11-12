@@ -13,12 +13,12 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
+{% include "_brand_head.html" %}</head>
 
 <body><a class="skip-link" href="#main-content">Skip to main content</a>
     <div class="app-layout">
         <aside class="sidebar">
-            <a href="{{ url_for('home') }}" class="brand"><img class="furlong-bear-mark" src="{{ url_for('static',filename='furlong-bear.svg') }}" alt=""><span class="brand-wordmark">furlong<span>.</span></span></a>
+            <a href="{{ url_for('home') }}" class="brand">{% include "_brand_mark.html" %}<span class="brand-wordmark">furlong<span>.</span></span></a>
 
             <nav class="sidebar-nav" aria-label="Main navigation">
                 <a href="{{ url_for('home') }}" class="nav-link">

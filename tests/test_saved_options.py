@@ -340,7 +340,7 @@ class SavedOptionsTests(unittest.TestCase):
         self.assertIn(b'scenario-active',res.data)
         self.assertIn(b'workspace-preferences',res.data)
         self.assertIn(b'atlas-city-gallery',res.data)
-        self.assertIn(b'furlong-bear.svg',res.data)
+        self.assertIn(b'brand/bear-walking.svg',res.data)
         self.assertNotIn(b'atlas-stamp',res.data)
 
     def test_hotel_cards_and_independent_itineraries(self):

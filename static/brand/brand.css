@@ -1,0 +1,11 @@
+/* Approved sapphire bear family: decorative artwork supports the page's text. */
+.brand .brand-mark{display:inline-flex;align-items:center;justify-content:center;flex:0 0 64px;width:64px;height:32px}
+.brand .brand-mark .furlong-bear-mark,.sidebar .brand .brand-mark img{display:block;width:64px;height:32px;object-fit:contain;filter:none!important;opacity:1}
+.brand-empty-art{display:block;max-width:240px;width:100%;margin:0 auto 20px;line-height:0}
+.brand-empty-art img{display:block;width:100%;height:auto;max-height:160px;object-fit:contain;filter:none;opacity:1}
+.illustrated-empty{text-align:center}
+.empty.illustrated-empty{padding:28px 24px}
+.illustrated-empty .brand-empty-art+ h3{margin-top:0}
+.illustrated-empty p{max-width:430px;margin:10px auto 18px}
+.illustrated-empty button{margin-inline:auto}
+@media(max-width:700px){.brand .brand-mark{flex-basis:34px;width:34px;height:34px}.brand .brand-mark .furlong-bear-mark,.sidebar .brand .brand-mark img{width:34px;height:34px}.brand-empty-art{max-width:200px;margin-bottom:16px}.brand-empty-art img{max-height:140px}}
