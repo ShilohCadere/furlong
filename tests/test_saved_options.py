@@ -461,7 +461,7 @@ class SavedOptionsTests(unittest.TestCase):
             expenses=db.execute("SELECT COUNT(*) FROM scenario_expenses").fetchone()[0]
         s1=self.client.get(f"/trip/{trip}/budget-playground?scenario={plans['S1']}")
         self.assertEqual(s1.status_code,200)
-        self.assertIn(b'Budget playground',s1.data)
+        self.assertIn(b'<h1>Budget</h1>',s1.data)
         self.assertIn(b'Quote needed',s1.data)
         self.assertIn(b'$14,114',s1.data)
         self.assertIn(b'pg-option',s1.data)

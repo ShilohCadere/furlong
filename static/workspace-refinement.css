@@ -203,3 +203,6 @@
 .workspace-view[data-density=detailed] .hotel-card-actions{margin-top:auto!important;padding-top:10px!important}
 .workspace-view .hotel-card-actions{margin-top:7px!important}
 }
+
+.workspace-view .atlas-section-title{flex:1;min-width:0}
+.workspace-view .workspace-start{margin:24px 0;padding:18px 0;border-bottom:1px solid var(--border)}

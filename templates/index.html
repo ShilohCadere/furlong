@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Furlong | My Journeys</title>
+    <title>Furlong | My Trips</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,8 +24,8 @@
                 <a href="{{ url_for('home') }}"
                    class="nav-link active"
                    aria-current="page">
-                    <span class="nav-icon">⌂</span>
-                    My Journeys
+
+                    My Trips
                 </a>
             </nav>
 
@@ -39,10 +39,10 @@
 
             <header class="page-header">
                 <div>
-                    <p class="eyebrow">YOUR TRAVEL JOURNAL</p>
-                    <h1>Your next chapter awaits.</h1>
+
+                    <h1>Your trips</h1>
                     <p class="page-subtitle">
-                        Every great journey begins with a little inspiration.
+                        Create a trip or continue planning.
                     </p>
                 </div>
 
@@ -60,13 +60,13 @@
             <section class="journeys-section">
                 <div class="section-heading">
                     <div>
-                        <p class="eyebrow">COLLECTION</p>
-                        <h2>My Journeys</h2>
+
+                        <h2>My Trips</h2>
                     </div>
 
                     <span class="trip-count">
                         {{ trips|length }}
-                        {{ "journey" if trips|length == 1 else "journeys" }}
+                        {{ "trip" if trips|length == 1 else "trips" }}
                     </span>
                 </div>
 
@@ -75,12 +75,6 @@
                         {% for trip in trips %}
                             <article class="trip-card">
                             <a href="{{ url_for('planner_workspace', trip_id=trip.id) }}" class="trip-card-link">
-                                <div class="trip-cover">
-                                    <span class="cover-label">
-                                        JOURNEY {{ "%02d"|format(loop.index) }}
-                                    </span>
-                                    <span class="cover-decoration">✦</span>
-                                </div>
 
                                 <div class="trip-details">
                                     <h3>{{ trip.name }}</h3>
@@ -91,7 +85,7 @@
                                         </p>
                                     {% else %}
                                         <p class="trip-destination muted">
-                                            Destination to be discovered
+                                            Destination not set
                                         </p>
                                     {% endif %}
 
@@ -113,11 +107,10 @@
                     </div>
                 {% else %}
                     <div class="empty-state">
-                        <span class="empty-symbol">✦</span>
-                        <h3>Your story starts here.</h3>
+
+                        <h3>No trips yet</h3>
                         <p>
-                            Create your first journey and start collecting
-                            the places you dream of exploring.
+                            Add a trip to save places and build an itinerary.
                         </p>
 
                         <button
@@ -127,14 +120,14 @@
                             aria-haspopup="dialog"
                             aria-controls="new-trip-dialog"
                         >
-                            Create your first journey
+                            Create your first trip
                         </button>
                     </div>
                 {% endif %}
             </section>
 
             <footer class="page-footer">
-                Furlong · A little further, every day.
+                Furlong
             </footer>
 
         </main>
@@ -148,10 +141,10 @@
     >
         <div class="dialog-heading">
             <div>
-                <p class="eyebrow">SOMETHING NEW</p>
-                <h2 id="dialog-title">Where to next?</h2>
+
+                <h2 id="dialog-title">New trip</h2>
                 <p id="dialog-description" class="dialog-description">
-                    Every journey begins somewhere.
+                    Add a trip name and destination.
                 </p>
             </div>
 
@@ -159,7 +152,7 @@
                 type="button"
                 class="close-btn"
                 id="close-trip-btn"
-                aria-label="Close new journey dialog"
+                aria-label="Close new trip dialog"
             >
                 &times;
             </button>

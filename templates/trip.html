@@ -22,8 +22,8 @@
 
             <nav class="sidebar-nav" aria-label="Main navigation">
                 <a href="{{ url_for('home') }}" class="nav-link">
-                    <span class="nav-icon">⌂</span>
-                    My Journeys
+
+                    My Trips
                 </a>
 
                 <a
@@ -31,7 +31,7 @@
                     class="nav-link active"
                     aria-current="page"
                 >
-                    <span class="nav-icon">◫</span>
+
                     Overview
                 </a>
 
@@ -39,19 +39,17 @@
                     href="{{ url_for('itinerary', trip_id=trip.id, scenario=itinerary_scenario) }}"
                     class="nav-link"
                 >
-                    <span class="nav-icon">▤</span>
+
                     Itinerary
                 </a>
             </nav>
 
-            <div class="sidebar-footer">
-                <span>Make room for the journey.</span>
-            </div>
+
         </aside>
 
         <main id="main-content" tabindex="-1" class="main-content">
             <nav class="breadcrumbs" aria-label="Breadcrumb">
-                <a href="{{ url_for('home') }}">My Journeys</a>
+                <a href="{{ url_for('home') }}">My Trips</a>
                 <span aria-hidden="true">/</span>
                 <span aria-current="page">{{ trip.name }}</span>
             </nav>
@@ -70,7 +68,7 @@
 
             <header class="overview-header">
                 <div>
-                    <p class="eyebrow">YOUR JOURNEY</p>
+
                     <h1>{{ trip.name }}</h1>
 
                     {% if trip.destination %}
@@ -80,7 +78,7 @@
                         </p>
                     {% else %}
                         <p class="overview-destination muted">
-                            Destination to be discovered
+                            Destination not set
                         </p>
                     {% endif %}
                     <div class="overview-atlas-divider" aria-hidden="true"></div>
@@ -111,12 +109,10 @@
                 <article class="overview-preview">
                     <div class="preview-heading">
                         <div>
-                            <p class="eyebrow">PLAN YOUR DAYS</p>
+
                             <h2>Itinerary</h2>
                         </div>
-                        <div class="preview-heading-icon" aria-hidden="true">
-                            <span>◷</span>
-                        </div>
+
                     </div>
 
                     {% if days %}
@@ -143,12 +139,10 @@
                         </p>
                     {% else %}
                         <div class="preview-empty">
-                            <div class="empty-icon-wrap" aria-hidden="true">
-                                <span>＋</span>
-                            </div>
-                            <h3>Your days are waiting.</h3>
+
+                            <h3>No itinerary days yet</h3>
                             <p>
-                                Start organizing your journey, one day at a time.
+                                Add a day to start your itinerary.
                             </p>
                         </div>
                     {% endif %}
@@ -167,12 +161,10 @@
                 <article class="overview-preview">
                     <div class="preview-heading">
                         <div>
-                            <p class="eyebrow">COLLECT INSPIRATION</p>
+
                             <h2>Saved Ideas</h2>
                         </div>
-                        <div class="preview-heading-icon" aria-hidden="true">
-                            <span>♡</span>
-                        </div>
+
                     </div>
 
                     {% if saved_ideas %}
@@ -190,7 +182,7 @@
                         <p class="overview-day-count">{{ saved_ideas_count }} saved {{ "option" if saved_ideas_count == 1 else "options" }} in this trip version</p>
                     {% else %}
                         <div class="preview-empty">
-                            <div class="empty-icon-wrap" aria-hidden="true"><span>✦</span></div>
+
                             <h3>No saved ideas yet</h3>
                             <p>Save hotels, places, and experiences to compare later.</p>
                         </div>
@@ -204,7 +196,7 @@
 
             <footer class="page-footer">
                 <a href="{{ url_for('home') }}">
-                    ← Back to My Journeys
+                    ← Back to My Trips
                 </a>
             </footer>
         </main>
@@ -217,10 +209,10 @@
     >
         <div class="dialog-heading">
             <div>
-                <p class="eyebrow">YOUR JOURNEY</p>
+
                 <h2 id="edit-dialog-title">Edit Trip</h2>
                 <p class="dialog-description">
-                    Update the details of your journey.
+                    Update your trip details.
                 </p>
             </div>
 
